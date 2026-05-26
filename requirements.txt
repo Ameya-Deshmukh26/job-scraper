@@ -1,0 +1,6 @@
+requests>=2.31.0
+plyer>=2.1.0
+flask>=3.0.0
+beautifulsoup4>=4.12.0
+playwright>=1.44.0
+anthropic>=0.40.0

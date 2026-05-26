@@ -1,0 +1,49 @@
+# Database & logs
+seen_jobs.db
+*.db
+*.log
+job_scraper.log
+
+# Personal profile & apply data
+profile.json
+autoapply/applied_*.json
+
+# Generated resume files
+*.pdf
+*.aux
+*.out
+*.fls
+*.fdb_latexmk
+tailored_resumes/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets — never commit real keys
+# config.py is safe to commit because all keys are empty strings.
+# If you add real keys, use env vars or a .env file (which is listed below):
+.env
+.env.*
+secrets.json

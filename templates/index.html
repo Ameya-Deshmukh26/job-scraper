@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Board — Ameya Deshmukh</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <style>
+    :root {
+      --bg:       #0d0f18;
+      --surface:  #13162a;
+      --card:     #181b2e;
+      --border:   #252845;
+      --accent:   #5b6ee8;
+      --li-blue:  #0a66c2;
+      --green:    #3ecf8e;
+      --orange:   #f5a623;
+      --red:      #f66;
+      --text:     #dde1f5;
+      --muted:    #7b80a0;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: "Inter", system-ui, sans-serif; font-size: 14px; }
+
+    /* ─── NAV ─── */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+    .brand { font-size: 15px; font-weight: 700; flex: 1; letter-spacing: -.01em; }
+    .brand em { color: var(--accent); font-style: normal; }
+    .scan-group { display: flex; align-items: center; gap: 8px; }
+    .scan-hours {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 7px;
+      padding: 5px 10px;
+      font-size: 13px;
+      width: 80px;
+      outline: none;
+    }
+    .scan-hours:focus { border-color: var(--accent); }
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 7px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity .15s, background .15s;
+      white-space: nowrap;
+    }
+    .btn:hover:not(:disabled) { opacity: .85; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-gh   { background: #0d2a1e; color: var(--green); border: 1px solid #1e5038; }
+    .btn-li   { background: #07192d; color: #2d8fd5;      border: 1px solid #0a3a5c; }
+    .btn-li.scanning { animation: pulse 1.4s ease-in-out infinite; }
+    .btn-hc   { background: #1a0d2e; color: #a78bfa;      border: 1px solid #3b1f6a; }
+    .btn-hc.scanning { animation: pulse 1.4s ease-in-out infinite; }
+    .btn-wd   { background: #001a2e; color: #38bdf8;      border: 1px solid #0e4c78; }
+    .btn-wd.scanning { animation: pulse 1.4s ease-in-out infinite; }
+    .btn-all  { background: var(--accent); color: #fff; }
+    #scan-status { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+    /* ─── STATS ─── */
+    .stats { display: flex; gap: 12px; padding: 20px 24px 0; flex-wrap: wrap; }
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 22px;
+      flex: 1;
+      min-width: 120px;
+    }
+    .stat .lbl  { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+    .stat .val  { font-size: 28px; font-weight: 800; margin-top: 2px; line-height: 1; }
+    .stat.hot   .val { color: var(--orange); }
+    .stat.fresh .val { color: #f472b6; }
+    .stat.total .val { color: var(--green); }
+    .stat.done  .val { color: var(--accent); }
+
+    /* ─── FILTERS ─── */
+    .filters {
+      padding: 16px 24px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .search {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 13px;
+      width: 280px;
+      outline: none;
+    }
+    .search:focus { border-color: var(--accent); }
+    .chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 6px;
+      padding: 5px 13px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .chip.on { color: var(--text); border-color: currentColor; }
+    .chip[data-src="linkedin"].on  { color: var(--li-blue); }
+    .chip[data-src="greenhouse"].on { color: var(--green); }
+    .chip[data-src="lever"].on      { color: #818cf8; }
+    .chip[data-src="remotive"].on   { color: #22d3ee; }
+    .chip[data-src="themuse"].on    { color: #c084fc; }
+    .chip[data-src="adzuna"].on     { color: var(--orange); }
+    .chip[data-src="hiringcafe"].on { color: #a78bfa; }
+    .chip[data-src="workday"].on    { color: #38bdf8; }
+    .chip[data-src="new"].on        { color: var(--orange); }
+    .hide-toggle {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .hide-toggle input { accent-color: var(--accent); cursor: pointer; }
+
+    /* ─── JOB CARDS ─── */
+    .jobs-wrap { padding: 16px 24px 60px; }
+    .jobs-count { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+
+    .job-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 12px;
+    }
+
+    .job-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color .15s, transform .1s;
+      position: relative;
+    }
+    .job-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .job-card.is-new  { border-left: 3px solid var(--orange); }
+    .job-card.applied { opacity: .4; }
+
+    .card-top { display: flex; align-items: flex-start; gap: 10px; }
+    .source-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+    .dot-linkedin    { background: var(--li-blue); }
+    .dot-greenhouse  { background: var(--green); }
+    .dot-lever       { background: #818cf8; }
+    .dot-remotive    { background: #22d3ee; }
+    .dot-themuse     { background: #c084fc; }
+    .dot-adzuna      { background: var(--orange); }
+    .dot-hiringcafe  { background: #a78bfa; }
+    .dot-workday     { background: #38bdf8; }
+
+    .card-titles { flex: 1; min-width: 0; }
+    .card-role {
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1.3;
+      color: var(--text);
+      text-decoration: none;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .card-role:hover { color: var(--accent); }
+    .card-company { font-size: 12px; color: var(--muted); margin-top: 2px;
+                    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .card-meta {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .meta-item { display: flex; align-items: center; gap: 4px; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      letter-spacing: .04em;
+      white-space: nowrap;
+    }
+    .tag-new     { background: #2a1d00; color: var(--orange); }
+    .tag-src-linkedin   { background: #071422; color: #2d8fd5; }
+    .tag-src-greenhouse { background: #0a2018; color: var(--green); }
+    .tag-src-lever      { background: #10122a; color: #818cf8; }
+    .tag-src-remotive   { background: #051a1f; color: #22d3ee; }
+    .tag-src-themuse    { background: #1e0d2a; color: #c084fc; }
+    .tag-src-adzuna     { background: #1e1200; color: var(--orange); }
+    .tag-src-hiringcafe { background: #150924; color: #a78bfa; }
+    .tag-src-workday    { background: #001220; color: #38bdf8; }
+
+    .card-actions { display: flex; gap: 8px; align-items: center; }
+    .btn-apply {
+      flex: 1;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: opacity .15s;
+      text-decoration: none;
+    }
+    .btn-apply:hover { opacity: .85; }
+    .btn-apply.done {
+      background: #0d2010;
+      color: var(--green);
+      border: 1px solid var(--green);
+    }
+    .btn-mark {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 7px;
+      padding: 7px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-mark:hover { border-color: var(--green); color: var(--green); }
+    .btn-mark.done  { border-color: var(--green); color: var(--green); }
+
+    /* ─── EMPTY / LOADING ─── */
+    .empty {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--muted);
+    }
+    .empty i { font-size: 48px; display: block; margin-bottom: 14px; }
+
+    /* ─── TOAST ─── */
+    .toasts { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 13px;
+      min-width: 240px;
+      animation: fadeUp .2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes pulse  { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+
+    /* ─── SCROLL TO TOP ─── */
+    #back-top {
+      position: fixed; bottom: 24px; left: 24px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); border-radius: 8px; padding: 8px 12px;
+      font-size: 13px; cursor: pointer; display: none; z-index: 100;
+      transition: all .15s;
+    }
+    #back-top:hover { color: var(--text); border-color: var(--accent); }
+
+    /* ─── TABS ─── */
+    .tab-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      gap: 0;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: color .15s, border-color .15s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
+    .tab-btn .tab-badge {
+      background: var(--orange);
+      color: #000;
+      font-size: 10px;
+      font-weight: 800;
+      border-radius: 10px;
+      padding: 1px 6px;
+      display: none;
+    }
+    .tab-btn .tab-badge.show { display: inline-block; }
+
+    /* ─── PORTAL RADAR ─── */
+    .portal-radar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+    }
+    .radar-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .radar-title {
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .radar-title i { color: var(--accent); }
+    .radar-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      flex-wrap: wrap;
+    }
+    .radar-meta-item {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .radar-meta-item strong { color: var(--text); }
+    .countdown {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--green);
+      font-variant-numeric: tabular-nums;
+    }
+    .countdown.soon { color: var(--orange); }
+    .btn-portal-scan {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity .15s;
+      white-space: nowrap;
+      margin-left: auto;
+    }
+    .btn-portal-scan:hover:not(:disabled) { opacity: .85; }
+    .btn-portal-scan:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-portal-scan.scanning { animation: pulse 1.2s ease-in-out infinite; }
+
+    /* Source stat cards in radar */
+    .radar-sources {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 700px) {
+      .radar-sources { grid-template-columns: repeat(2, 1fr); }
+    }
+    .radar-source {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      transition: border-color .15s;
+    }
+    .radar-source:hover { border-color: var(--accent); }
+    .rs-name {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 6px;
+    }
+    .rs-companies { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
+    .rs-count {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--green);
+      line-height: 1;
+    }
+    .rs-count.zero { color: var(--muted); }
+    .rs-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .rs-list {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .rs-tag {
+      font-size: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ─── PORTAL FEED ─── */
+    .portal-wrap { padding: 16px 24px 60px; }
+    .portal-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .portal-count { font-size: 12px; color: var(--muted); }
+
+    /* Portal job cards — timeline style with prominent freshness */
+    .portal-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .p-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: 72px 1fr auto;
+      gap: 14px;
+      align-items: center;
+      transition: border-color .15s, transform .1s;
+      position: relative;
+      overflow: hidden;
+    }
+    .p-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .p-card.applied { opacity: .4; }
+
+    /* Freshness badge (left column) */
+    .p-fresh {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .p-fresh-icon { font-size: 20px; line-height: 1; }
+    .p-fresh-time {
+      font-size: 11px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .p-fresh-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+
+    /* Freshness colour tiers */
+    .fresh-hot  .p-fresh-time { color: var(--orange); }
+    .fresh-hot  { border-left: 3px solid var(--orange); }
+    .fresh-hot::before {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, rgba(245,166,35,.06) 0%, transparent 40%);
+      pointer-events: none;
+    }
+    .fresh-warm .p-fresh-time { color: var(--green); }
+    .fresh-warm { border-left: 3px solid var(--green); }
+    .fresh-cool .p-fresh-time { color: #38bdf8; }
+    .fresh-cool { border-left: 3px solid #38bdf8; }
+    .fresh-cold .p-fresh-time { color: var(--muted); }
+
+    /* Middle column */
+    .p-info { min-width: 0; }
+    .p-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text);
+      text-decoration: none;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .p-title:hover { color: var(--accent); }
+    .p-company { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .p-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    .p-meta-item { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 3px; }
+
+    /* Right column — actions */
+    .p-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-end;
+      min-width: 100px;
+    }
+    .p-apply {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: opacity .15s;
+      white-space: nowrap;
+    }
+    .p-apply:hover { opacity: .85; }
+    .p-apply.done {
+      background: #0d2010;
+      color: var(--green);
+      border: 1px solid var(--green);
+    }
+    .p-bookmark {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 7px;
+      padding: 5px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all .15s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .p-bookmark:hover { border-color: var(--green); color: var(--green); }
+    .p-bookmark.done  { border-color: var(--green); color: var(--green); }
+
+    @media (max-width: 600px) {
+      .p-card { grid-template-columns: 60px 1fr; }
+      .p-actions { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="brand">Job Board <em>// Ameya</em></div>
+  <span id="scan-status"></span>
+  <div class="scan-group">
+    <label style="font-size:12px;color:var(--muted);white-space:nowrap">Lookback hrs:</label>
+    <input id="scan-hours" class="scan-hours" type="number" min="1" max="24" value="2" />
+  </div>
+  <button class="btn btn-li" id="btn-li" onclick="scanLinkedIn()">
+    <i class="bi bi-linkedin"></i> LinkedIn Scan
+  </button>
+  <button class="btn btn-hc" id="btn-hc" onclick="scanHiringCafe()">
+    <i class="bi bi-cup-hot"></i> HiringCafe Scan
+  </button>
+  <button class="btn btn-wd" id="btn-wd" onclick="scanWorkday()">
+    <i class="bi bi-building"></i> Workday Scan
+  </button>
+  <button class="btn btn-gh" id="btn-gh" onclick="scanGreenhouse()">
+    <i class="bi bi-briefcase"></i> GH + Lever Scan
+  </button>
+</nav>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-btn-all" onclick="switchTab('all')">
+    <i class="bi bi-grid-3x3-gap"></i> All Jobs
+  </button>
+  <button class="tab-btn" id="tab-btn-portals" onclick="switchTab('portals')">
+    <i class="bi bi-radar"></i> Company Portals
+    <span class="tab-badge" id="portals-badge">0</span>
+  </button>
+</div>
+
+<!-- ════════════ TAB: ALL JOBS ════════════ -->
+<div id="tab-all">
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat hot">   <div class="lbl">New (last hour)</div>  <div class="val" id="s-hour">—</div></div>
+  <div class="stat fresh"> <div class="lbl">Last 2 hours</div>     <div class="val" id="s-2h">—</div></div>
+  <div class="stat total"> <div class="lbl">Total tracked</div>    <div class="val" id="s-total">—</div></div>
+  <div class="stat done">  <div class="lbl">Applied</div>           <div class="val" id="s-applied">—</div></div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters">
+  <input class="search" id="search" type="text" placeholder="🔍  Search role or company…" oninput="render()" />
+  <button class="chip on" data-src="all"        onclick="setSource(this)">All</button>
+  <button class="chip"    data-src="linkedin"   onclick="setSource(this)">LinkedIn</button>
+  <button class="chip"    data-src="greenhouse" onclick="setSource(this)">Greenhouse</button>
+  <button class="chip"    data-src="lever"      onclick="setSource(this)">Lever</button>
+  <button class="chip"    data-src="remotive"   onclick="setSource(this)">Remotive</button>
+  <button class="chip"    data-src="themuse"    onclick="setSource(this)">TheMuse</button>
+  <button class="chip"    data-src="adzuna"      onclick="setSource(this)">Adzuna</button>
+  <button class="chip"    data-src="hiringcafe" onclick="setSource(this)">HiringCafe</button>
+  <button class="chip"    data-src="workday"   onclick="setSource(this)">Workday</button>
+  <button class="chip"    data-src="new"        onclick="setSource(this)" style="color:var(--orange);border-color:#3a2a00">🔥 New</button>
+  <label class="hide-toggle">
+    <input type="checkbox" id="hide-applied" checked onchange="render()" /> Hide applied
+  </label>
+</div>
+
+<!-- JOBS -->
+<div class="jobs-wrap">
+  <div class="jobs-count" id="jobs-count"></div>
+  <div class="job-grid" id="grid"></div>
+</div>
+
+</div><!-- end #tab-all -->
+
+<!-- ════════════ TAB: COMPANY PORTALS ════════════ -->
+<div id="tab-portals" style="display:none">
+
+  <!-- PORTAL RADAR -->
+  <div class="portal-radar">
+    <div class="radar-header">
+      <div class="radar-title">
+        <i class="bi bi-radar"></i> Company Portal Radar
+      </div>
+      <div class="radar-meta">
+        <span class="radar-meta-item">
+          <i class="bi bi-clock-history"></i>
+          Last scan: <strong id="pr-last-scan">—</strong>
+        </span>
+        <span class="radar-meta-item">
+          <i class="bi bi-arrow-repeat"></i>
+          Next: <span class="countdown" id="pr-countdown">—</span>
+        </span>
+        <span class="radar-meta-item" id="pr-added-msg" style="display:none">
+          <i class="bi bi-plus-circle" style="color:var(--green)"></i>
+          <strong id="pr-added-count" style="color:var(--green)">0</strong> new jobs last scan
+        </span>
+      </div>
+      <button class="btn-portal-scan" id="btn-portal-scan" onclick="scanPortals()">
+        <i class="bi bi-play-fill"></i> Scan Now
+      </button>
+    </div>
+
+    <div class="radar-sources">
+      <div class="radar-source">
+        <div class="rs-name"><i class="bi bi-briefcase" style="color:var(--green)"></i> Greenhouse</div>
+        <div class="rs-companies" id="rs-co-greenhouse">— companies</div>
+        <div class="rs-count" id="rs-count-greenhouse">—</div>
+        <div class="rs-label">jobs fetched last scan</div>
+        <div class="rs-list" id="rs-list-greenhouse"></div>
+      </div>
+      <div class="radar-source">
+        <div class="rs-name"><i class="bi bi-building" style="color:#818cf8"></i> Lever</div>
+        <div class="rs-companies" id="rs-co-lever">— companies</div>
+        <div class="rs-count" id="rs-count-lever">—</div>
+        <div class="rs-label">jobs fetched last scan</div>
+        <div class="rs-list" id="rs-list-lever"></div>
+      </div>
+      <div class="radar-source">
+        <div class="rs-name"><i class="bi bi-star" style="color:#c084fc"></i> Ashby</div>
+        <div class="rs-companies" id="rs-co-ashby">— companies</div>
+        <div class="rs-count" id="rs-count-ashby">—</div>
+        <div class="rs-label">jobs fetched last scan</div>
+        <div class="rs-list" id="rs-list-ashby"></div>
+      </div>
+      <div class="radar-source" style="border-color:#0e4c78">
+        <div class="rs-name"><i class="bi bi-globe" style="color:#38bdf8"></i> Workday</div>
+        <div class="rs-companies" id="rs-co-workday">— companies</div>
+        <div class="rs-count" id="rs-count-workday">—</div>
+        <div class="rs-label">jobs fetched last scan</div>
+        <div class="rs-list" id="rs-list-workday"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PORTAL JOB FEED -->
+  <div class="portal-wrap">
+    <div class="portal-toolbar">
+      <input class="search" id="portal-search" type="text"
+             placeholder="🔍  Search portal jobs…" oninput="renderPortal()" />
+      <label class="hide-toggle">
+        <input type="checkbox" id="portal-hide-applied" checked onchange="renderPortal()" />
+        Hide applied
+      </label>
+      <span class="portal-count" id="portal-count"></span>
+    </div>
+    <div class="portal-feed" id="portal-feed">
+      <div class="empty" style="text-align:center;padding:60px 20px;color:var(--muted)">
+        <i class="bi bi-radar" style="font-size:40px;display:block;margin-bottom:12px;color:var(--border)"></i>
+        Hit <strong style="color:var(--text)">Scan Now</strong> to pull fresh jobs from all company portals.<br/>
+        <span style="font-size:12px;margin-top:8px;display:block">Auto-scan runs every 60 minutes.</span>
+      </div>
+    </div>
+  </div>
+</div><!-- end #tab-portals -->
+
+<!-- SCROLL TOP -->
+<button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑ Top</button>
+
+<!-- TOASTS -->
+<div class="toasts" id="toasts"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+let allJobs   = [];
+let activeSrc = "all";
+
+// ── Utils ──────────────────────────────────────────────────────────────
+function timeAgo(str) {
+  if (!str) return { rel: "Unknown", abs: "", fresh: false };
+  const d = new Date(str), now = new Date();
+  if (isNaN(d)) return { rel: "Unknown", abs: "", fresh: false };
+  const m = Math.floor((now - d) / 60000);
+  const abs = d.toLocaleDateString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
+  if (m < 0)    return { rel: "Just posted", abs, fresh: true };
+  if (m < 60)   return { rel: m + "m ago",              abs, fresh: true };
+  if (m < 1440) return { rel: Math.floor(m/60) + "h ago", abs, fresh: m < 180 };
+  return { rel: Math.floor(m/1440) + "d ago", abs, fresh: false };
+}
+
+function esc(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function toast(msg, color = "var(--green)") {
+  const el = Object.assign(document.createElement("div"), { className: "toast", innerHTML: msg });
+  el.style.borderLeft = `3px solid ${color}`;
+  document.getElementById("toasts").appendChild(el);
+  setTimeout(() => el.remove(), 3800);
+}
+
+// ── Render ─────────────────────────────────────────────────────────────
+function render() {
+  const q      = document.getElementById("search").value.toLowerCase();
+  const hideAp = document.getElementById("hide-applied").checked;
+  const now    = Date.now();
+  const twoH   = 2 * 60 * 60 * 1000;
+
+  const filtered = allJobs.filter(j => {
+    if (hideAp && j.applied) return false;
+    const src = (j.source || "").toLowerCase();
+    if (activeSrc === "new") {
+      const ts = new Date(j.posted_at || j.seen_at);
+      if (isNaN(ts) || (now - ts) > twoH) return false;
+    } else if (activeSrc !== "all" && src !== activeSrc) {
+      return false;
+    }
+    if (q && !j.title.toLowerCase().includes(q) && !j.company.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  // Sort: newest first
+  filtered.sort((a, b) => {
+    const ta = new Date(a.posted_at || a.seen_at || 0);
+    const tb = new Date(b.posted_at || b.seen_at || 0);
+    return tb - ta;
+  });
+
+  document.getElementById("jobs-count").textContent = `${filtered.length} job${filtered.length !== 1 ? "s" : ""}`;
+  const grid = document.getElementById("grid");
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+      <i class="bi bi-inbox"></i>No jobs match your filters.
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(j => {
+    const ts    = timeAgo(j.posted_at || j.seen_at);
+    const src   = (j.source || "unknown").toLowerCase();
+    const srcCap = src.charAt(0).toUpperCase() + src.slice(1);
+    const isNew = ts.fresh;
+    const isAp  = !!j.applied;
+
+    const newTag = isNew
+      ? `<span class="tag tag-new"><i class="bi bi-lightning-charge-fill"></i> NEW</span>` : "";
+    const srcTag = `<span class="tag tag-src-${src}">${srcCap}</span>`;
+
+    const applyLabel = isAp
+      ? `<i class="bi bi-check2-circle"></i> Applied`
+      : `<i class="bi bi-box-arrow-up-right"></i> Apply`;
+
+    return `<div class="job-card ${isNew ? "is-new" : ""} ${isAp ? "applied" : ""}" data-id="${esc(j.job_id)}">
+      <div class="card-top">
+        <div class="source-dot dot-${src}"></div>
+        <div class="card-titles">
+          <a class="card-role" href="${esc(j.url)}" target="_blank" rel="noopener" title="${esc(j.title)}">${esc(j.title)}</a>
+          <div class="card-company">${esc(j.company)}</div>
+        </div>
+      </div>
+      <div class="card-meta">
+        <span class="meta-item"><i class="bi bi-geo-alt"></i>${esc(j.location || "Unspecified")}</span>
+        <span class="meta-item"><i class="bi bi-clock"></i>${ts.rel}</span>
+        ${srcTag}${newTag}
+      </div>
+      <div class="card-actions">
+        <a class="btn-apply ${isAp ? "done" : ""}" href="${esc(j.url)}" target="_blank" rel="noopener"
+           onclick="markApplied(event,'${esc(j.job_id)}',this)">
+          ${applyLabel}
+        </a>
+        <button class="btn-mark ${isAp ? "done" : ""}" title="Toggle applied"
+                onclick="toggleApplied('${esc(j.job_id)}',this)">
+          <i class="bi bi-${isAp ? "bookmark-check-fill" : "bookmark"}"></i>
+        </button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ── Source filter ─────────────────────────────────────────────────────
+function setSource(btn) {
+  document.querySelectorAll(".chip").forEach(b => b.classList.remove("on"));
+  btn.classList.add("on");
+  activeSrc = btn.dataset.src;
+  render();
+}
+
+// ── Data ──────────────────────────────────────────────────────────────
+async function loadJobs() {
+  const r = await fetch("/api/jobs");
+  allJobs = await r.json();
+  render();
+}
+
+async function loadStats() {
+  const r = await fetch("/api/stats");
+  const s = await r.json();
+  document.getElementById("s-hour").textContent    = s.last_hour  ?? 0;
+  document.getElementById("s-total").textContent   = s.total      ?? 0;
+  document.getElementById("s-applied").textContent = s.applied    ?? 0;
+
+  // 2-hour count
+  const now = Date.now();
+  const twoH = allJobs.filter(j => {
+    const t = new Date(j.posted_at || j.seen_at || 0);
+    return (now - t) <= 2 * 3600 * 1000;
+  }).length;
+  document.getElementById("s-2h").textContent = twoH;
+}
+
+// ── Apply actions ─────────────────────────────────────────────────────
+function markApplied(e, jobId, link) {
+  // Fire-and-forget mark when user clicks the Apply link
+  setTimeout(() => {
+    const job = allJobs.find(j => j.job_id === jobId);
+    if (job && !job.applied) {
+      fetch(`/api/jobs/${jobId}/toggle`, { method: "POST" });
+      job.applied = true;
+      render();
+      loadStats();
+    }
+  }, 3000); // small delay so user has time to open tab first
+}
+
+async function toggleApplied(jobId, btn) {
+  const r    = await fetch(`/api/jobs/${jobId}/toggle`, { method: "POST" });
+  const data = await r.json();
+  const job  = allJobs.find(j => j.job_id === jobId);
+  if (job) { job.applied = data.applied; }
+  render();
+  loadStats();
+  toast(data.applied ? "Marked as applied ✓" : "Unmarked");
+}
+
+// ── LinkedIn scan ─────────────────────────────────────────────────────
+async function scanLinkedIn() {
+  const btn   = document.getElementById("btn-li");
+  const hours = parseFloat(document.getElementById("scan-hours").value) || 2;
+  btn.disabled = true;
+  btn.classList.add("scanning");
+  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning LinkedIn…`;
+  setStatus("Running LinkedIn Apify scraper…");
+
+  try {
+    const r = await fetch("/api/linkedin-scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hours }),
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
+
+    toast(`LinkedIn scan started (last ${hours}h) — takes ~2 min`, "var(--li-blue)");
+    pollLinkedInStatus();
+  } catch(e) {
+    toast("LinkedIn scan error: " + e.message, "var(--red)");
+    resetLiBtn();
+  }
+}
+
+function pollLinkedInStatus() {
+  const iv = setInterval(async () => {
+    try {
+      const r    = await fetch("/api/linkedin-scan/status");
+      const data = await r.json();
+      if (!data.running) {
+        clearInterval(iv);
+        resetLiBtn();
+        if (data.error) {
+          toast("LinkedIn scan failed: " + data.error, "var(--red)");
+          setStatus("LinkedIn scan failed.");
+        } else {
+          toast(`LinkedIn scan done — <strong>+${data.added} new jobs</strong>`, "var(--li-blue)");
+          setStatus(`LinkedIn scan done at ${new Date(data.finished_at).toLocaleTimeString()}`);
+          await Promise.all([loadJobs(), loadStats()]);
+        }
+      }
+    } catch { /* server busy */ }
+  }, 5000);
+}
+
+function resetLiBtn() {
+  const btn = document.getElementById("btn-li");
+  btn.disabled = false;
+  btn.classList.remove("scanning");
+  btn.innerHTML = `<i class="bi bi-linkedin"></i> LinkedIn Scan`;
+}
+
+// ── HiringCafe scan ───────────────────────────────────────────────────
+async function scanHiringCafe() {
+  const btn   = document.getElementById("btn-hc");
+  const hours = parseFloat(document.getElementById("scan-hours").value) || 2;
+  btn.disabled = true;
+  btn.classList.add("scanning");
+  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning HiringCafe…`;
+  setStatus("Running HiringCafe scraper…");
+
+  try {
+    const r = await fetch("/api/hiringcafe-scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hours }),
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
+
+    toast(`HiringCafe scan started (last ${hours}h) — takes ~3 min`, "#a78bfa");
+    pollHiringCafeStatus();
+  } catch(e) {
+    toast("HiringCafe scan error: " + e.message, "var(--red)");
+    resetHcBtn();
+  }
+}
+
+function pollHiringCafeStatus() {
+  const iv = setInterval(async () => {
+    try {
+      const r    = await fetch("/api/hiringcafe-scan/status");
+      const data = await r.json();
+      if (!data.running) {
+        clearInterval(iv);
+        resetHcBtn();
+        if (data.error) {
+          toast("HiringCafe scan failed: " + data.error, "var(--red)");
+          setStatus("HiringCafe scan failed.");
+        } else {
+          toast(`HiringCafe scan done — <strong>+${data.added} new jobs</strong>`, "#a78bfa");
+          setStatus(`HiringCafe scan done at ${new Date(data.finished_at).toLocaleTimeString()}`);
+          await Promise.all([loadJobs(), loadStats()]);
+        }
+      }
+    } catch { /* server busy */ }
+  }, 5000);
+}
+
+function resetHcBtn() {
+  const btn = document.getElementById("btn-hc");
+  btn.disabled = false;
+  btn.classList.remove("scanning");
+  btn.innerHTML = `<i class="bi bi-cup-hot"></i> HiringCafe Scan`;
+}
+
+// ── Workday scan ─────────────────────────────────────────────────────
+async function scanWorkday() {
+  const btn   = document.getElementById("btn-wd");
+  const hours = parseFloat(document.getElementById("scan-hours").value) || 24;
+  btn.disabled = true;
+  btn.classList.add("scanning");
+  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning Workday…`;
+  setStatus("Running Workday scraper…");
+
+  try {
+    const r = await fetch("/api/workday-scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hours }),
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
+
+    toast(`Workday scan started (last ${hours}h) — scanning ${hours <= 24 ? "~16 companies" : "all boards"}…`, "#38bdf8");
+    pollWorkdayStatus();
+  } catch(e) {
+    toast("Workday scan error: " + e.message, "var(--red)");
+    resetWdBtn();
+  }
+}
+
+function pollWorkdayStatus() {
+  const iv = setInterval(async () => {
+    try {
+      const r    = await fetch("/api/workday-scan/status");
+      const data = await r.json();
+      if (!data.running) {
+        clearInterval(iv);
+        resetWdBtn();
+        if (data.error) {
+          toast("Workday scan failed: " + data.error, "var(--red)");
+          setStatus("Workday scan failed.");
+        } else {
+          toast(`Workday scan done — <strong>+${data.added} new jobs</strong>`, "#38bdf8");
+          setStatus(`Workday scan done at ${new Date(data.finished_at).toLocaleTimeString()}`);
+          await Promise.all([loadJobs(), loadStats()]);
+        }
+      }
+    } catch { /* server busy */ }
+  }, 5000);
+}
+
+function resetWdBtn() {
+  const btn = document.getElementById("btn-wd");
+  btn.disabled = false;
+  btn.classList.remove("scanning");
+  btn.innerHTML = `<i class="bi bi-building"></i> Workday Scan`;
+}
+
+// ── GH + Lever scan ───────────────────────────────────────────────────
+async function scanGreenhouse() {
+  const btn   = document.getElementById("btn-gh");
+  const hours = parseFloat(document.getElementById("scan-hours").value) || 2;
+  btn.disabled = true;
+  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning…`;
+  setStatus("Running Greenhouse + Lever scan…");
+
+  try {
+    const r = await fetch("/api/scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hours }),
+    });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    toast(`GH + Lever scan started (last ${hours}h) — refreshing in 25s…`, "var(--green)");
+    setTimeout(async () => {
+      await Promise.all([loadJobs(), loadStats()]);
+      setStatus("GH + Lever scan finished");
+    }, 25000);
+  } catch(e) {
+    toast("Scan error: " + e.message, "var(--red)");
+    setStatus("");
+  } finally {
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="bi bi-briefcase"></i> GH + Lever Scan`;
+    }, 26000);
+  }
+}
+
+function setStatus(msg) {
+  document.getElementById("scan-status").textContent = msg;
+}
+
+// ── Scroll to top ─────────────────────────────────────────────────────
+window.addEventListener("scroll", () => {
+  document.getElementById("back-top").style.display = window.scrollY > 300 ? "block" : "none";
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ══════════════════════════════════════════════════════════════════════
+let activeTab = "all";
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById("tab-all").style.display     = tab === "all"     ? "" : "none";
+  document.getElementById("tab-portals").style.display = tab === "portals" ? "" : "none";
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById(`tab-btn-${tab}`).classList.add("active");
+  if (tab === "portals") {
+    renderPortal();
+    loadPortalStatus();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// PORTAL TAB — Data & Rendering
+// ══════════════════════════════════════════════════════════════════════
+let portalJobs = [];
+let portalScanRunning = false;
+let _countdownTimer = null;
+
+// Freshness tier from age in minutes
+function freshnessClass(mins) {
+  if (mins < 0)    return "fresh-hot";
+  if (mins < 60)   return "fresh-hot";   // < 1 h  🔥
+  if (mins < 360)  return "fresh-warm";  // < 6 h  ✨
+  if (mins < 1440) return "fresh-cool";  // < 24h  🔵
+  return "fresh-cold";
+}
+
+function freshnessIcon(mins) {
+  if (mins < 0)    return "🔥";
+  if (mins < 60)   return "🔥";
+  if (mins < 360)  return "✨";
+  if (mins < 1440) return "🔵";
+  return "⬜";
+}
+
+function freshnessLabel(mins) {
+  if (mins < 0)    return "Just now";
+  if (mins < 60)   return `${mins}m ago`;
+  if (mins < 1440) return `${Math.floor(mins/60)}h ago`;
+  return `${Math.floor(mins/1440)}d ago`;
+}
+
+// Non-US location filter matching main.py's _NON_US list
+const _NON_US_TERMS = [
+  "india","bangalore","bengaluru","mumbai","pune","hyderabad","delhi","chennai","kolkata","noida","gurugram","gurgaon",
+  "pakistan","karachi","lahore","islamabad","bangladesh","dhaka","sri lanka",
+  "united kingdom"," uk,","(uk)","london","manchester","edinburgh","germany","berlin","munich","frankfurt","hamburg",
+  "france","paris","lyon","netherlands","amsterdam","ireland","dublin","spain","madrid","barcelona",
+  "italy","milan","rome","sweden","stockholm","switzerland","zurich","geneva","denmark","copenhagen",
+  "finland","helsinki","norway","oslo","belgium","brussels","austria","vienna","portugal","lisbon",
+  "poland","warsaw","krakow","czech republic","prague","romania","bucharest","hungary","budapest",
+  "ukraine","kyiv","russia","moscow","greece","athens","turkey","istanbul",
+  "canada","toronto","vancouver","ottawa","montreal","calgary",
+  "australia","sydney","melbourne","brisbane","new zealand","auckland",
+  "china","beijing","shanghai","shenzhen","guangzhou","hangzhou","japan","tokyo","osaka",
+  "south korea","seoul","taiwan","taipei","hong kong",
+  "singapore","thailand","bangkok","vietnam","hanoi","ho chi minh","philippines","manila","malaysia","kuala lumpur","indonesia","jakarta",
+  "israel","tel aviv","saudi arabia","riyadh","uae","dubai","abu dhabi",
+  "brazil","são paulo","sao paulo","rio de janeiro","mexico","mexico city","monterrey","guadalajara",
+  "argentina","buenos aires","colombia","bogota","chile","santiago",
+  "south africa","johannesburg","cape town","nigeria","lagos","kenya","nairobi","egypt","cairo",
+];
+function isUS(location) {
+  if (!location) return true;
+  const loc = location.toLowerCase();
+  return !_NON_US_TERMS.some(t => loc.includes(t));
+}
+
+async function loadPortalCompanies() {
+  try {
+    const r    = await fetch("/api/portal-companies");
+    const data = await r.json();
+
+    const configs = {
+      greenhouse: { names: data.greenhouse, color: "var(--green)" },
+      lever:      { names: data.lever,      color: "#818cf8" },
+      ashby:      { names: data.ashby,      color: "#c084fc" },
+      workday:    { names: data.workday.map(w => w.name), color: "#38bdf8" },
+    };
+
+    for (const [src, cfg] of Object.entries(configs)) {
+      const coEl   = document.getElementById(`rs-co-${src}`);
+      const listEl = document.getElementById(`rs-list-${src}`);
+      if (coEl)   coEl.textContent = `${cfg.names.length} companies`;
+      if (listEl) listEl.innerHTML = cfg.names
+        .map(n => `<span class="rs-tag" style="border-color:${cfg.color}22;color:${cfg.color}">${esc(n)}</span>`)
+        .join("");
+    }
+  } catch(e) { /* ignore */ }
+}
+
+async function loadPortalJobs() {
+  try {
+    const r = await fetch("/api/portal-jobs");
+    portalJobs = await r.json();
+    renderPortal();
+    // Update tab badge with jobs from last 2 hours
+    const twoH = 2 * 60 * 60 * 1000;
+    const fresh = portalJobs.filter(j => {
+      const t = new Date(j.posted_at || j.seen_at || 0);
+      return (Date.now() - t) <= twoH;
+    }).length;
+    const badge = document.getElementById("portals-badge");
+    badge.textContent = fresh;
+    badge.classList.toggle("show", fresh > 0);
+  } catch (e) { /* ignore */ }
+}
+
+function renderPortal() {
+  const q       = (document.getElementById("portal-search")?.value || "").toLowerCase();
+  const hideAp  = document.getElementById("portal-hide-applied")?.checked ?? true;
+  const now     = Date.now();
+
+  let filtered = portalJobs.filter(j => {
+    if (hideAp && j.applied) return false;
+    if (!isUS(j.location)) return false;
+    if (q && !j.title.toLowerCase().includes(q) && !(j.company||"").toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  document.getElementById("portal-count").textContent =
+    `${filtered.length} job${filtered.length !== 1 ? "s" : ""}`;
+
+  const feed = document.getElementById("portal-feed");
+  if (!filtered.length) {
+    feed.innerHTML = `<div class="empty" style="text-align:center;padding:60px 20px;color:var(--muted)">
+      <i class="bi bi-inbox" style="font-size:40px;display:block;margin-bottom:12px"></i>
+      No portal jobs match your filters.</div>`;
+    return;
+  }
+
+  // Source tag colours
+  const srcColor = {
+    greenhouse: "var(--green)", lever: "#818cf8",
+    ashby: "#c084fc", workday: "#38bdf8"
+  };
+
+  function renderCard(j) {
+    const ts      = new Date(j.posted_at || j.seen_at || 0);
+    const mins    = isNaN(ts) ? 9999 : Math.floor((now - ts) / 60000);
+    const fc      = freshnessClass(mins);
+    const icon    = freshnessIcon(mins);
+    const label   = freshnessLabel(mins);
+    const src     = (j.source || "").toLowerCase();
+    const color   = srcColor[src] || "var(--muted)";
+    const isAp    = !!j.applied;
+    const srcCap  = src.charAt(0).toUpperCase() + src.slice(1);
+    return `<div class="p-card ${fc} ${isAp ? "applied" : ""}" data-id="${esc(j.job_id)}">
+      <div class="p-fresh">
+        <div class="p-fresh-icon">${icon}</div>
+        <div class="p-fresh-time">${label}</div>
+        <div class="p-fresh-label" style="color:${color}">${srcCap}</div>
+      </div>
+      <div class="p-info">
+        <a class="p-title" href="${esc(j.url)}" target="_blank" rel="noopener"
+           title="${esc(j.title)}"
+           onclick="portalMarkApplied(event,'${esc(j.job_id)}')">${esc(j.title)}</a>
+        <div class="p-company">${esc(j.company || "Unknown")}</div>
+        <div class="p-meta">
+          <span class="p-meta-item"><i class="bi bi-geo-alt"></i>${esc(j.location || "Unspecified")}</span>
+          <span class="p-meta-item" style="color:${color}">
+            <i class="bi bi-circle-fill" style="font-size:6px"></i>${srcCap}
+          </span>
+        </div>
+      </div>
+      <div class="p-actions">
+        <a class="p-apply ${isAp ? "done" : ""}" href="${esc(j.url)}" target="_blank" rel="noopener"
+           onclick="portalMarkApplied(event,'${esc(j.job_id)}')">
+          ${isAp
+            ? `<i class="bi bi-check2-circle"></i> Applied`
+            : `<i class="bi bi-box-arrow-up-right"></i> Apply`}
+        </a>
+        <button class="p-bookmark ${isAp ? "done" : ""}" title="Toggle applied"
+                onclick="portalToggleApplied('${esc(j.job_id)}',this)">
+          <i class="bi bi-bookmark${isAp ? "-check-fill" : ""}"></i>
+          ${isAp ? "Applied" : "Mark"}
+        </button>
+      </div>
+    </div>`;
+  }
+
+  const workdayJobs = filtered.filter(j => (j.source||"").toLowerCase() === "workday");
+  const gsJobs      = filtered.filter(j => (j.source||"").toLowerCase() === "goldman_sachs");
+  const otherJobs   = filtered.filter(j => !["workday","goldman_sachs"].includes((j.source||"").toLowerCase()));
+
+  function sectionHeader(label, count, color) {
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 2px 6px;margin-top:8px">
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:${color}">${label}</span>
+      <span style="font-size:11px;color:var(--muted)">${count} job${count !== 1 ? "s" : ""}</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>`;
+  }
+
+  let html = "";
+  if (workdayJobs.length) {
+    html += sectionHeader("Workday — Fortune 500", workdayJobs.length, "#38bdf8");
+    html += workdayJobs.map(renderCard).join("");
+  }
+  if (gsJobs.length) {
+    html += sectionHeader("Goldman Sachs", gsJobs.length, "#c9aa71");
+    html += gsJobs.map(renderCard).join("");
+  }
+  if (otherJobs.length) {
+    html += sectionHeader("Greenhouse · Lever · Ashby", otherJobs.length, "var(--green)");
+    html += otherJobs.map(renderCard).join("");
+  }
+  feed.innerHTML = html;
+}
+
+// ── Portal apply actions ───────────────────────────────────────────────
+function portalMarkApplied(e, jobId) {
+  setTimeout(() => {
+    const job = portalJobs.find(j => j.job_id === jobId);
+    if (job && !job.applied) {
+      fetch(`/api/jobs/${jobId}/toggle`, { method: "POST" });
+      job.applied = true;
+      renderPortal();
+    }
+  }, 3000);
+}
+
+async function portalToggleApplied(jobId, btn) {
+  const r    = await fetch(`/api/jobs/${jobId}/toggle`, { method: "POST" });
+  const data = await r.json();
+  const job  = portalJobs.find(j => j.job_id === jobId);
+  if (job) { job.applied = data.applied; }
+  renderPortal();
+  toast(data.applied ? "Marked as applied ✓" : "Unmarked");
+}
+
+// ── Portal scan ────────────────────────────────────────────────────────
+async function scanPortals() {
+  const btn = document.getElementById("btn-portal-scan");
+  btn.disabled = true;
+  btn.classList.add("scanning");
+  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning…`;
+  portalScanRunning = true;
+
+  try {
+    const r = await fetch("/api/portal-scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hours: 2 }),
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
+    toast("Portal scan started — GH + Lever + Ashby + Workday (takes ~30s)", "var(--accent)");
+    pollPortalStatus();
+  } catch (e) {
+    toast("Portal scan error: " + e.message, "var(--red)");
+    resetPortalBtn();
+  }
+}
+
+function pollPortalStatus() {
+  const iv = setInterval(async () => {
+    try {
+      const data = await loadPortalStatus();
+      if (!data.running) {
+        clearInterval(iv);
+        resetPortalBtn();
+        portalScanRunning = false;
+        if (data.error) {
+          toast("Portal scan failed: " + data.error, "var(--red)");
+        } else {
+          const added = data.added || 0;
+          toast(
+            `Portal scan done — <strong>+${added} new job${added !== 1 ? "s" : ""}</strong>`,
+            added > 0 ? "var(--green)" : "var(--muted)"
+          );
+          await loadPortalJobs();
+        }
+      }
+    } catch { /* server busy */ }
+  }, 4000);
+}
+
+function resetPortalBtn() {
+  const btn = document.getElementById("btn-portal-scan");
+  btn.disabled = false;
+  btn.classList.remove("scanning");
+  btn.innerHTML = `<i class="bi bi-play-fill"></i> Scan Now`;
+}
+
+// ── Portal status (last scan info + countdown) ─────────────────────────
+async function loadPortalStatus() {
+  try {
+    const r    = await fetch("/api/portal-scan/status");
+    const data = await r.json();
+
+    // Last scan timestamp
+    const lastEl = document.getElementById("pr-last-scan");
+    if (data.last_scan_at) {
+      const d = new Date(data.last_scan_at);
+      const mins = Math.floor((Date.now() - d) / 60000);
+      lastEl.textContent = mins < 1 ? "just now"
+        : mins < 60 ? `${mins}m ago`
+        : `${Math.floor(mins/60)}h ${mins % 60}m ago`;
+    } else if (data.running) {
+      lastEl.textContent = "scanning…";
+    } else {
+      lastEl.textContent = "never";
+    }
+
+    // Countdown to next auto-scan
+    const cdEl = document.getElementById("pr-countdown");
+    if (data.next_auto_at) {
+      const secsLeft = Math.max(0, Math.floor(data.next_auto_at - Date.now() / 1000));
+      const m = Math.floor(secsLeft / 60);
+      const s = secsLeft % 60;
+      cdEl.textContent = `${m}m ${String(s).padStart(2, "0")}s`;
+      cdEl.className = "countdown" + (secsLeft < 120 ? " soon" : "");
+    } else {
+      cdEl.textContent = data.running ? "scanning now" : "—";
+    }
+
+    // Per-source counts
+    const src = data.sources || {};
+    for (const [name, count] of Object.entries(src)) {
+      const el = document.getElementById(`rs-count-${name}`);
+      if (el) {
+        el.textContent = count;
+        el.className = "rs-count" + (count === 0 ? " zero" : "");
+      }
+    }
+
+    // Added count badge
+    if (data.last_scan_at && !data.running) {
+      const addedMsg = document.getElementById("pr-added-msg");
+      const addedCount = document.getElementById("pr-added-count");
+      if (data.added > 0) {
+        addedCount.textContent = data.added;
+        addedMsg.style.display = "";
+      } else {
+        addedMsg.style.display = "none";
+      }
+    }
+
+    // Scan button state
+    if (data.running && !portalScanRunning) {
+      portalScanRunning = true;
+      const btn = document.getElementById("btn-portal-scan");
+      btn.disabled = true;
+      btn.classList.add("scanning");
+      btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning…`;
+    }
+
+    return data;
+  } catch { return {}; }
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────
+(async () => {
+  await Promise.all([loadJobs(), loadStats(), loadPortalJobs(), loadPortalCompanies()]);
+  setInterval(() => Promise.all([loadJobs(), loadStats()]), 90_000);
+  // Refresh portal data every 60s (lightweight — no new scan, just re-render)
+  setInterval(async () => {
+    await loadPortalJobs();
+    if (activeTab === "portals") loadPortalStatus();
+  }, 60_000);
+  // Countdown ticks every second when portal tab is visible
+  setInterval(() => {
+    if (activeTab === "portals") loadPortalStatus();
+  }, 15_000);
+})();
+</script>
+</body>
+</html>
