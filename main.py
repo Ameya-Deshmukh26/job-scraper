@@ -45,6 +45,7 @@ from sources.linkedin import fetch_linkedin_jobs
 from sources.goldman_sachs import fetch_goldman_sachs_jobs
 from sources.oracle_hcm import fetch_oracle_hcm_jobs
 from sources.deloitte import fetch_deloitte_jobs
+from sources.remoteok import fetch_remoteok_jobs
 from sources.hiringcafe import fetch_hiringcafe_jobs
 from sources.remotive import fetch_remotive_jobs
 from sources.workday import fetch_workday_jobs
@@ -272,6 +273,12 @@ def run_once(tracker: JobTracker, lookback_hours: float) -> list[dict]:
         _process(fetch_hiringcafe_jobs(cutoff))
     except Exception as e:
         log.debug(f"HiringCafe: {e}")
+
+    # RemoteOK (startup / small-company remote jobs)
+    try:
+        _process(fetch_remoteok_jobs(cutoff))
+    except Exception as e:
+        log.debug(f"RemoteOK: {e}")
 
     # Workday
     if WORKDAY_COMPANIES:

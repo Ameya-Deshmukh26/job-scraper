@@ -26,6 +26,7 @@
       --c-ashby:        #c084fc;
       --c-workday:      #22d3ee;
       --c-remotive:     #22d3ee;
+      --c-remoteok:     #10b981;
       --c-themuse:      #f472b6;
       --c-hiringcafe:   #a78bfa;
       --c-goldman_sachs:#c9aa71;
@@ -214,6 +215,7 @@
     .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
     .btn-li   { background: rgba(10,102,194,.15); color: #60a5fa; border: 1px solid rgba(10,102,194,.35); }
     .btn-hc   { background: rgba(167,139,250,.12); color: #a78bfa; border: 1px solid rgba(167,139,250,.3); }
+    .btn-rok  { background: rgba(16,185,129,.10);  color: #10b981; border: 1px solid rgba(16,185,129,.28); }
     .btn-wd   { background: rgba(34,211,238,.1);  color: #22d3ee; border: 1px solid rgba(34,211,238,.28); }
     .btn-gh   { background: rgba(52,211,153,.1);  color: #34d399; border: 1px solid rgba(52,211,153,.28); }
     .btn-primary {
@@ -337,6 +339,7 @@
     .chip[data-src="greenhouse"].on { color: var(--c-greenhouse);   border-color: rgba(52,211,153,.5); }
     .chip[data-src="lever"].on      { color: var(--c-lever);        border-color: rgba(129,140,248,.5); }
     .chip[data-src="remotive"].on   { color: var(--c-remotive);     border-color: rgba(34,211,238,.5); }
+    .chip[data-src="remoteok"].on   { color: var(--c-remoteok);     border-color: rgba(16,185,129,.5); }
     .chip[data-src="themuse"].on    { color: var(--c-themuse);      border-color: rgba(244,114,182,.5); }
     .chip[data-src="adzuna"].on     { color: var(--c-adzuna);       border-color: rgba(251,146,60,.5); }
     .chip[data-src="hiringcafe"].on { color: var(--c-hiringcafe);   border-color: rgba(167,139,250,.5); }
@@ -394,6 +397,7 @@
     .job-card[data-src="ashby"]::before       { background: var(--c-ashby); }
     .job-card[data-src="workday"]::before     { background: var(--c-workday); }
     .job-card[data-src="remotive"]::before    { background: var(--c-remotive); }
+    .job-card[data-src="remoteok"]::before    { background: var(--c-remoteok); }
     .job-card[data-src="themuse"]::before     { background: var(--c-themuse); }
     .job-card[data-src="hiringcafe"]::before  { background: var(--c-hiringcafe); }
     .job-card[data-src="adzuna"]::before      { background: var(--c-adzuna); }
@@ -405,6 +409,7 @@
     .job-card[data-src="ashby"]:hover       { border-color: rgba(192,132,252,.5);  box-shadow: 0 8px 32px rgba(192,132,252,.12); }
     .job-card[data-src="workday"]:hover     { border-color: rgba(34,211,238,.5);   box-shadow: 0 8px 32px rgba(34,211,238,.12); }
     .job-card[data-src="remotive"]:hover    { border-color: rgba(34,211,238,.4);   box-shadow: 0 8px 32px rgba(34,211,238,.10); }
+    .job-card[data-src="remoteok"]:hover    { border-color: rgba(16,185,129,.5);   box-shadow: 0 8px 32px rgba(16,185,129,.12); }
     .job-card[data-src="themuse"]:hover     { border-color: rgba(244,114,182,.5);  box-shadow: 0 8px 32px rgba(244,114,182,.12); }
     .job-card[data-src="hiringcafe"]:hover  { border-color: rgba(167,139,250,.5);  box-shadow: 0 8px 32px rgba(167,139,250,.12); }
     .job-card[data-src="adzuna"]:hover      { border-color: rgba(251,146,60,.5);   box-shadow: 0 8px 32px rgba(251,146,60,.12); }
@@ -424,6 +429,7 @@
     .dot-lever       { background: var(--c-lever); }
     .dot-ashby       { background: var(--c-ashby); }
     .dot-remotive    { background: var(--c-remotive); }
+    .dot-remoteok    { background: var(--c-remoteok); }
     .dot-themuse     { background: var(--c-themuse); }
     .dot-adzuna      { background: var(--c-adzuna); }
     .dot-hiringcafe  { background: var(--c-hiringcafe); }
@@ -478,6 +484,7 @@
     .tag-src-lever      { background: rgba(129,140,248,.1); color: var(--c-lever); }
     .tag-src-ashby      { background: rgba(192,132,252,.1); color: var(--c-ashby); }
     .tag-src-remotive   { background: rgba(34,211,238,.08); color: var(--c-remotive); }
+    .tag-src-remoteok   { background: rgba(16,185,129,.08); color: var(--c-remoteok); }
     .tag-src-themuse    { background: rgba(244,114,182,.1); color: var(--c-themuse); }
     .tag-src-adzuna     { background: rgba(251,146,60,.1);  color: var(--c-adzuna); }
     .tag-src-hiringcafe { background: rgba(167,139,250,.1); color: var(--c-hiringcafe); }
@@ -967,6 +974,7 @@
     .li-chip[data-src="linkedin"].active   { color: var(--c-linkedin); background: rgba(10,102,194,.08); border-color: rgba(10,102,194,.35); }
     .li-chip[data-src="hiringcafe"].active { color: var(--c-hiringcafe); background: rgba(167,139,250,.08); border-color: rgba(167,139,250,.35); }
     .li-chip[data-src="remotive"].active   { color: var(--c-remotive); background: rgba(34,211,238,.07); border-color: rgba(34,211,238,.3); }
+    .li-chip[data-src="remoteok"].active   { color: var(--c-remoteok); background: rgba(16,185,129,.07); border-color: rgba(16,185,129,.3); }
     .li-chip[data-src="themuse"].active    { color: var(--c-themuse); background: rgba(244,114,182,.08); border-color: rgba(244,114,182,.3); }
     .li-chip[data-src="adzuna"].active     { color: var(--c-adzuna); background: rgba(251,146,60,.08); border-color: rgba(251,146,60,.3); }
 
@@ -1102,6 +1110,7 @@
     <button class="chip"    data-src="linkedin"   onclick="setSource(this)">LinkedIn</button>
     <button class="chip"    data-src="greenhouse" onclick="setSource(this)">Greenhouse</button>
     <button class="chip"    data-src="lever"      onclick="setSource(this)">Lever</button>
+    <button class="chip"    data-src="remoteok"   onclick="setSource(this)">RemoteOK</button>
     <button class="chip"    data-src="remotive"   onclick="setSource(this)">Remotive</button>
     <button class="chip"    data-src="themuse"    onclick="setSource(this)">TheMuse</button>
     <button class="chip"    data-src="adzuna"     onclick="setSource(this)">Adzuna</button>
@@ -1140,6 +1149,9 @@
       <button class="btn btn-hc" id="btn-hc" onclick="scanHiringCafe()">
         <i class="bi bi-cup-hot"></i> HiringCafe Scan
       </button>
+      <button class="btn btn-rok" id="btn-rok" onclick="scanRemoteOK()">
+        <i class="bi bi-rocket"></i> RemoteOK Scan
+      </button>
       <span style="font-size:11px;color:var(--muted);white-space:nowrap">
         <i class="bi bi-arrow-repeat" style="font-size:10px"></i> Remotive &amp; TheMuse auto-pull
       </span>
@@ -1151,6 +1163,7 @@
     <button class="li-chip active" data-src="all" onclick="setLiFilter(this)">All Boards</button>
     <button class="li-chip" data-src="linkedin"   onclick="setLiFilter(this)"><i class="bi bi-linkedin" style="font-size:11px"></i> LinkedIn</button>
     <button class="li-chip" data-src="hiringcafe" onclick="setLiFilter(this)"><i class="bi bi-cup-hot" style="font-size:11px"></i> HiringCafe</button>
+    <button class="li-chip" data-src="remoteok"   onclick="setLiFilter(this)"><i class="bi bi-rocket" style="font-size:11px"></i> RemoteOK</button>
     <button class="li-chip" data-src="remotive"   onclick="setLiFilter(this)">Remotive</button>
     <button class="li-chip" data-src="themuse"    onclick="setLiFilter(this)">TheMuse</button>
     <button class="li-chip" data-src="adzuna"     onclick="setLiFilter(this)">Adzuna</button>
@@ -1327,7 +1340,7 @@ let activeLiSrc     = "all";
 let activeTab       = "all";
 let portalScanRunning = false;
 
-const LI_SOURCES = ["linkedin", "hiringcafe", "remotive", "themuse", "adzuna"];
+const LI_SOURCES = ["linkedin", "hiringcafe", "remoteok", "remotive", "themuse", "adzuna"];
 
 // ════════════════════════════════════════════════════════════════════════
 // UTILS
@@ -1708,6 +1721,54 @@ function resetHcBtn() {
   btn.disabled = false;
   btn.classList.remove("scanning");
   btn.innerHTML = `<i class="bi bi-cup-hot"></i> HiringCafe Scan`;
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// REMOTEOK SCAN (startups + small companies)
+// ════════════════════════════════════════════════════════════════════════
+async function scanRemoteOK() {
+  const btn   = document.getElementById("btn-rok");
+  const hours = parseFloat(document.getElementById("scan-hours").value) || 48;
+  btn.disabled = true;
+  btn.classList.add("scanning");
+  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning…`;
+  setStatus("Running RemoteOK scraper (startups)…");
+
+  try {
+    const r = await fetch("/api/remoteok-scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hours }),
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
+    toast(`RemoteOK scan started (last ${hours}h) — startup + small-co jobs`, "var(--c-remoteok)");
+    const iv = setInterval(async () => {
+      try {
+        const data = await (await fetch("/api/remoteok-scan/status")).json();
+        if (!data.running) {
+          clearInterval(iv);
+          resetRokBtn();
+          if (data.error) {
+            toast("RemoteOK scan failed: " + data.error, "var(--red)");
+          } else {
+            toast(`RemoteOK done — <strong>+${data.added} new jobs</strong>`, "var(--c-remoteok)");
+            setStatus(`RemoteOK scan done at ${new Date(data.finished_at).toLocaleTimeString()}`);
+            await Promise.all([loadJobs(), loadStats()]);
+          }
+        }
+      } catch { /* retry */ }
+    }, 5000);
+  } catch(e) {
+    toast("RemoteOK scan error: " + e.message, "var(--red)");
+    resetRokBtn();
+  }
+}
+
+function resetRokBtn() {
+  const btn = document.getElementById("btn-rok");
+  btn.disabled = false;
+  btn.classList.remove("scanning");
+  btn.innerHTML = `<i class="bi bi-rocket"></i> RemoteOK Scan`;
 }
 
 // ════════════════════════════════════════════════════════════════════════

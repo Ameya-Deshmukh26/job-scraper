@@ -99,6 +99,7 @@ GREENHOUSE_COMPANIES = [
     "stripe", "brex", "ramp", "mercury", "plaid", "robinhood",
     "coinbase", "chime", "affirm", "klarna", "marqeta", "payoneer",
     "wealthfront", "betterment", "sofi", "fundbox", "bluevine",
+    "tabapay", "lithic",
     # Data / Analytics / AI Infrastructure
     "databricks", "snowflakecomputing", "dbtlabs", "fivetran",
     "hightouch", "rudderstack", "metabase", "hex", "deepnote",
@@ -106,6 +107,11 @@ GREENHOUSE_COMPANIES = [
     "modal", "anyscale", "cohere", "groq", "together",
     "starburst", "atlan", "montecarlodata", "greatexpectations",
     "tecton", "feast", "weights-biases",
+    "clickhouse", "singlestore", "imply", "transform",
+    # AI / LLM Startups (confirmed working)
+    "anthropic", "xai", "togetherai", "fireworksai",
+    "stabilityai", "imbue", "scaleai", "heygen",
+    "vectara", "truefoundry",
     # Enterprise SaaS
     "figma", "notion", "airtable", "lattice", "rippling",
     "gusto", "checkr", "deel", "remote", "carta",
@@ -113,6 +119,7 @@ GREENHOUSE_COMPANIES = [
     "monday", "clickup", "asana", "smartsheet",
     "zendesk", "freshworks", "intercom", "drift",
     "salesloft", "outreach", "gong",
+    "descript", "lokalise",
     # Cloud / Infra
     "hashicorp", "confluent", "mongodb", "elastic",
     "cockroachdb", "neon", "planetscale", "supabase", "vercel",
@@ -141,6 +148,12 @@ GREENHOUSE_COMPANIES = [
     "salesforce", "workday", "servicenow",
     "zoom", "slack", "box",
     "nvidia", "amd", "qualcomm",
+    # Observability / DevTools
+    "honeycomb",
+    # AI Research Labs
+    "deepmind",
+    # Startup / Growth companies
+    "cobo",
 ]
 
 # ── Ashby Companies ───────────────────────────────────────────────────────
@@ -233,6 +246,7 @@ LEVER_COMPANIES = [
     "netflix", "reddit", "squarespace", "vimeo", "twitch",
     # AI / ML
     "scaleai", "huggingface", "together", "aleph-alpha",
+    "mistral", "anyscale",
     # Fintech
     "robinhood", "wise", "nubank", "chime", "brex",
     # Data

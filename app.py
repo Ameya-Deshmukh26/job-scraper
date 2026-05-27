@@ -189,10 +189,13 @@ _li_scan_state: dict = {"running": False, "added": 0, "error": None, "finished_a
 
 def _do_linkedin_scan(hours: float):
     global _li_scan_state
-    from sources.linkedin_apify import fetch_linkedin_jobs
     import datetime
+    from datetime import timedelta, timezone as _tz
+    # Use free guest API (no token needed); fall back msg removed
+    from sources.linkedin import fetch_linkedin_jobs
     try:
-        jobs = fetch_linkedin_jobs(lookback_hours=int(hours))
+        cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
+        jobs = fetch_linkedin_jobs(cutoff, us_only=True)
         tracker = JobTracker()
         added = 0
         for job in jobs:
@@ -284,6 +287,55 @@ def api_hiringcafe_scan():
 @app.get("/api/hiringcafe-scan/status")
 def api_hiringcafe_scan_status():
     return jsonify(_hc_scan_state)
+
+
+# ── RemoteOK scan (startups + small companies) ────────────────────────────────
+
+_rok_scan_lock = threading.Lock()
+_rok_scan_state: dict = {"running": False, "added": 0, "error": None, "finished_at": None}
+
+
+def _do_remoteok_scan(hours: float):
+    global _rok_scan_state
+    from sources.remoteok import fetch_remoteok_jobs
+    import datetime
+    from datetime import timedelta, timezone as _tz
+    try:
+        cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
+        jobs   = fetch_remoteok_jobs(cutoff)
+        tracker = JobTracker()
+        added = 0
+        for job in jobs:
+            if tracker.seen(job["id"]):
+                continue
+            if tracker.seen_by_title_company(job["title"], job["company"]):
+                tracker.mark_seen({**job, "title": "__repost__"})
+                continue
+            tracker.mark_seen(job)
+            added += 1
+        tracker.close()
+        _rok_scan_state.update(running=False, added=added, error=None,
+                               finished_at=datetime.datetime.now().isoformat())
+    except Exception as exc:
+        _rok_scan_state.update(running=False, error=str(exc),
+                               finished_at=datetime.datetime.now().isoformat())
+    finally:
+        _rok_scan_lock.release()
+
+
+@app.post("/api/remoteok-scan")
+def api_remoteok_scan():
+    hours = float(request.json.get("hours", 48) if request.is_json else 48)
+    if not _rok_scan_lock.acquire(blocking=False):
+        return jsonify({"error": "RemoteOK scan already running"}), 409
+    _rok_scan_state.update(running=True, added=0, error=None, finished_at=None)
+    threading.Thread(target=_do_remoteok_scan, args=(hours,), daemon=True).start()
+    return jsonify({"started": True, "hours": hours})
+
+
+@app.get("/api/remoteok-scan/status")
+def api_remoteok_scan_status():
+    return jsonify(_rok_scan_state)
 
 
 # ── Portal scan (Greenhouse + Lever + Ashby + Workday combined) ───────────────
