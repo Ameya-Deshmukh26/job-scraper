@@ -4,96 +4,300 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Job Board — Ameya Deshmukh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <style>
+    /* ─── TOKENS ─────────────────────────────────────────────────────────── */
     :root {
-      --bg:       #0d0f18;
-      --surface:  #13162a;
-      --card:     #181b2e;
-      --border:   #252845;
-      --accent:   #5b6ee8;
-      --li-blue:  #0a66c2;
-      --green:    #3ecf8e;
-      --orange:   #f5a623;
-      --red:      #f66;
-      --text:     #dde1f5;
-      --muted:    #7b80a0;
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: "Inter", system-ui, sans-serif; font-size: 14px; }
+      --bg:        #070914;
+      --surface:   #0f1225;
+      --card:      #161929;
+      --border:    #1e2342;
+      --text:      #e2e6f8;
+      --muted:     #6371a0;
+      --red:       #f87171;
 
-    /* ─── NAV ─── */
+      /* per-source colours */
+      --c-linkedin:     #0a66c2;
+      --c-greenhouse:   #34d399;
+      --c-lever:        #818cf8;
+      --c-ashby:        #c084fc;
+      --c-workday:      #22d3ee;
+      --c-remotive:     #22d3ee;
+      --c-themuse:      #f472b6;
+      --c-hiringcafe:   #a78bfa;
+      --c-goldman_sachs:#c9aa71;
+      --c-oracle_hcm:   #f59e0b;
+      --c-deloitte:     #00a3e0;
+      --c-adzuna:       #fb923c;
+
+      /* tab accent colours */
+      --t-all:     #818cf8;
+      --t-li:      #38bdf8;
+      --t-wd:      #22d3ee;
+      --t-portals: #34d399;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    /* ─── SCROLLBAR ───────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    /* ─── NAV ─────────────────────────────────────────────────────────────── */
     nav {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      height: 54px;
+      padding: 0 28px;
+      height: 52px;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 18px;
       position: sticky;
       top: 0;
-      z-index: 200;
+      z-index: 300;
+      backdrop-filter: blur(10px);
     }
-    .brand { font-size: 15px; font-weight: 700; flex: 1; letter-spacing: -.01em; }
-    .brand em { color: var(--accent); font-style: normal; }
-    .scan-group { display: flex; align-items: center; gap: 8px; }
+
+    .brand {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      white-space: nowrap;
+    }
+    .brand .brand-dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      background: linear-gradient(135deg, #818cf8, #38bdf8);
+      border-radius: 50%;
+      margin: 0 6px 1px;
+      vertical-align: middle;
+    }
+    .brand .brand-name { color: var(--text); }
+    .brand .brand-sub  { color: var(--muted); font-weight: 500; }
+
+    #scan-status {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 320px;
+    }
+
+    .nav-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-lookback {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
     .scan-hours {
       background: var(--card);
       border: 1px solid var(--border);
       color: var(--text);
-      border-radius: 7px;
-      padding: 5px 10px;
-      font-size: 13px;
-      width: 80px;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      width: 64px;
       outline: none;
+      font-family: inherit;
     }
-    .scan-hours:focus { border-color: var(--accent); }
+    .scan-hours:focus { border-color: var(--t-all); }
+
+    /* ─── TAB BAR ─────────────────────────────────────────────────────────── */
+    .tab-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 28px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      position: sticky;
+      top: 52px;
+      z-index: 200;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      padding: 6px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all .2s;
+      white-space: nowrap;
+      letter-spacing: .01em;
+    }
+    .tab-btn:hover { color: var(--text); background: var(--card); }
+
+    .tab-btn[data-tab="all"].active {
+      background: linear-gradient(135deg, rgba(129,140,248,.18), rgba(129,140,248,.06));
+      border-color: rgba(129,140,248,.35);
+      color: var(--t-all);
+    }
+    .tab-btn[data-tab="linkedin"].active {
+      background: linear-gradient(135deg, rgba(56,189,248,.18), rgba(56,189,248,.06));
+      border-color: rgba(56,189,248,.35);
+      color: var(--t-li);
+    }
+    .tab-btn[data-tab="workday"].active {
+      background: linear-gradient(135deg, rgba(34,211,238,.18), rgba(34,211,238,.06));
+      border-color: rgba(34,211,238,.35);
+      color: var(--t-wd);
+    }
+    .tab-btn[data-tab="portals"].active {
+      background: linear-gradient(135deg, rgba(52,211,153,.18), rgba(52,211,153,.06));
+      border-color: rgba(52,211,153,.35);
+      color: var(--t-portals);
+    }
+
+    .tab-badge {
+      background: rgba(251,146,60,.15);
+      color: #fb923c;
+      border: 1px solid rgba(251,146,60,.3);
+      font-size: 10px;
+      font-weight: 800;
+      border-radius: 10px;
+      padding: 1px 7px;
+      display: none;
+      font-variant-numeric: tabular-nums;
+    }
+    .tab-badge.show { display: inline-block; }
+    .tab-badge.accent-all    { background: rgba(129,140,248,.15); color: var(--t-all);  border-color: rgba(129,140,248,.25); }
+    .tab-badge.accent-li     { background: rgba(56,189,248,.15);  color: var(--t-li);   border-color: rgba(56,189,248,.25); }
+    .tab-badge.accent-wd     { background: rgba(34,211,238,.15);  color: var(--t-wd);   border-color: rgba(34,211,238,.25); }
+    .tab-badge.accent-portal { background: rgba(52,211,153,.15);  color: var(--t-portals); border-color: rgba(52,211,153,.25); }
+
+    /* ─── SHARED BUTTON ───────────────────────────────────────────────────── */
     .btn {
       border: none;
       border-radius: 8px;
-      padding: 7px 16px;
-      font-size: 13px;
-      font-weight: 600;
+      padding: 7px 15px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: opacity .15s, background .15s;
+      transition: opacity .15s, transform .1s;
       white-space: nowrap;
+      letter-spacing: .01em;
     }
-    .btn:hover:not(:disabled) { opacity: .85; }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
-    .btn-gh   { background: #0d2a1e; color: var(--green); border: 1px solid #1e5038; }
-    .btn-li   { background: #07192d; color: #2d8fd5;      border: 1px solid #0a3a5c; }
-    .btn-li.scanning { animation: pulse 1.4s ease-in-out infinite; }
-    .btn-hc   { background: #1a0d2e; color: #a78bfa;      border: 1px solid #3b1f6a; }
-    .btn-hc.scanning { animation: pulse 1.4s ease-in-out infinite; }
-    .btn-wd   { background: #001a2e; color: #38bdf8;      border: 1px solid #0e4c78; }
-    .btn-wd.scanning { animation: pulse 1.4s ease-in-out infinite; }
-    .btn-all  { background: var(--accent); color: #fff; }
-    #scan-status { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .btn:hover:not(:disabled) { opacity: .85; transform: translateY(-1px); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .btn-li   { background: rgba(10,102,194,.15); color: #60a5fa; border: 1px solid rgba(10,102,194,.35); }
+    .btn-hc   { background: rgba(167,139,250,.12); color: #a78bfa; border: 1px solid rgba(167,139,250,.3); }
+    .btn-wd   { background: rgba(34,211,238,.1);  color: #22d3ee; border: 1px solid rgba(34,211,238,.28); }
+    .btn-gh   { background: rgba(52,211,153,.1);  color: #34d399; border: 1px solid rgba(52,211,153,.28); }
+    .btn-primary {
+      background: linear-gradient(135deg, #818cf8, #6366f1);
+      color: #fff;
+      border: none;
+      box-shadow: 0 2px 12px rgba(99,102,241,.35);
+    }
+    .btn.scanning { animation: pulse 1.4s ease-in-out infinite; }
 
-    /* ─── STATS ─── */
-    .stats { display: flex; gap: 12px; padding: 20px 24px 0; flex-wrap: wrap; }
-    .stat {
+    @keyframes pulse  { 0%,100%{opacity:1} 50%{opacity:.5} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes shimmer {
+      0%   { background-position: -400px 0; }
+      100% { background-position: 400px 0; }
+    }
+
+    /* ─── STATS ROW ───────────────────────────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 20px 28px 0;
+    }
+    @media (max-width: 900px) { .stats-row { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 500px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+
+    .stat-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 22px;
-      flex: 1;
-      min-width: 120px;
+      border-radius: 14px;
+      padding: 16px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .2s;
     }
-    .stat .lbl  { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
-    .stat .val  { font-size: 28px; font-weight: 800; margin-top: 2px; line-height: 1; }
-    .stat.hot   .val { color: var(--orange); }
-    .stat.fresh .val { color: #f472b6; }
-    .stat.total .val { color: var(--green); }
-    .stat.done  .val { color: var(--accent); }
+    .stat-card:hover { border-color: rgba(255,255,255,.1); }
+    .stat-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      border-radius: 14px 14px 0 0;
+    }
+    .stat-card.hot::before    { background: linear-gradient(90deg, #f59e0b, #fb923c); }
+    .stat-card.fresh::before  { background: linear-gradient(90deg, #f472b6, #c084fc); }
+    .stat-card.total::before  { background: linear-gradient(90deg, #34d399, #22d3ee); }
+    .stat-card.done::before   { background: linear-gradient(90deg, #818cf8, #6366f1); }
 
-    /* ─── FILTERS ─── */
+    .stat-card .stat-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 6px;
+    }
+    .stat-card .stat-val {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -.03em;
+    }
+    .stat-card.hot   .stat-val { background: linear-gradient(135deg,#f59e0b,#fb923c); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .stat-card.fresh .stat-val { background: linear-gradient(135deg,#f472b6,#c084fc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .stat-card.total .stat-val { background: linear-gradient(135deg,#34d399,#22d3ee); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .stat-card.done  .stat-val { background: linear-gradient(135deg,#818cf8,#6366f1); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+    .stat-glow {
+      position: absolute;
+      bottom: -20px; right: -20px;
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      opacity: .07;
+      filter: blur(24px);
+    }
+    .stat-card.hot   .stat-glow { background: #f59e0b; }
+    .stat-card.fresh .stat-glow { background: #f472b6; }
+    .stat-card.total .stat-glow { background: #34d399; }
+    .stat-card.done  .stat-glow { background: #818cf8; }
+
+    /* ─── FILTERS BAR ─────────────────────────────────────────────────────── */
     .filters {
-      padding: 16px 24px 0;
+      padding: 16px 28px 0;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -104,50 +308,58 @@
       border: 1px solid var(--border);
       color: var(--text);
       border-radius: 8px;
-      padding: 7px 14px;
+      padding: 8px 14px;
       font-size: 13px;
-      width: 280px;
+      font-family: inherit;
+      width: 260px;
       outline: none;
+      transition: border-color .2s;
     }
-    .search:focus { border-color: var(--accent); }
+    .search:focus { border-color: var(--t-all); }
+
     .chip {
       background: var(--surface);
       border: 1px solid var(--border);
       color: var(--muted);
       border-radius: 6px;
-      padding: 5px 13px;
-      font-size: 12px;
-      font-weight: 600;
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: inherit;
       cursor: pointer;
       transition: all .15s;
       white-space: nowrap;
+      letter-spacing: .02em;
     }
-    .chip.on { color: var(--text); border-color: currentColor; }
-    .chip[data-src="linkedin"].on  { color: var(--li-blue); }
-    .chip[data-src="greenhouse"].on { color: var(--green); }
-    .chip[data-src="lever"].on      { color: #818cf8; }
-    .chip[data-src="remotive"].on   { color: #22d3ee; }
-    .chip[data-src="themuse"].on    { color: #c084fc; }
-    .chip[data-src="adzuna"].on     { color: var(--orange); }
-    .chip[data-src="hiringcafe"].on { color: #a78bfa; }
-    .chip[data-src="workday"].on    { color: #38bdf8; }
-    .chip[data-src="new"].on        { color: var(--orange); }
+    .chip:hover { color: var(--text); border-color: rgba(255,255,255,.15); }
+    .chip.on { color: var(--text); background: rgba(255,255,255,.05); }
+    .chip[data-src="linkedin"].on   { color: var(--c-linkedin);     border-color: rgba(10,102,194,.5); }
+    .chip[data-src="greenhouse"].on { color: var(--c-greenhouse);   border-color: rgba(52,211,153,.5); }
+    .chip[data-src="lever"].on      { color: var(--c-lever);        border-color: rgba(129,140,248,.5); }
+    .chip[data-src="remotive"].on   { color: var(--c-remotive);     border-color: rgba(34,211,238,.5); }
+    .chip[data-src="themuse"].on    { color: var(--c-themuse);      border-color: rgba(244,114,182,.5); }
+    .chip[data-src="adzuna"].on     { color: var(--c-adzuna);       border-color: rgba(251,146,60,.5); }
+    .chip[data-src="hiringcafe"].on { color: var(--c-hiringcafe);   border-color: rgba(167,139,250,.5); }
+    .chip[data-src="workday"].on    { color: var(--c-workday);      border-color: rgba(34,211,238,.5); }
+    .chip[data-src="new"].on        { color: #fb923c;               border-color: rgba(251,146,60,.5); background: rgba(251,146,60,.06); }
+
     .hide-toggle {
       margin-left: auto;
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 12px;
+      font-size: 11px;
+      font-weight: 600;
       color: var(--muted);
       cursor: pointer;
       user-select: none;
       white-space: nowrap;
     }
-    .hide-toggle input { accent-color: var(--accent); cursor: pointer; }
+    .hide-toggle input { accent-color: var(--t-all); cursor: pointer; }
 
-    /* ─── JOB CARDS ─── */
-    .jobs-wrap { padding: 16px 24px 60px; }
-    .jobs-count { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    /* ─── JOB GRID (Tab 1 & 2) ────────────────────────────────────────────── */
+    .jobs-wrap { padding: 16px 28px 80px; }
+    .jobs-count { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 14px; letter-spacing: .03em; }
 
     .job-grid {
       display: grid;
@@ -158,49 +370,87 @@
     .job-card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 13px;
       padding: 16px 18px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      transition: border-color .15s, transform .1s;
+      gap: 11px;
+      transition: border-color .2s, transform .15s, box-shadow .2s;
       position: relative;
+      overflow: hidden;
     }
-    .job-card:hover { border-color: var(--accent); transform: translateY(-1px); }
-    .job-card.is-new  { border-left: 3px solid var(--orange); }
-    .job-card.applied { opacity: .4; }
+    .job-card::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      border-radius: 13px 0 0 13px;
+    }
 
-    .card-top { display: flex; align-items: flex-start; gap: 10px; }
+    /* source-specific left border + hover glow */
+    .job-card[data-src="linkedin"]::before    { background: var(--c-linkedin); }
+    .job-card[data-src="greenhouse"]::before  { background: var(--c-greenhouse); }
+    .job-card[data-src="lever"]::before       { background: var(--c-lever); }
+    .job-card[data-src="ashby"]::before       { background: var(--c-ashby); }
+    .job-card[data-src="workday"]::before     { background: var(--c-workday); }
+    .job-card[data-src="remotive"]::before    { background: var(--c-remotive); }
+    .job-card[data-src="themuse"]::before     { background: var(--c-themuse); }
+    .job-card[data-src="hiringcafe"]::before  { background: var(--c-hiringcafe); }
+    .job-card[data-src="adzuna"]::before      { background: var(--c-adzuna); }
+
+    .job-card:hover { transform: translateY(-2px); }
+    .job-card[data-src="linkedin"]:hover    { border-color: rgba(10,102,194,.5);   box-shadow: 0 8px 32px rgba(10,102,194,.12); }
+    .job-card[data-src="greenhouse"]:hover  { border-color: rgba(52,211,153,.5);   box-shadow: 0 8px 32px rgba(52,211,153,.12); }
+    .job-card[data-src="lever"]:hover       { border-color: rgba(129,140,248,.5);  box-shadow: 0 8px 32px rgba(129,140,248,.12); }
+    .job-card[data-src="ashby"]:hover       { border-color: rgba(192,132,252,.5);  box-shadow: 0 8px 32px rgba(192,132,252,.12); }
+    .job-card[data-src="workday"]:hover     { border-color: rgba(34,211,238,.5);   box-shadow: 0 8px 32px rgba(34,211,238,.12); }
+    .job-card[data-src="remotive"]:hover    { border-color: rgba(34,211,238,.4);   box-shadow: 0 8px 32px rgba(34,211,238,.10); }
+    .job-card[data-src="themuse"]:hover     { border-color: rgba(244,114,182,.5);  box-shadow: 0 8px 32px rgba(244,114,182,.12); }
+    .job-card[data-src="hiringcafe"]:hover  { border-color: rgba(167,139,250,.5);  box-shadow: 0 8px 32px rgba(167,139,250,.12); }
+    .job-card[data-src="adzuna"]:hover      { border-color: rgba(251,146,60,.5);   box-shadow: 0 8px 32px rgba(251,146,60,.12); }
+    .job-card.is-new  { }
+    .job-card.applied { opacity: .38; }
+
+    .card-top { display: flex; align-items: flex-start; gap: 11px; }
+
     .source-dot {
       width: 8px; height: 8px;
       border-radius: 50%;
       flex-shrink: 0;
       margin-top: 5px;
     }
-    .dot-linkedin    { background: var(--li-blue); }
-    .dot-greenhouse  { background: var(--green); }
-    .dot-lever       { background: #818cf8; }
-    .dot-remotive    { background: #22d3ee; }
-    .dot-themuse     { background: #c084fc; }
-    .dot-adzuna      { background: var(--orange); }
-    .dot-hiringcafe  { background: #a78bfa; }
-    .dot-workday     { background: #38bdf8; }
+    .dot-linkedin    { background: var(--c-linkedin); }
+    .dot-greenhouse  { background: var(--c-greenhouse); }
+    .dot-lever       { background: var(--c-lever); }
+    .dot-ashby       { background: var(--c-ashby); }
+    .dot-remotive    { background: var(--c-remotive); }
+    .dot-themuse     { background: var(--c-themuse); }
+    .dot-adzuna      { background: var(--c-adzuna); }
+    .dot-hiringcafe  { background: var(--c-hiringcafe); }
+    .dot-workday     { background: var(--c-workday); }
 
     .card-titles { flex: 1; min-width: 0; }
     .card-role {
       font-weight: 700;
-      font-size: 14px;
-      line-height: 1.3;
+      font-size: 13.5px;
+      line-height: 1.35;
       color: var(--text);
       text-decoration: none;
       display: block;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      transition: color .15s;
     }
-    .card-role:hover { color: var(--accent); }
-    .card-company { font-size: 12px; color: var(--muted); margin-top: 2px;
-                    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .card-role:hover { color: var(--t-all); }
+    .card-company {
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
     .card-meta {
       display: flex;
@@ -217,31 +467,33 @@
       align-items: center;
       border-radius: 4px;
       font-size: 10px;
-      font-weight: 700;
+      font-weight: 800;
       padding: 2px 6px;
       letter-spacing: .04em;
       white-space: nowrap;
     }
-    .tag-new     { background: #2a1d00; color: var(--orange); }
-    .tag-src-linkedin   { background: #071422; color: #2d8fd5; }
-    .tag-src-greenhouse { background: #0a2018; color: var(--green); }
-    .tag-src-lever      { background: #10122a; color: #818cf8; }
-    .tag-src-remotive   { background: #051a1f; color: #22d3ee; }
-    .tag-src-themuse    { background: #1e0d2a; color: #c084fc; }
-    .tag-src-adzuna     { background: #1e1200; color: var(--orange); }
-    .tag-src-hiringcafe { background: #150924; color: #a78bfa; }
-    .tag-src-workday    { background: #001220; color: #38bdf8; }
+    .tag-new            { background: rgba(251,146,60,.12); color: #fb923c; border: 1px solid rgba(251,146,60,.25); }
+    .tag-src-linkedin   { background: rgba(10,102,194,.1);  color: #60a5fa; }
+    .tag-src-greenhouse { background: rgba(52,211,153,.1);  color: var(--c-greenhouse); }
+    .tag-src-lever      { background: rgba(129,140,248,.1); color: var(--c-lever); }
+    .tag-src-ashby      { background: rgba(192,132,252,.1); color: var(--c-ashby); }
+    .tag-src-remotive   { background: rgba(34,211,238,.08); color: var(--c-remotive); }
+    .tag-src-themuse    { background: rgba(244,114,182,.1); color: var(--c-themuse); }
+    .tag-src-adzuna     { background: rgba(251,146,60,.1);  color: var(--c-adzuna); }
+    .tag-src-hiringcafe { background: rgba(167,139,250,.1); color: var(--c-hiringcafe); }
+    .tag-src-workday    { background: rgba(34,211,238,.1);  color: var(--c-workday); }
 
     .card-actions { display: flex; gap: 8px; align-items: center; }
     .btn-apply {
       flex: 1;
-      background: var(--accent);
+      background: linear-gradient(135deg, #818cf8, #6366f1);
       color: #fff;
       border: none;
       border-radius: 7px;
       padding: 7px 14px;
       font-size: 12px;
       font-weight: 700;
+      font-family: inherit;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -249,12 +501,14 @@
       gap: 5px;
       transition: opacity .15s;
       text-decoration: none;
+      box-shadow: 0 2px 10px rgba(99,102,241,.3);
     }
     .btn-apply:hover { opacity: .85; }
     .btn-apply.done {
-      background: #0d2010;
-      color: var(--green);
-      border: 1px solid var(--green);
+      background: rgba(52,211,153,.08);
+      color: var(--c-greenhouse);
+      border: 1px solid rgba(52,211,153,.3);
+      box-shadow: none;
     }
     .btn-mark {
       background: transparent;
@@ -263,221 +517,342 @@
       border-radius: 7px;
       padding: 7px 10px;
       font-size: 12px;
+      font-family: inherit;
       cursor: pointer;
       transition: all .15s;
     }
-    .btn-mark:hover { border-color: var(--green); color: var(--green); }
-    .btn-mark.done  { border-color: var(--green); color: var(--green); }
+    .btn-mark:hover { border-color: var(--c-greenhouse); color: var(--c-greenhouse); }
+    .btn-mark.done  { border-color: var(--c-greenhouse); color: var(--c-greenhouse); }
 
-    /* ─── EMPTY / LOADING ─── */
-    .empty {
-      text-align: center;
-      padding: 80px 20px;
-      color: var(--muted);
-    }
-    .empty i { font-size: 48px; display: block; margin-bottom: 14px; }
-
-    /* ─── TOAST ─── */
-    .toasts { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
-    .toast {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 18px;
-      font-size: 13px;
-      min-width: 240px;
-      animation: fadeUp .2s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-    @keyframes pulse  { 0%,100% { opacity:1; } 50% { opacity:.5; } }
-
-    /* ─── SCROLL TO TOP ─── */
-    #back-top {
-      position: fixed; bottom: 24px; left: 24px;
-      background: var(--surface); border: 1px solid var(--border);
-      color: var(--muted); border-radius: 8px; padding: 8px 12px;
-      font-size: 13px; cursor: pointer; display: none; z-index: 100;
-      transition: all .15s;
-    }
-    #back-top:hover { color: var(--text); border-color: var(--accent); }
-
-    /* ─── TABS ─── */
-    .tab-bar {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      display: flex;
-      gap: 0;
-    }
-    .tab-btn {
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 600;
-      padding: 10px 20px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      transition: color .15s, border-color .15s;
-      white-space: nowrap;
-    }
-    .tab-btn:hover { color: var(--text); }
-    .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
-    .tab-btn .tab-badge {
-      background: var(--orange);
-      color: #000;
-      font-size: 10px;
-      font-weight: 800;
-      border-radius: 10px;
-      padding: 1px 6px;
-      display: none;
-    }
-    .tab-btn .tab-badge.show { display: inline-block; }
-
-    /* ─── PORTAL RADAR ─── */
-    .portal-radar {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 16px 24px;
-    }
-    .radar-header {
+    /* ─── TAB SECTION HEADER ──────────────────────────────────────────────── */
+    .tab-section-header {
+      padding: 22px 28px 0;
       display: flex;
       align-items: center;
       gap: 16px;
-      margin-bottom: 14px;
       flex-wrap: wrap;
     }
-    .radar-title {
-      font-size: 15px;
-      font-weight: 700;
+    .tsh-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+    }
+    .tsh-sub {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .tsh-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+    /* ─── SECTION DIVIDER (Portals tab) ───────────────────────────────────── */
+    .section-divider {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
+      padding: 12px 2px 8px;
+      margin-top: 6px;
     }
-    .radar-title i { color: var(--accent); }
-    .radar-meta {
+    .section-divider-label {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section-divider-count {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .section-divider-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border), transparent);
+    }
+
+    /* ─── EMPTY STATE ─────────────────────────────────────────────────────── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px;
+      gap: 14px;
+      text-align: center;
+    }
+    .empty-state-icon {
+      width: 72px; height: 72px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+    }
+    .empty-state h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .empty-state p {
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 340px;
+      line-height: 1.6;
+    }
+
+    /* ─── PORTAL RADAR ────────────────────────────────────────────────────── */
+    .portal-radar {
+      margin: 20px 28px 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .portal-radar::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #34d399, #22d3ee, #818cf8);
+      border-radius: 16px 16px 0 0;
+    }
+
+    .radar-header {
       display: flex;
       align-items: center;
       gap: 14px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .radar-title {
+      font-size: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -.01em;
+    }
+    .radar-title i { color: var(--t-portals); }
+
+    .radar-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
       flex: 1;
       flex-wrap: wrap;
     }
     .radar-meta-item {
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--muted);
       display: flex;
       align-items: center;
       gap: 5px;
     }
-    .radar-meta-item strong { color: var(--text); }
+    .radar-meta-item strong { color: var(--text); font-weight: 600; }
+
     .countdown {
       font-size: 12px;
-      font-weight: 700;
-      color: var(--green);
+      font-weight: 800;
+      color: var(--c-greenhouse);
       font-variant-numeric: tabular-nums;
+      letter-spacing: .02em;
     }
-    .countdown.soon { color: var(--orange); }
+    .countdown.soon { color: #fb923c; }
+
     .btn-portal-scan {
-      background: var(--accent);
+      background: linear-gradient(135deg, #34d399, #059669);
       color: #fff;
       border: none;
-      border-radius: 8px;
-      padding: 8px 18px;
+      border-radius: 9px;
+      padding: 9px 20px;
       font-size: 13px;
       font-weight: 700;
+      font-family: inherit;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      transition: opacity .15s;
+      gap: 7px;
+      transition: opacity .15s, transform .1s;
       white-space: nowrap;
       margin-left: auto;
+      box-shadow: 0 3px 14px rgba(52,211,153,.3);
     }
-    .btn-portal-scan:hover:not(:disabled) { opacity: .85; }
-    .btn-portal-scan:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-portal-scan:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
+    .btn-portal-scan:disabled { opacity: .45; cursor: not-allowed; transform: none; }
     .btn-portal-scan.scanning { animation: pulse 1.2s ease-in-out infinite; }
 
-    /* Source stat cards in radar */
+    /* Source stat cards in radar — 6-col grid (no workday on portals tab) */
     .radar-sources {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 10px;
     }
-    @media (max-width: 1100px) {
-      .radar-sources { grid-template-columns: repeat(3, 1fr); }
-    }
-    @media (max-width: 600px) {
-      .radar-sources { grid-template-columns: repeat(2, 1fr); }
-    }
+    @media (max-width: 1200px) { .radar-sources { grid-template-columns: repeat(3,1fr); } }
+    @media (max-width: 700px)  { .radar-sources { grid-template-columns: repeat(2,1fr); } }
+
     .radar-source {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 16px;
-      transition: border-color .15s;
+      border-radius: 11px;
+      padding: 12px 14px;
+      transition: border-color .2s, transform .15s;
+      cursor: default;
     }
-    .radar-source:hover { border-color: var(--accent); }
+    .radar-source:hover { transform: translateY(-1px); }
+
     .rs-name {
-      font-size: 11px;
-      font-weight: 700;
+      font-size: 10px;
+      font-weight: 800;
       color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: .06em;
+      letter-spacing: .07em;
       display: flex;
       align-items: center;
       gap: 5px;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
     .rs-count {
-      font-size: 26px;
-      font-weight: 800;
-      color: var(--green);
+      font-size: 28px;
+      font-weight: 900;
       line-height: 1;
-      margin: 6px 0 2px;
+      margin: 4px 0 2px;
+      letter-spacing: -.03em;
     }
     .rs-count.zero { color: var(--muted); }
-    .rs-label { font-size: 10px; color: var(--muted); }
+    .rs-label { font-size: 9px; color: var(--muted); letter-spacing: .03em; }
 
-    /* ─── PORTAL FEED ─── */
-    .portal-wrap { padding: 16px 24px 60px; }
+    /* ─── WORKDAY TAB HERO ────────────────────────────────────────────────── */
+    .workday-hero {
+      margin: 20px 28px 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 28px;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .workday-hero::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #22d3ee, #0ea5e9);
+      border-radius: 16px 16px 0 0;
+    }
+    .workday-hero-glow {
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      background: rgba(34,211,238,.06);
+      filter: blur(40px);
+    }
+    .wd-stat-big {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .wd-stat-big .wd-num {
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: -.04em;
+      line-height: 1;
+      background: linear-gradient(135deg, #22d3ee, #0ea5e9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .wd-stat-big .wd-lbl {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .wd-divider { width: 1px; height: 56px; background: var(--border); }
+    .wd-meta { display: flex; flex-direction: column; gap: 8px; }
+    .wd-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .wd-meta-item strong { color: var(--text); }
+    .wd-actions { margin-left: auto; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+    .btn-workday-scan {
+      background: linear-gradient(135deg, #22d3ee, #0891b2);
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      padding: 9px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: opacity .15s, transform .1s;
+      white-space: nowrap;
+      box-shadow: 0 3px 14px rgba(34,211,238,.25);
+    }
+    .btn-workday-scan:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
+    .btn-workday-scan:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .btn-workday-scan.scanning { animation: pulse 1.2s ease-in-out infinite; }
+
+    /* ─── PORTAL TIMELINE (p-card) ────────────────────────────────────────── */
+    .portal-wrap { padding: 16px 28px 80px; }
     .portal-toolbar {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
       flex-wrap: wrap;
     }
-    .portal-count { font-size: 12px; color: var(--muted); }
+    .portal-count { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .03em; }
 
-    /* Portal job cards — timeline style with prominent freshness */
-    .portal-feed {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+    .portal-feed { display: flex; flex-direction: column; gap: 8px; }
+
     .p-card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 13px;
       padding: 14px 18px;
       display: grid;
       grid-template-columns: 72px 1fr auto;
       gap: 14px;
       align-items: center;
-      transition: border-color .15s, transform .1s;
+      transition: border-color .2s, transform .15s, box-shadow .2s;
       position: relative;
       overflow: hidden;
     }
-    .p-card:hover { border-color: var(--accent); transform: translateY(-1px); }
-    .p-card.applied { opacity: .4; }
+    .p-card:hover { transform: translateY(-1px); }
+    .p-card.applied { opacity: .38; }
 
-    /* Freshness badge (left column) */
+    /* freshness tiers */
+    .fresh-hot  { border-left: 3px solid #f59e0b; }
+    .fresh-hot:hover  { border-color: rgba(245,158,11,.6); box-shadow: 0 6px 28px rgba(245,158,11,.1); }
+    .fresh-hot::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(245,158,11,.05) 0%, transparent 35%);
+      pointer-events: none;
+    }
+    .fresh-warm { border-left: 3px solid var(--c-greenhouse); }
+    .fresh-warm:hover { border-color: rgba(52,211,153,.6); box-shadow: 0 6px 28px rgba(52,211,153,.1); }
+    .fresh-cool { border-left: 3px solid var(--c-workday); }
+    .fresh-cool:hover { border-color: rgba(34,211,238,.5); box-shadow: 0 6px 28px rgba(34,211,238,.08); }
+    .fresh-cold { border-left: 3px solid var(--border); }
+
     .p-fresh {
       text-align: center;
       display: flex;
@@ -485,43 +860,28 @@
       align-items: center;
       gap: 2px;
     }
-    .p-fresh-icon { font-size: 20px; line-height: 1; }
-    .p-fresh-time {
-      font-size: 11px;
-      font-weight: 800;
-      font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-    }
-    .p-fresh-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    .p-fresh-icon  { font-size: 22px; line-height: 1; }
+    .p-fresh-time  { font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .p-fresh-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-top: 1px; }
 
-    /* Freshness colour tiers */
-    .fresh-hot  .p-fresh-time { color: var(--orange); }
-    .fresh-hot  { border-left: 3px solid var(--orange); }
-    .fresh-hot::before {
-      content: "";
-      position: absolute; inset: 0;
-      background: linear-gradient(90deg, rgba(245,166,35,.06) 0%, transparent 40%);
-      pointer-events: none;
-    }
-    .fresh-warm .p-fresh-time { color: var(--green); }
-    .fresh-warm { border-left: 3px solid var(--green); }
-    .fresh-cool .p-fresh-time { color: #38bdf8; }
-    .fresh-cool { border-left: 3px solid #38bdf8; }
+    .fresh-hot  .p-fresh-time { color: #f59e0b; }
+    .fresh-warm .p-fresh-time { color: var(--c-greenhouse); }
+    .fresh-cool .p-fresh-time { color: var(--c-workday); }
     .fresh-cold .p-fresh-time { color: var(--muted); }
 
-    /* Middle column */
     .p-info { min-width: 0; }
     .p-title {
       font-weight: 700;
-      font-size: 14px;
+      font-size: 13.5px;
       color: var(--text);
       text-decoration: none;
       display: block;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      transition: color .15s;
     }
-    .p-title:hover { color: var(--accent); }
+    .p-title:hover { color: var(--t-all); }
     .p-company { font-size: 12px; color: var(--muted); margin-top: 2px; }
     .p-meta {
       display: flex;
@@ -532,7 +892,6 @@
     }
     .p-meta-item { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 3px; }
 
-    /* Right column — actions */
     .p-actions {
       display: flex;
       flex-direction: column;
@@ -541,13 +900,14 @@
       min-width: 100px;
     }
     .p-apply {
-      background: var(--accent);
+      background: linear-gradient(135deg, #818cf8, #6366f1);
       color: #fff;
       border: none;
       border-radius: 7px;
       padding: 7px 14px;
       font-size: 12px;
       font-weight: 700;
+      font-family: inherit;
       cursor: pointer;
       text-decoration: none;
       display: flex;
@@ -555,12 +915,14 @@
       gap: 5px;
       transition: opacity .15s;
       white-space: nowrap;
+      box-shadow: 0 2px 10px rgba(99,102,241,.25);
     }
     .p-apply:hover { opacity: .85; }
     .p-apply.done {
-      background: #0d2010;
-      color: var(--green);
-      border: 1px solid var(--green);
+      background: rgba(52,211,153,.08);
+      color: var(--c-greenhouse);
+      border: 1px solid rgba(52,211,153,.3);
+      box-shadow: none;
     }
     .p-bookmark {
       background: transparent;
@@ -568,98 +930,295 @@
       color: var(--muted);
       border-radius: 7px;
       padding: 5px 10px;
-      font-size: 12px;
+      font-size: 11px;
+      font-family: inherit;
       cursor: pointer;
       transition: all .15s;
       display: flex;
       align-items: center;
       gap: 4px;
     }
-    .p-bookmark:hover { border-color: var(--green); color: var(--green); }
-    .p-bookmark.done  { border-color: var(--green); color: var(--green); }
+    .p-bookmark:hover { border-color: var(--c-greenhouse); color: var(--c-greenhouse); }
+    .p-bookmark.done  { border-color: var(--c-greenhouse); color: var(--c-greenhouse); }
 
-    @media (max-width: 600px) {
+    /* ─── LINKEDIN TAB FILTER CHIPS ───────────────────────────────────────── */
+    .li-filter-chips {
+      padding: 14px 28px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .li-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .li-chip:hover { color: var(--text); border-color: rgba(255,255,255,.15); }
+    .li-chip.active { color: var(--text); background: rgba(56,189,248,.08); border-color: rgba(56,189,248,.35); }
+    .li-chip[data-src="linkedin"].active   { color: var(--c-linkedin); background: rgba(10,102,194,.08); border-color: rgba(10,102,194,.35); }
+    .li-chip[data-src="hiringcafe"].active { color: var(--c-hiringcafe); background: rgba(167,139,250,.08); border-color: rgba(167,139,250,.35); }
+    .li-chip[data-src="remotive"].active   { color: var(--c-remotive); background: rgba(34,211,238,.07); border-color: rgba(34,211,238,.3); }
+    .li-chip[data-src="themuse"].active    { color: var(--c-themuse); background: rgba(244,114,182,.08); border-color: rgba(244,114,182,.3); }
+    .li-chip[data-src="adzuna"].active     { color: var(--c-adzuna); background: rgba(251,146,60,.08); border-color: rgba(251,146,60,.3); }
+
+    /* ─── TOAST ───────────────────────────────────────────────────────────── */
+    .toasts {
+      position: fixed;
+      bottom: 22px; right: 22px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 12px 18px;
+      font-size: 13px;
+      min-width: 240px;
+      max-width: 380px;
+      animation: fadeUp .22s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    }
+
+    /* ─── SCROLL TO TOP ───────────────────────────────────────────────────── */
+    #back-top {
+      position: fixed; bottom: 24px; left: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 10px;
+      padding: 9px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: none;
+      z-index: 100;
+      transition: all .15s;
+      letter-spacing: .02em;
+    }
+    #back-top:hover { color: var(--text); border-color: var(--t-all); }
+
+    /* ─── RESPONSIVE ──────────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
       .p-card { grid-template-columns: 60px 1fr; }
       .p-actions { display: none; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .tab-section-header { padding: 16px 16px 0; }
+      .jobs-wrap, .portal-wrap { padding: 12px 16px 80px; }
+      .filters, .li-filter-chips { padding: 12px 16px 0; }
+      .workday-hero, .portal-radar { margin: 12px 16px 0; }
+      .stats-row { padding: 12px 16px 0; }
     }
   </style>
 </head>
 <body>
 
-<!-- NAV -->
+<!-- ══════════ NAV ══════════ -->
 <nav>
-  <div class="brand">Job Board <em>// Ameya</em></div>
-  <span id="scan-status"></span>
-  <div class="scan-group">
-    <label style="font-size:12px;color:var(--muted);white-space:nowrap">Lookback hrs:</label>
-    <input id="scan-hours" class="scan-hours" type="number" min="1" max="24" value="2" />
+  <div class="brand">
+    <span class="brand-name">JobBoard</span>
+    <span class="brand-dot"></span>
+    <span class="brand-sub">Ameya</span>
   </div>
-  <button class="btn btn-li" id="btn-li" onclick="scanLinkedIn()">
-    <i class="bi bi-linkedin"></i> LinkedIn Scan
-  </button>
-  <button class="btn btn-hc" id="btn-hc" onclick="scanHiringCafe()">
-    <i class="bi bi-cup-hot"></i> HiringCafe Scan
-  </button>
-  <button class="btn btn-wd" id="btn-wd" onclick="scanWorkday()">
-    <i class="bi bi-building"></i> Workday Scan
-  </button>
-  <button class="btn btn-gh" id="btn-gh" onclick="scanGreenhouse()">
-    <i class="bi bi-briefcase"></i> GH + Lever Scan
-  </button>
+  <span id="scan-status"></span>
+  <div class="nav-right">
+    <div class="nav-lookback">
+      <i class="bi bi-clock" style="font-size:11px"></i>
+      <label for="scan-hours" style="white-space:nowrap">Lookback hrs</label>
+      <input id="scan-hours" class="scan-hours" type="number" min="1" max="168" value="2" />
+    </div>
+  </div>
 </nav>
 
-<!-- TAB BAR -->
+<!-- ══════════ TAB BAR ══════════ -->
 <div class="tab-bar">
-  <button class="tab-btn active" id="tab-btn-all" onclick="switchTab('all')">
-    <i class="bi bi-grid-3x3-gap"></i> All Jobs
+  <button class="tab-btn active" id="tab-btn-all" data-tab="all" onclick="switchTab('all')">
+    <i class="bi bi-lightning-charge-fill"></i> Live Feed
+    <span class="tab-badge accent-all" id="all-badge"></span>
   </button>
-  <button class="tab-btn" id="tab-btn-portals" onclick="switchTab('portals')">
+  <button class="tab-btn" id="tab-btn-linkedin" data-tab="linkedin" onclick="switchTab('linkedin')">
+    <i class="bi bi-linkedin"></i> LinkedIn &amp; Boards
+    <span class="tab-badge accent-li" id="linkedin-badge"></span>
+  </button>
+  <button class="tab-btn" id="tab-btn-workday" data-tab="workday" onclick="switchTab('workday')">
+    <i class="bi bi-building-fill"></i> Workday
+    <span class="tab-badge accent-wd" id="workday-badge"></span>
+  </button>
+  <button class="tab-btn" id="tab-btn-portals" data-tab="portals" onclick="switchTab('portals')">
     <i class="bi bi-radar"></i> Company Portals
-    <span class="tab-badge" id="portals-badge">0</span>
+    <span class="tab-badge accent-portal" id="portals-badge"></span>
   </button>
 </div>
 
-<!-- ════════════ TAB: ALL JOBS ════════════ -->
+
+<!-- ══════════════════════════════════════════════════════
+     TAB 1 — LIVE FEED
+════════════════════════════════════════════════════════ -->
 <div id="tab-all">
 
-<!-- STATS -->
-<div class="stats">
-  <div class="stat hot">   <div class="lbl">New (last hour)</div>  <div class="val" id="s-hour">—</div></div>
-  <div class="stat fresh"> <div class="lbl">Last 2 hours</div>     <div class="val" id="s-2h">—</div></div>
-  <div class="stat total"> <div class="lbl">Total tracked</div>    <div class="val" id="s-total">—</div></div>
-  <div class="stat done">  <div class="lbl">Applied</div>           <div class="val" id="s-applied">—</div></div>
-</div>
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card hot">
+      <div class="stat-lbl"><i class="bi bi-fire"></i> New last hour</div>
+      <div class="stat-val" id="s-hour">—</div>
+      <div class="stat-glow"></div>
+    </div>
+    <div class="stat-card fresh">
+      <div class="stat-lbl"><i class="bi bi-stars"></i> Last 2 hours</div>
+      <div class="stat-val" id="s-2h">—</div>
+      <div class="stat-glow"></div>
+    </div>
+    <div class="stat-card total">
+      <div class="stat-lbl"><i class="bi bi-layers"></i> Total tracked</div>
+      <div class="stat-val" id="s-total">—</div>
+      <div class="stat-glow"></div>
+    </div>
+    <div class="stat-card done">
+      <div class="stat-lbl"><i class="bi bi-check2-circle"></i> Applied</div>
+      <div class="stat-val" id="s-applied">—</div>
+      <div class="stat-glow"></div>
+    </div>
+  </div>
 
-<!-- FILTERS -->
-<div class="filters">
-  <input class="search" id="search" type="text" placeholder="🔍  Search role or company…" oninput="render()" />
-  <button class="chip on" data-src="all"        onclick="setSource(this)">All</button>
-  <button class="chip"    data-src="linkedin"   onclick="setSource(this)">LinkedIn</button>
-  <button class="chip"    data-src="greenhouse" onclick="setSource(this)">Greenhouse</button>
-  <button class="chip"    data-src="lever"      onclick="setSource(this)">Lever</button>
-  <button class="chip"    data-src="remotive"   onclick="setSource(this)">Remotive</button>
-  <button class="chip"    data-src="themuse"    onclick="setSource(this)">TheMuse</button>
-  <button class="chip"    data-src="adzuna"      onclick="setSource(this)">Adzuna</button>
-  <button class="chip"    data-src="hiringcafe" onclick="setSource(this)">HiringCafe</button>
-  <button class="chip"    data-src="workday"   onclick="setSource(this)">Workday</button>
-  <button class="chip"    data-src="new"        onclick="setSource(this)" style="color:var(--orange);border-color:#3a2a00">🔥 New</button>
-  <label class="hide-toggle">
-    <input type="checkbox" id="hide-applied" checked onchange="render()" /> Hide applied
-  </label>
-</div>
+  <!-- Filters -->
+  <div class="filters">
+    <input class="search" id="search" type="text" placeholder="&#128269;  Search role or company…" oninput="render()" />
+    <button class="chip on" data-src="all"        onclick="setSource(this)">All</button>
+    <button class="chip"    data-src="linkedin"   onclick="setSource(this)">LinkedIn</button>
+    <button class="chip"    data-src="greenhouse" onclick="setSource(this)">Greenhouse</button>
+    <button class="chip"    data-src="lever"      onclick="setSource(this)">Lever</button>
+    <button class="chip"    data-src="remotive"   onclick="setSource(this)">Remotive</button>
+    <button class="chip"    data-src="themuse"    onclick="setSource(this)">TheMuse</button>
+    <button class="chip"    data-src="adzuna"     onclick="setSource(this)">Adzuna</button>
+    <button class="chip"    data-src="hiringcafe" onclick="setSource(this)">HiringCafe</button>
+    <button class="chip"    data-src="workday"    onclick="setSource(this)">Workday</button>
+    <button class="chip"    data-src="new"        onclick="setSource(this)">🔥 New</button>
+    <label class="hide-toggle">
+      <input type="checkbox" id="hide-applied" checked onchange="render()" /> Hide applied
+    </label>
+  </div>
 
-<!-- JOBS -->
-<div class="jobs-wrap">
-  <div class="jobs-count" id="jobs-count"></div>
-  <div class="job-grid" id="grid"></div>
-</div>
+  <!-- Jobs -->
+  <div class="jobs-wrap">
+    <div class="jobs-count" id="jobs-count"></div>
+    <div class="job-grid" id="grid"></div>
+  </div>
 
-</div><!-- end #tab-all -->
+</div><!-- #tab-all -->
 
-<!-- ════════════ TAB: COMPANY PORTALS ════════════ -->
+
+<!-- ══════════════════════════════════════════════════════
+     TAB 2 — LINKEDIN & BOARDS
+════════════════════════════════════════════════════════ -->
+<div id="tab-linkedin" style="display:none">
+
+  <!-- Section header with scan buttons -->
+  <div class="tab-section-header">
+    <div>
+      <div class="tsh-title" style="background:linear-gradient(135deg,#38bdf8,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent">LinkedIn &amp; Job Boards</div>
+      <div class="tsh-sub">Live feed from LinkedIn · HiringCafe · Remotive · TheMuse · Adzuna</div>
+    </div>
+    <div class="tsh-actions">
+      <button class="btn btn-li" id="btn-li" onclick="scanLinkedIn()">
+        <i class="bi bi-linkedin"></i> LinkedIn Scan
+      </button>
+      <button class="btn btn-hc" id="btn-hc" onclick="scanHiringCafe()">
+        <i class="bi bi-cup-hot"></i> HiringCafe Scan
+      </button>
+      <span style="font-size:11px;color:var(--muted);white-space:nowrap">
+        <i class="bi bi-arrow-repeat" style="font-size:10px"></i> Remotive &amp; TheMuse auto-pull
+      </span>
+    </div>
+  </div>
+
+  <!-- Filter chips per board -->
+  <div class="li-filter-chips">
+    <button class="li-chip active" data-src="all" onclick="setLiFilter(this)">All Boards</button>
+    <button class="li-chip" data-src="linkedin"   onclick="setLiFilter(this)"><i class="bi bi-linkedin" style="font-size:11px"></i> LinkedIn</button>
+    <button class="li-chip" data-src="hiringcafe" onclick="setLiFilter(this)"><i class="bi bi-cup-hot" style="font-size:11px"></i> HiringCafe</button>
+    <button class="li-chip" data-src="remotive"   onclick="setLiFilter(this)">Remotive</button>
+    <button class="li-chip" data-src="themuse"    onclick="setLiFilter(this)">TheMuse</button>
+    <button class="li-chip" data-src="adzuna"     onclick="setLiFilter(this)">Adzuna</button>
+    <label class="hide-toggle" style="margin-left:auto">
+      <input type="checkbox" id="li-hide-applied" checked onchange="renderLinkedinTab()" /> Hide applied
+    </label>
+  </div>
+
+  <!-- Job grid -->
+  <div class="jobs-wrap">
+    <div class="jobs-count" id="linkedin-count"></div>
+    <div class="job-grid" id="linkedin-grid"></div>
+  </div>
+
+</div><!-- #tab-linkedin -->
+
+
+<!-- ══════════════════════════════════════════════════════
+     TAB 3 — WORKDAY
+════════════════════════════════════════════════════════ -->
+<div id="tab-workday" style="display:none">
+
+  <!-- Hero banner -->
+  <div class="workday-hero">
+    <div class="workday-hero-glow"></div>
+    <div class="wd-stat-big">
+      <div class="wd-num" id="workday-count">—</div>
+      <div class="wd-lbl">Workday Jobs</div>
+    </div>
+    <div class="wd-divider"></div>
+    <div class="wd-meta">
+      <div class="wd-meta-item">
+        <i class="bi bi-building" style="color:var(--c-workday)"></i>
+        <span>Fortune 500 &amp; enterprise companies</span>
+      </div>
+      <div class="wd-meta-item">
+        <i class="bi bi-clock-history" style="color:var(--muted)"></i>
+        <span>Sorted newest first</span>
+      </div>
+    </div>
+    <div class="wd-actions">
+      <button class="btn-workday-scan" id="btn-wd" onclick="scanWorkday()">
+        <i class="bi bi-play-fill"></i> Workday Scan
+      </button>
+      <label class="hide-toggle" style="font-size:11px">
+        <input type="checkbox" id="wd-hide-applied" checked onchange="renderWorkdayTab()" /> Hide applied
+      </label>
+    </div>
+  </div>
+
+  <!-- Feed -->
+  <div class="portal-wrap">
+    <div class="portal-toolbar">
+      <input class="search" id="wd-search" type="text" placeholder="&#128269;  Search Workday jobs…" oninput="renderWorkdayTab()" />
+      <span class="portal-count" id="wd-count-label"></span>
+    </div>
+    <div class="portal-feed" id="workday-feed"></div>
+  </div>
+
+</div><!-- #tab-workday -->
+
+
+<!-- ══════════════════════════════════════════════════════
+     TAB 4 — COMPANY PORTALS
+════════════════════════════════════════════════════════ -->
 <div id="tab-portals" style="display:none">
 
-  <!-- PORTAL RADAR -->
+  <!-- Radar panel -->
   <div class="portal-radar">
     <div class="radar-header">
       <div class="radar-title">
@@ -672,90 +1231,107 @@
         </span>
         <span class="radar-meta-item">
           <i class="bi bi-arrow-repeat"></i>
-          Next: <span class="countdown" id="pr-countdown">—</span>
+          Next auto: <span class="countdown" id="pr-countdown">—</span>
         </span>
         <span class="radar-meta-item" id="pr-added-msg" style="display:none">
-          <i class="bi bi-plus-circle" style="color:var(--green)"></i>
-          <strong id="pr-added-count" style="color:var(--green)">0</strong> new jobs last scan
+          <i class="bi bi-plus-circle" style="color:var(--c-greenhouse)"></i>
+          <strong id="pr-added-count" style="color:var(--c-greenhouse)">0</strong> new jobs last scan
         </span>
       </div>
-      <button class="btn-portal-scan" id="btn-portal-scan" onclick="scanPortals()">
-        <i class="bi bi-play-fill"></i> Scan Now
-      </button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-gh" id="btn-gh" onclick="scanGreenhouse()" style="font-size:12px;padding:7px 13px">
+          <i class="bi bi-briefcase"></i> GH+Lever Quick
+        </button>
+        <button class="btn-portal-scan" id="btn-portal-scan" onclick="scanPortals()">
+          <i class="bi bi-play-fill"></i> Scan All Portals
+        </button>
+      </div>
     </div>
 
+    <!-- 6-card grid: GH, Lever, Ashby, Goldman, Oracle, Deloitte -->
     <div class="radar-sources">
-      <div class="radar-source">
-        <div class="rs-name"><i class="bi bi-briefcase" style="color:var(--green)"></i> Greenhouse</div>
-        <div class="rs-count" id="rs-count-greenhouse">—</div>
-        <div class="rs-label">jobs fetched last scan</div>
+      <div class="radar-source" style="border-color:rgba(52,211,153,.2)">
+        <div class="rs-name"><i class="bi bi-briefcase" style="color:var(--c-greenhouse)"></i> Greenhouse</div>
+        <div class="rs-count" id="rs-count-greenhouse" style="color:var(--c-greenhouse)">—</div>
+        <div class="rs-label">jobs last scan</div>
       </div>
-      <div class="radar-source">
-        <div class="rs-name"><i class="bi bi-building" style="color:#818cf8"></i> Lever</div>
-        <div class="rs-count" id="rs-count-lever">—</div>
-        <div class="rs-label">jobs fetched last scan</div>
+      <div class="radar-source" style="border-color:rgba(129,140,248,.2)">
+        <div class="rs-name"><i class="bi bi-building" style="color:var(--c-lever)"></i> Lever</div>
+        <div class="rs-count" id="rs-count-lever" style="color:var(--c-lever)">—</div>
+        <div class="rs-label">jobs last scan</div>
       </div>
-      <div class="radar-source">
-        <div class="rs-name"><i class="bi bi-star" style="color:#c084fc"></i> Ashby</div>
-        <div class="rs-count" id="rs-count-ashby">—</div>
-        <div class="rs-label">jobs fetched last scan</div>
+      <div class="radar-source" style="border-color:rgba(192,132,252,.2)">
+        <div class="rs-name"><i class="bi bi-star" style="color:var(--c-ashby)"></i> Ashby</div>
+        <div class="rs-count" id="rs-count-ashby" style="color:var(--c-ashby)">—</div>
+        <div class="rs-label">jobs last scan</div>
       </div>
-      <div class="radar-source" style="border-color:#0e4c78">
-        <div class="rs-name"><i class="bi bi-globe" style="color:#38bdf8"></i> Workday</div>
-        <div class="rs-count" id="rs-count-workday">—</div>
-        <div class="rs-label">jobs fetched last scan</div>
+      <div class="radar-source" style="border-color:rgba(201,170,113,.2)">
+        <div class="rs-name"><i class="bi bi-bank" style="color:var(--c-goldman_sachs)"></i> Goldman Sachs</div>
+        <div class="rs-count" id="rs-count-goldman_sachs" style="color:var(--c-goldman_sachs)">—</div>
+        <div class="rs-label">jobs last scan</div>
       </div>
-      <div class="radar-source" style="border-color:#c9aa7144">
-        <div class="rs-name"><i class="bi bi-bank" style="color:#c9aa71"></i> Goldman Sachs</div>
-        <div class="rs-count" id="rs-count-goldman_sachs">—</div>
-        <div class="rs-label">jobs fetched last scan</div>
+      <div class="radar-source" style="border-color:rgba(245,158,11,.2)">
+        <div class="rs-name"><i class="bi bi-building-fill" style="color:var(--c-oracle_hcm)"></i> Oracle HCM</div>
+        <div class="rs-count" id="rs-count-oracle_hcm" style="color:var(--c-oracle_hcm)">—</div>
+        <div class="rs-label">JPMorgan · Amex · Oracle</div>
       </div>
-      <div class="radar-source" style="border-color:#f0800044">
-        <div class="rs-name"><i class="bi bi-building-fill" style="color:#f08000"></i> Oracle HCM</div>
-        <div class="rs-count" id="rs-count-oracle_hcm">—</div>
-        <div class="rs-label">JPMorgan · Amex · GS · Oracle</div>
-      </div>
-      <div class="radar-source" style="border-color:#00a3e044">
-        <div class="rs-name"><i class="bi bi-diagram-3" style="color:#00a3e0"></i> Deloitte</div>
-        <div class="rs-count" id="rs-count-deloitte">—</div>
-        <div class="rs-label">jobs fetched last scan</div>
+      <div class="radar-source" style="border-color:rgba(0,163,224,.2)">
+        <div class="rs-name"><i class="bi bi-diagram-3" style="color:var(--c-deloitte)"></i> Deloitte</div>
+        <div class="rs-count" id="rs-count-deloitte" style="color:var(--c-deloitte)">—</div>
+        <div class="rs-label">jobs last scan</div>
       </div>
     </div>
+
+    <!-- Hidden workday count for JS compatibility -->
+    <span id="rs-count-workday" style="display:none">—</span>
   </div>
 
-  <!-- PORTAL JOB FEED -->
+  <!-- Portal feed -->
   <div class="portal-wrap">
     <div class="portal-toolbar">
-      <input class="search" id="portal-search" type="text"
-             placeholder="🔍  Search portal jobs…" oninput="renderPortal()" />
+      <input class="search" id="portal-search" type="text" placeholder="&#128269;  Search portal jobs…" oninput="renderPortal()" />
       <label class="hide-toggle">
-        <input type="checkbox" id="portal-hide-applied" checked onchange="renderPortal()" />
-        Hide applied
+        <input type="checkbox" id="portal-hide-applied" checked onchange="renderPortal()" /> Hide applied
       </label>
       <span class="portal-count" id="portal-count"></span>
     </div>
     <div class="portal-feed" id="portal-feed">
-      <div class="empty" style="text-align:center;padding:60px 20px;color:var(--muted)">
-        <i class="bi bi-radar" style="font-size:40px;display:block;margin-bottom:12px;color:var(--border)"></i>
-        Hit <strong style="color:var(--text)">Scan Now</strong> to pull fresh jobs from all company portals.<br/>
-        <span style="font-size:12px;margin-top:8px;display:block">Auto-scan runs every 60 minutes.</span>
+      <div class="empty-state">
+        <div class="empty-state-icon" style="color:var(--t-portals)"><i class="bi bi-radar"></i></div>
+        <h3>Portal Radar Ready</h3>
+        <p>Hit <strong style="color:var(--text)">Scan Now</strong> to pull fresh jobs from Greenhouse, Lever, Ashby, Goldman Sachs, Oracle HCM and Deloitte.<br/>Auto-scan runs every 60 minutes.</p>
       </div>
     </div>
   </div>
-</div><!-- end #tab-portals -->
+
+</div><!-- #tab-portals -->
+
 
 <!-- SCROLL TOP -->
-<button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑ Top</button>
+<button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <i class="bi bi-arrow-up-short"></i> Top
+</button>
 
 <!-- TOASTS -->
 <div class="toasts" id="toasts"></div>
 
-<script>
-// ── State ──────────────────────────────────────────────────────────────
-let allJobs   = [];
-let activeSrc = "all";
 
-// ── Utils ──────────────────────────────────────────────────────────────
+<script>
+// ════════════════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════════════════
+let allJobs         = [];
+let portalJobs      = [];
+let activeSrc       = "all";
+let activeLiSrc     = "all";
+let activeTab       = "all";
+let portalScanRunning = false;
+
+const LI_SOURCES = ["linkedin", "hiringcafe", "remotive", "themuse", "adzuna"];
+
+// ════════════════════════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════════════════════════
 function timeAgo(str) {
   if (!str) return { rel: "Unknown", abs: "", fresh: false };
   const d = new Date(str), now = new Date();
@@ -772,14 +1348,60 @@ function esc(s) {
   return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
-function toast(msg, color = "var(--green)") {
+function toast(msg, color = "var(--c-greenhouse)") {
   const el = Object.assign(document.createElement("div"), { className: "toast", innerHTML: msg });
   el.style.borderLeft = `3px solid ${color}`;
   document.getElementById("toasts").appendChild(el);
   setTimeout(() => el.remove(), 3800);
 }
 
-// ── Render ─────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════
+// JOB CARD BUILDER (shared by Tab 1 & Tab 2)
+// ════════════════════════════════════════════════════════════════════════
+function buildJobCard(j, onToggle) {
+  const ts    = timeAgo(j.posted_at || j.seen_at);
+  const src   = (j.source || "unknown").toLowerCase();
+  const srcCap = src.charAt(0).toUpperCase() + src.slice(1);
+  const isNew = ts.fresh;
+  const isAp  = !!j.applied;
+
+  const newTag = isNew
+    ? `<span class="tag tag-new"><i class="bi bi-lightning-charge-fill"></i> NEW</span>` : "";
+  const srcTag = `<span class="tag tag-src-${src}">${srcCap}</span>`;
+
+  const applyLabel = isAp
+    ? `<i class="bi bi-check2-circle"></i> Applied`
+    : `<i class="bi bi-box-arrow-up-right"></i> Apply`;
+
+  return `<div class="job-card ${isAp ? "applied" : ""}" data-id="${esc(j.job_id)}" data-src="${esc(src)}">
+    <div class="card-top">
+      <div class="source-dot dot-${src}"></div>
+      <div class="card-titles">
+        <a class="card-role" href="${esc(j.url)}" target="_blank" rel="noopener" title="${esc(j.title)}">${esc(j.title)}</a>
+        <div class="card-company">${esc(j.company)}</div>
+      </div>
+    </div>
+    <div class="card-meta">
+      <span class="meta-item"><i class="bi bi-geo-alt"></i>${esc(j.location || "Unspecified")}</span>
+      <span class="meta-item"><i class="bi bi-clock"></i>${ts.rel}</span>
+      ${srcTag}${newTag}
+    </div>
+    <div class="card-actions">
+      <a class="btn-apply ${isAp ? "done" : ""}" href="${esc(j.url)}" target="_blank" rel="noopener"
+         onclick="markApplied(event,'${esc(j.job_id)}',this)">
+        ${applyLabel}
+      </a>
+      <button class="btn-mark ${isAp ? "done" : ""}" title="Toggle applied"
+              onclick="toggleApplied('${esc(j.job_id)}',this)">
+        <i class="bi bi-${isAp ? "bookmark-check-fill" : "bookmark"}"></i>
+      </button>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// TAB 1 — RENDER (All Jobs)
+// ════════════════════════════════════════════════════════════════════════
 function render() {
   const q      = document.getElementById("search").value.toLowerCase();
   const hideAp = document.getElementById("hide-applied").checked;
@@ -799,66 +1421,128 @@ function render() {
     return true;
   });
 
-  // Sort: newest first
-  filtered.sort((a, b) => {
-    const ta = new Date(a.posted_at || a.seen_at || 0);
-    const tb = new Date(b.posted_at || b.seen_at || 0);
-    return tb - ta;
-  });
+  filtered.sort((a, b) => new Date(b.posted_at || b.seen_at || 0) - new Date(a.posted_at || a.seen_at || 0));
 
   document.getElementById("jobs-count").textContent = `${filtered.length} job${filtered.length !== 1 ? "s" : ""}`;
-  const grid = document.getElementById("grid");
 
+  // Update badge
+  const allBadge = document.getElementById("all-badge");
+  allBadge.textContent = allJobs.length;
+  allBadge.classList.toggle("show", allJobs.length > 0);
+
+  const grid = document.getElementById("grid");
   if (!filtered.length) {
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
-      <i class="bi bi-inbox"></i>No jobs match your filters.
+    grid.innerHTML = `<div style="grid-column:1/-1">
+      <div class="empty-state">
+        <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+        <h3>No jobs found</h3>
+        <p>Try adjusting your filters or run a scan to fetch fresh listings.</p>
+      </div>
     </div>`;
     return;
   }
 
-  grid.innerHTML = filtered.map(j => {
-    const ts    = timeAgo(j.posted_at || j.seen_at);
-    const src   = (j.source || "unknown").toLowerCase();
-    const srcCap = src.charAt(0).toUpperCase() + src.slice(1);
-    const isNew = ts.fresh;
-    const isAp  = !!j.applied;
-
-    const newTag = isNew
-      ? `<span class="tag tag-new"><i class="bi bi-lightning-charge-fill"></i> NEW</span>` : "";
-    const srcTag = `<span class="tag tag-src-${src}">${srcCap}</span>`;
-
-    const applyLabel = isAp
-      ? `<i class="bi bi-check2-circle"></i> Applied`
-      : `<i class="bi bi-box-arrow-up-right"></i> Apply`;
-
-    return `<div class="job-card ${isNew ? "is-new" : ""} ${isAp ? "applied" : ""}" data-id="${esc(j.job_id)}">
-      <div class="card-top">
-        <div class="source-dot dot-${src}"></div>
-        <div class="card-titles">
-          <a class="card-role" href="${esc(j.url)}" target="_blank" rel="noopener" title="${esc(j.title)}">${esc(j.title)}</a>
-          <div class="card-company">${esc(j.company)}</div>
-        </div>
-      </div>
-      <div class="card-meta">
-        <span class="meta-item"><i class="bi bi-geo-alt"></i>${esc(j.location || "Unspecified")}</span>
-        <span class="meta-item"><i class="bi bi-clock"></i>${ts.rel}</span>
-        ${srcTag}${newTag}
-      </div>
-      <div class="card-actions">
-        <a class="btn-apply ${isAp ? "done" : ""}" href="${esc(j.url)}" target="_blank" rel="noopener"
-           onclick="markApplied(event,'${esc(j.job_id)}',this)">
-          ${applyLabel}
-        </a>
-        <button class="btn-mark ${isAp ? "done" : ""}" title="Toggle applied"
-                onclick="toggleApplied('${esc(j.job_id)}',this)">
-          <i class="bi bi-${isAp ? "bookmark-check-fill" : "bookmark"}"></i>
-        </button>
-      </div>
-    </div>`;
-  }).join("");
+  grid.innerHTML = filtered.map(j => buildJobCard(j)).join("");
 }
 
-// ── Source filter ─────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════
+// TAB 2 — RENDER (LinkedIn & Boards)
+// ════════════════════════════════════════════════════════════════════════
+function renderLinkedinTab() {
+  const hideAp = document.getElementById("li-hide-applied")?.checked ?? true;
+  const now    = Date.now();
+
+  // Base: only LinkedIn/boards sources
+  let filtered = allJobs.filter(j => {
+    const src = (j.source || "").toLowerCase();
+    return LI_SOURCES.includes(src);
+  });
+
+  // Apply sub-filter chip
+  if (activeLiSrc !== "all") {
+    filtered = filtered.filter(j => (j.source || "").toLowerCase() === activeLiSrc);
+  }
+
+  // Hide applied
+  if (hideAp) filtered = filtered.filter(j => !j.applied);
+
+  filtered.sort((a, b) => new Date(b.posted_at || b.seen_at || 0) - new Date(a.posted_at || a.seen_at || 0));
+
+  // Count for badge (all LI jobs regardless of filter/hide)
+  const liTotal = allJobs.filter(j => LI_SOURCES.includes((j.source || "").toLowerCase())).length;
+  const liBadge = document.getElementById("linkedin-badge");
+  liBadge.textContent = liTotal;
+  liBadge.classList.toggle("show", liTotal > 0);
+
+  document.getElementById("linkedin-count").textContent = `${filtered.length} job${filtered.length !== 1 ? "s" : ""}`;
+
+  const grid = document.getElementById("linkedin-grid");
+  if (!filtered.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1">
+      <div class="empty-state">
+        <div class="empty-state-icon" style="color:var(--t-li)"><i class="bi bi-linkedin"></i></div>
+        <h3>No board jobs yet</h3>
+        <p>Click <strong style="color:var(--text)">LinkedIn Scan</strong> or <strong style="color:var(--text)">HiringCafe Scan</strong> above to pull fresh listings.</p>
+      </div>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(j => buildJobCard(j)).join("");
+}
+
+function setLiFilter(btn) {
+  document.querySelectorAll(".li-chip").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  activeLiSrc = btn.dataset.src;
+  renderLinkedinTab();
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// TAB 3 — RENDER (Workday)
+// ════════════════════════════════════════════════════════════════════════
+function renderWorkdayTab() {
+  const q      = (document.getElementById("wd-search")?.value || "").toLowerCase();
+  const hideAp = document.getElementById("wd-hide-applied")?.checked ?? true;
+  const now    = Date.now();
+
+  let filtered = portalJobs.filter(j => {
+    const src = (j.source || "").toLowerCase();
+    if (src !== "workday") return false;
+    if (hideAp && j.applied) return false;
+    if (!isUS(j.location)) return false;
+    if (q && !j.title.toLowerCase().includes(q) && !(j.company||"").toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => new Date(b.posted_at || b.seen_at || 0) - new Date(a.posted_at || a.seen_at || 0));
+
+  // Badge: total workday count
+  const wdTotal = portalJobs.filter(j => (j.source||"").toLowerCase() === "workday").length;
+  const wdBadge = document.getElementById("workday-badge");
+  wdBadge.textContent = wdTotal;
+  wdBadge.classList.toggle("show", wdTotal > 0);
+
+  // Update hero number
+  document.getElementById("workday-count").textContent = wdTotal || 0;
+  document.getElementById("wd-count-label").textContent = `${filtered.length} job${filtered.length !== 1 ? "s" : ""}`;
+
+  const feed = document.getElementById("workday-feed");
+  if (!filtered.length) {
+    feed.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon" style="color:var(--c-workday)"><i class="bi bi-building-fill"></i></div>
+      <h3>No Workday jobs yet</h3>
+      <p>Click <strong style="color:var(--text)">Workday Scan</strong> to scrape Fortune 500 career portals.</p>
+    </div>`;
+    return;
+  }
+
+  feed.innerHTML = filtered.map(j => renderPCard(j)).join("");
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// SOURCE FILTER (Tab 1)
+// ════════════════════════════════════════════════════════════════════════
 function setSource(btn) {
   document.querySelectorAll(".chip").forEach(b => b.classList.remove("on"));
   btn.classList.add("on");
@@ -866,11 +1550,14 @@ function setSource(btn) {
   render();
 }
 
-// ── Data ──────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════
+// DATA LOADING
+// ════════════════════════════════════════════════════════════════════════
 async function loadJobs() {
   const r = await fetch("/api/jobs");
   allJobs = await r.json();
   render();
+  renderLinkedinTab();
 }
 
 async function loadStats() {
@@ -880,8 +1567,7 @@ async function loadStats() {
   document.getElementById("s-total").textContent   = s.total      ?? 0;
   document.getElementById("s-applied").textContent = s.applied    ?? 0;
 
-  // 2-hour count
-  const now = Date.now();
+  const now  = Date.now();
   const twoH = allJobs.filter(j => {
     const t = new Date(j.posted_at || j.seen_at || 0);
     return (now - t) <= 2 * 3600 * 1000;
@@ -889,18 +1575,20 @@ async function loadStats() {
   document.getElementById("s-2h").textContent = twoH;
 }
 
-// ── Apply actions ─────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════
+// APPLY ACTIONS (Tab 1 & 2)
+// ════════════════════════════════════════════════════════════════════════
 function markApplied(e, jobId, link) {
-  // Fire-and-forget mark when user clicks the Apply link
   setTimeout(() => {
     const job = allJobs.find(j => j.job_id === jobId);
     if (job && !job.applied) {
       fetch(`/api/jobs/${jobId}/toggle`, { method: "POST" });
       job.applied = true;
       render();
+      renderLinkedinTab();
       loadStats();
     }
-  }, 3000); // small delay so user has time to open tab first
+  }, 3000);
 }
 
 async function toggleApplied(jobId, btn) {
@@ -909,11 +1597,14 @@ async function toggleApplied(jobId, btn) {
   const job  = allJobs.find(j => j.job_id === jobId);
   if (job) { job.applied = data.applied; }
   render();
+  renderLinkedinTab();
   loadStats();
   toast(data.applied ? "Marked as applied ✓" : "Unmarked");
 }
 
-// ── LinkedIn scan ─────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════
+// LINKEDIN SCAN
+// ════════════════════════════════════════════════════════════════════════
 async function scanLinkedIn() {
   const btn   = document.getElementById("btn-li");
   const hours = parseFloat(document.getElementById("scan-hours").value) || 2;
@@ -929,8 +1620,7 @@ async function scanLinkedIn() {
       body: JSON.stringify({ hours }),
     });
     if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
-
-    toast(`LinkedIn scan started (last ${hours}h) — takes ~2 min`, "var(--li-blue)");
+    toast(`LinkedIn scan started (last ${hours}h) — takes ~2 min`, "var(--c-linkedin)");
     pollLinkedInStatus();
   } catch(e) {
     toast("LinkedIn scan error: " + e.message, "var(--red)");
@@ -950,7 +1640,7 @@ function pollLinkedInStatus() {
           toast("LinkedIn scan failed: " + data.error, "var(--red)");
           setStatus("LinkedIn scan failed.");
         } else {
-          toast(`LinkedIn scan done — <strong>+${data.added} new jobs</strong>`, "var(--li-blue)");
+          toast(`LinkedIn scan done — <strong>+${data.added} new jobs</strong>`, "var(--c-linkedin)");
           setStatus(`LinkedIn scan done at ${new Date(data.finished_at).toLocaleTimeString()}`);
           await Promise.all([loadJobs(), loadStats()]);
         }
@@ -966,7 +1656,9 @@ function resetLiBtn() {
   btn.innerHTML = `<i class="bi bi-linkedin"></i> LinkedIn Scan`;
 }
 
-// ── HiringCafe scan ───────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════
+// HIRINGCAFE SCAN
+// ════════════════════════════════════════════════════════════════════════
 async function scanHiringCafe() {
   const btn   = document.getElementById("btn-hc");
   const hours = parseFloat(document.getElementById("scan-hours").value) || 2;
@@ -982,8 +1674,7 @@ async function scanHiringCafe() {
       body: JSON.stringify({ hours }),
     });
     if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
-
-    toast(`HiringCafe scan started (last ${hours}h) — takes ~3 min`, "#a78bfa");
+    toast(`HiringCafe scan started (last ${hours}h) — takes ~3 min`, "var(--c-hiringcafe)");
     pollHiringCafeStatus();
   } catch(e) {
     toast("HiringCafe scan error: " + e.message, "var(--red)");
@@ -1003,7 +1694,7 @@ function pollHiringCafeStatus() {
           toast("HiringCafe scan failed: " + data.error, "var(--red)");
           setStatus("HiringCafe scan failed.");
         } else {
-          toast(`HiringCafe scan done — <strong>+${data.added} new jobs</strong>`, "#a78bfa");
+          toast(`HiringCafe scan done — <strong>+${data.added} new jobs</strong>`, "var(--c-hiringcafe)");
           setStatus(`HiringCafe scan done at ${new Date(data.finished_at).toLocaleTimeString()}`);
           await Promise.all([loadJobs(), loadStats()]);
         }
@@ -1019,7 +1710,9 @@ function resetHcBtn() {
   btn.innerHTML = `<i class="bi bi-cup-hot"></i> HiringCafe Scan`;
 }
 
-// ── Workday scan ─────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════
+// WORKDAY SCAN
+// ════════════════════════════════════════════════════════════════════════
 async function scanWorkday() {
   const btn   = document.getElementById("btn-wd");
   const hours = parseFloat(document.getElementById("scan-hours").value) || 24;
@@ -1035,8 +1728,7 @@ async function scanWorkday() {
       body: JSON.stringify({ hours }),
     });
     if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
-
-    toast(`Workday scan started (last ${hours}h) — scanning ${hours <= 24 ? "~16 companies" : "all boards"}…`, "#38bdf8");
+    toast(`Workday scan started (last ${hours}h) — scanning ${hours <= 24 ? "~16 companies" : "all boards"}…`, "var(--c-workday)");
     pollWorkdayStatus();
   } catch(e) {
     toast("Workday scan error: " + e.message, "var(--red)");
@@ -1056,7 +1748,7 @@ function pollWorkdayStatus() {
           toast("Workday scan failed: " + data.error, "var(--red)");
           setStatus("Workday scan failed.");
         } else {
-          toast(`Workday scan done — <strong>+${data.added} new jobs</strong>`, "#38bdf8");
+          toast(`Workday scan done — <strong>+${data.added} new jobs</strong>`, "var(--c-workday)");
           setStatus(`Workday scan done at ${new Date(data.finished_at).toLocaleTimeString()}`);
           await Promise.all([loadJobs(), loadStats()]);
         }
@@ -1069,10 +1761,12 @@ function resetWdBtn() {
   const btn = document.getElementById("btn-wd");
   btn.disabled = false;
   btn.classList.remove("scanning");
-  btn.innerHTML = `<i class="bi bi-building"></i> Workday Scan`;
+  btn.innerHTML = `<i class="bi bi-play-fill"></i> Workday Scan`;
 }
 
-// ── GH + Lever scan ───────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════
+// GH + LEVER SCAN
+// ════════════════════════════════════════════════════════════════════════
 async function scanGreenhouse() {
   const btn   = document.getElementById("btn-gh");
   const hours = parseFloat(document.getElementById("scan-hours").value) || 2;
@@ -1088,7 +1782,7 @@ async function scanGreenhouse() {
     });
     const d = await r.json();
     if (d.error) throw new Error(d.error);
-    toast(`GH + Lever scan started (last ${hours}h) — refreshing in 25s…`, "var(--green)");
+    toast(`GH + Lever scan started (last ${hours}h) — refreshing in 25s…`, "var(--c-greenhouse)");
     setTimeout(async () => {
       await Promise.all([loadJobs(), loadStats()]);
       setStatus("GH + Lever scan finished");
@@ -1108,41 +1802,45 @@ function setStatus(msg) {
   document.getElementById("scan-status").textContent = msg;
 }
 
-// ── Scroll to top ─────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════
+// SCROLL TO TOP
+// ════════════════════════════════════════════════════════════════════════
 window.addEventListener("scroll", () => {
   document.getElementById("back-top").style.display = window.scrollY > 300 ? "block" : "none";
 });
 
-// ══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════
 // TAB SWITCHING
-// ══════════════════════════════════════════════════════════════════════
-let activeTab = "all";
-
+// ════════════════════════════════════════════════════════════════════════
 function switchTab(tab) {
   activeTab = tab;
-  document.getElementById("tab-all").style.display     = tab === "all"     ? "" : "none";
-  document.getElementById("tab-portals").style.display = tab === "portals" ? "" : "none";
-  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-  document.getElementById(`tab-btn-${tab}`).classList.add("active");
+  const tabs = ["all", "linkedin", "workday", "portals"];
+  tabs.forEach(t => {
+    const el = document.getElementById(`tab-${t}`);
+    if (el) el.style.display = t === tab ? "" : "none";
+    const btn = document.getElementById(`tab-btn-${t}`);
+    if (btn) btn.classList.toggle("active", t === tab);
+  });
   if (tab === "portals") {
     renderPortal();
     loadPortalStatus();
   }
+  if (tab === "workday") {
+    renderWorkdayTab();
+  }
+  if (tab === "linkedin") {
+    renderLinkedinTab();
+  }
 }
 
-// ══════════════════════════════════════════════════════════════════════
-// PORTAL TAB — Data & Rendering
-// ══════════════════════════════════════════════════════════════════════
-let portalJobs = [];
-let portalScanRunning = false;
-let _countdownTimer = null;
-
-// Freshness tier from age in minutes
+// ════════════════════════════════════════════════════════════════════════
+// PORTAL TAB — Freshness helpers
+// ════════════════════════════════════════════════════════════════════════
 function freshnessClass(mins) {
   if (mins < 0)    return "fresh-hot";
-  if (mins < 60)   return "fresh-hot";   // < 1 h  🔥
-  if (mins < 360)  return "fresh-warm";  // < 6 h  ✨
-  if (mins < 1440) return "fresh-cool";  // < 24h  🔵
+  if (mins < 60)   return "fresh-hot";
+  if (mins < 360)  return "fresh-warm";
+  if (mins < 1440) return "fresh-cool";
   return "fresh-cold";
 }
 
@@ -1161,7 +1859,7 @@ function freshnessLabel(mins) {
   return `${Math.floor(mins/1440)}d ago`;
 }
 
-// Non-US location filter matching main.py's _NON_US list
+// Non-US location filter
 const _NON_US_TERMS = [
   "india","bangalore","bengaluru","mumbai","pune","hyderabad","delhi","chennai","kolkata","noida","gurugram","gurgaon",
   "pakistan","karachi","lahore","islamabad","bangladesh","dhaka","sri lanka",
@@ -1181,22 +1879,31 @@ const _NON_US_TERMS = [
   "argentina","buenos aires","colombia","bogota","chile","santiago",
   "south africa","johannesburg","cape town","nigeria","lagos","kenya","nairobi","egypt","cairo",
 ];
+
 function isUS(location) {
   if (!location) return true;
   const loc = location.toLowerCase();
   return !_NON_US_TERMS.some(t => loc.includes(t));
 }
 
-async function loadPortalCompanies() { /* company lists removed */ }
+async function loadPortalCompanies() { /* removed */ }
 
+// ════════════════════════════════════════════════════════════════════════
+// PORTAL DATA LOAD
+// ════════════════════════════════════════════════════════════════════════
 async function loadPortalJobs() {
   try {
     const r = await fetch("/api/portal-jobs");
     portalJobs = await r.json();
     renderPortal();
-    // Update tab badge with jobs from last 2 hours
+    renderWorkdayTab();
+    renderLinkedinTab();
+
+    // Portals badge: non-workday portal jobs fresh in last 2h
     const twoH = 2 * 60 * 60 * 1000;
     const fresh = portalJobs.filter(j => {
+      const src = (j.source||"").toLowerCase();
+      if (src === "workday") return false;
       const t = new Date(j.posted_at || j.seen_at || 0);
       return (Date.now() - t) <= twoH;
     }).length;
@@ -1206,12 +1913,76 @@ async function loadPortalJobs() {
   } catch (e) { /* ignore */ }
 }
 
-function renderPortal() {
-  const q       = (document.getElementById("portal-search")?.value || "").toLowerCase();
-  const hideAp  = document.getElementById("portal-hide-applied")?.checked ?? true;
-  const now     = Date.now();
+// ════════════════════════════════════════════════════════════════════════
+// P-CARD BUILDER (shared by Tab 3 & Tab 4)
+// ════════════════════════════════════════════════════════════════════════
+const SRC_COLOR = {
+  greenhouse: "var(--c-greenhouse)",
+  lever:      "var(--c-lever)",
+  ashby:      "var(--c-ashby)",
+  workday:    "var(--c-workday)",
+  goldman_sachs: "var(--c-goldman_sachs)",
+  oracle_hcm:    "var(--c-oracle_hcm)",
+  deloitte:      "var(--c-deloitte)",
+};
 
+function renderPCard(j) {
+  const now   = Date.now();
+  const ts    = new Date(j.posted_at || j.seen_at || 0);
+  const mins  = isNaN(ts) ? 9999 : Math.floor((now - ts) / 60000);
+  const fc    = freshnessClass(mins);
+  const icon  = freshnessIcon(mins);
+  const label = freshnessLabel(mins);
+  const src   = (j.source || "").toLowerCase();
+  const color = SRC_COLOR[src] || "var(--muted)";
+  const isAp  = !!j.applied;
+  const srcCap = src.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+  return `<div class="p-card ${fc} ${isAp ? "applied" : ""}" data-id="${esc(j.job_id)}">
+    <div class="p-fresh">
+      <div class="p-fresh-icon">${icon}</div>
+      <div class="p-fresh-time">${label}</div>
+      <div class="p-fresh-label" style="color:${color}">${srcCap}</div>
+    </div>
+    <div class="p-info">
+      <a class="p-title" href="${esc(j.url)}" target="_blank" rel="noopener"
+         title="${esc(j.title)}"
+         onclick="portalMarkApplied(event,'${esc(j.job_id)}')">${esc(j.title)}</a>
+      <div class="p-company">${esc(j.company || "Unknown")}</div>
+      <div class="p-meta">
+        <span class="p-meta-item"><i class="bi bi-geo-alt"></i>${esc(j.location || "Unspecified")}</span>
+        <span class="p-meta-item" style="color:${color}">
+          <i class="bi bi-circle-fill" style="font-size:5px"></i>${srcCap}
+        </span>
+      </div>
+    </div>
+    <div class="p-actions">
+      <a class="p-apply ${isAp ? "done" : ""}" href="${esc(j.url)}" target="_blank" rel="noopener"
+         onclick="portalMarkApplied(event,'${esc(j.job_id)}')">
+        ${isAp
+          ? `<i class="bi bi-check2-circle"></i> Applied`
+          : `<i class="bi bi-box-arrow-up-right"></i> Apply`}
+      </a>
+      <button class="p-bookmark ${isAp ? "done" : ""}" title="Toggle applied"
+              onclick="portalToggleApplied('${esc(j.job_id)}',this)">
+        <i class="bi bi-bookmark${isAp ? "-check-fill" : ""}"></i>
+        ${isAp ? "Applied" : "Mark"}
+      </button>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// TAB 4 — RENDER PORTAL FEED
+// ════════════════════════════════════════════════════════════════════════
+function renderPortal() {
+  const q      = (document.getElementById("portal-search")?.value || "").toLowerCase();
+  const hideAp = document.getElementById("portal-hide-applied")?.checked ?? true;
+
+  // Portals tab shows everything EXCEPT workday (workday has its own tab)
   let filtered = portalJobs.filter(j => {
+    const src = (j.source||"").toLowerCase();
+    if (src === "workday") return false;
     if (hideAp && j.applied) return false;
     if (!isUS(j.location)) return false;
     if (q && !j.title.toLowerCase().includes(q) && !(j.company||"").toLowerCase().includes(q)) return false;
@@ -1223,101 +1994,51 @@ function renderPortal() {
 
   const feed = document.getElementById("portal-feed");
   if (!filtered.length) {
-    feed.innerHTML = `<div class="empty" style="text-align:center;padding:60px 20px;color:var(--muted)">
-      <i class="bi bi-inbox" style="font-size:40px;display:block;margin-bottom:12px"></i>
-      No portal jobs match your filters.</div>`;
+    feed.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon" style="color:var(--t-portals)"><i class="bi bi-radar"></i></div>
+      <h3>No portal jobs found</h3>
+      <p>Hit <strong style="color:var(--text)">Scan Now</strong> to pull fresh jobs from all company portals.<br/>Auto-scan runs every 60 minutes.</p>
+    </div>`;
     return;
   }
 
-  // Source tag colours
-  const srcColor = {
-    greenhouse: "var(--green)", lever: "#818cf8",
-    ashby: "#c084fc", workday: "#38bdf8"
-  };
-
-  function renderCard(j) {
-    const ts      = new Date(j.posted_at || j.seen_at || 0);
-    const mins    = isNaN(ts) ? 9999 : Math.floor((now - ts) / 60000);
-    const fc      = freshnessClass(mins);
-    const icon    = freshnessIcon(mins);
-    const label   = freshnessLabel(mins);
-    const src     = (j.source || "").toLowerCase();
-    const color   = srcColor[src] || "var(--muted)";
-    const isAp    = !!j.applied;
-    const srcCap  = src.charAt(0).toUpperCase() + src.slice(1);
-    return `<div class="p-card ${fc} ${isAp ? "applied" : ""}" data-id="${esc(j.job_id)}">
-      <div class="p-fresh">
-        <div class="p-fresh-icon">${icon}</div>
-        <div class="p-fresh-time">${label}</div>
-        <div class="p-fresh-label" style="color:${color}">${srcCap}</div>
-      </div>
-      <div class="p-info">
-        <a class="p-title" href="${esc(j.url)}" target="_blank" rel="noopener"
-           title="${esc(j.title)}"
-           onclick="portalMarkApplied(event,'${esc(j.job_id)}')">${esc(j.title)}</a>
-        <div class="p-company">${esc(j.company || "Unknown")}</div>
-        <div class="p-meta">
-          <span class="p-meta-item"><i class="bi bi-geo-alt"></i>${esc(j.location || "Unspecified")}</span>
-          <span class="p-meta-item" style="color:${color}">
-            <i class="bi bi-circle-fill" style="font-size:6px"></i>${srcCap}
-          </span>
-        </div>
-      </div>
-      <div class="p-actions">
-        <a class="p-apply ${isAp ? "done" : ""}" href="${esc(j.url)}" target="_blank" rel="noopener"
-           onclick="portalMarkApplied(event,'${esc(j.job_id)}')">
-          ${isAp
-            ? `<i class="bi bi-check2-circle"></i> Applied`
-            : `<i class="bi bi-box-arrow-up-right"></i> Apply`}
-        </a>
-        <button class="p-bookmark ${isAp ? "done" : ""}" title="Toggle applied"
-                onclick="portalToggleApplied('${esc(j.job_id)}',this)">
-          <i class="bi bi-bookmark${isAp ? "-check-fill" : ""}"></i>
-          ${isAp ? "Applied" : "Mark"}
-        </button>
-      </div>
+  function sectionHeader(label, count, color) {
+    return `<div class="section-divider">
+      <span class="section-divider-label" style="color:${color}">${label}</span>
+      <span class="section-divider-count">${count} job${count !== 1 ? "s" : ""}</span>
+      <div class="section-divider-line"></div>
     </div>`;
   }
 
-  const workdayJobs  = filtered.filter(j => (j.source||"").toLowerCase() === "workday");
   const gsJobs       = filtered.filter(j => (j.source||"").toLowerCase() === "goldman_sachs");
   const oracleJobs   = filtered.filter(j => (j.source||"").toLowerCase() === "oracle_hcm");
   const deloitteJobs = filtered.filter(j => (j.source||"").toLowerCase() === "deloitte");
-  const otherJobs    = filtered.filter(j => !["workday","goldman_sachs","oracle_hcm","deloitte"].includes((j.source||"").toLowerCase()));
-
-  function sectionHeader(label, count, color) {
-    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 2px 6px;margin-top:8px">
-      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:${color}">${label}</span>
-      <span style="font-size:11px;color:var(--muted)">${count} job${count !== 1 ? "s" : ""}</span>
-      <div style="flex:1;height:1px;background:var(--border)"></div>
-    </div>`;
-  }
+  const otherJobs    = filtered.filter(j => !["goldman_sachs","oracle_hcm","deloitte"].includes((j.source||"").toLowerCase()));
 
   let html = "";
-  if (workdayJobs.length) {
-    html += sectionHeader("Workday — Fortune 500", workdayJobs.length, "#38bdf8");
-    html += workdayJobs.map(renderCard).join("");
+  if (otherJobs.length) {
+    html += sectionHeader("Greenhouse · Lever · Ashby", otherJobs.length, "var(--c-greenhouse)");
+    html += otherJobs.map(renderPCard).join("");
   }
   if (gsJobs.length) {
-    html += sectionHeader("Goldman Sachs", gsJobs.length, "#c9aa71");
-    html += gsJobs.map(renderCard).join("");
+    html += sectionHeader("Goldman Sachs", gsJobs.length, "var(--c-goldman_sachs)");
+    html += gsJobs.map(renderPCard).join("");
   }
   if (oracleJobs.length) {
-    html += sectionHeader("Oracle HCM — JPMorgan · Oracle Corp · GS Lateral", oracleJobs.length, "#f08000");
-    html += oracleJobs.map(renderCard).join("");
+    html += sectionHeader("Oracle HCM — JPMorgan · Oracle Corp", oracleJobs.length, "var(--c-oracle_hcm)");
+    html += oracleJobs.map(renderPCard).join("");
   }
   if (deloitteJobs.length) {
-    html += sectionHeader("Deloitte", deloitteJobs.length, "#00a3e0");
-    html += deloitteJobs.map(renderCard).join("");
+    html += sectionHeader("Deloitte", deloitteJobs.length, "var(--c-deloitte)");
+    html += deloitteJobs.map(renderPCard).join("");
   }
-  if (otherJobs.length) {
-    html += sectionHeader("Greenhouse · Lever · Ashby", otherJobs.length, "var(--green)");
-    html += otherJobs.map(renderCard).join("");
-  }
+
   feed.innerHTML = html;
 }
 
-// ── Portal apply actions ───────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════
+// PORTAL APPLY ACTIONS
+// ════════════════════════════════════════════════════════════════════════
 function portalMarkApplied(e, jobId) {
   setTimeout(() => {
     const job = portalJobs.find(j => j.job_id === jobId);
@@ -1325,6 +2046,7 @@ function portalMarkApplied(e, jobId) {
       fetch(`/api/jobs/${jobId}/toggle`, { method: "POST" });
       job.applied = true;
       renderPortal();
+      renderWorkdayTab();
     }
   }, 3000);
 }
@@ -1335,10 +2057,13 @@ async function portalToggleApplied(jobId, btn) {
   const job  = portalJobs.find(j => j.job_id === jobId);
   if (job) { job.applied = data.applied; }
   renderPortal();
+  renderWorkdayTab();
   toast(data.applied ? "Marked as applied ✓" : "Unmarked");
 }
 
-// ── Portal scan ────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════
+// PORTAL SCAN
+// ════════════════════════════════════════════════════════════════════════
 async function scanPortals() {
   const btn = document.getElementById("btn-portal-scan");
   btn.disabled = true;
@@ -1353,7 +2078,7 @@ async function scanPortals() {
       body: JSON.stringify({ hours: 2 }),
     });
     if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
-    toast("Portal scan started — GH + Lever + Ashby + Workday (takes ~30s)", "var(--accent)");
+    toast("Portal scan started — GH + Lever + Ashby + Goldman + Oracle + Deloitte (takes ~30s)", "var(--t-portals)");
     pollPortalStatus();
   } catch (e) {
     toast("Portal scan error: " + e.message, "var(--red)");
@@ -1375,7 +2100,7 @@ function pollPortalStatus() {
           const added = data.added || 0;
           toast(
             `Portal scan done — <strong>+${added} new job${added !== 1 ? "s" : ""}</strong>`,
-            added > 0 ? "var(--green)" : "var(--muted)"
+            added > 0 ? "var(--t-portals)" : "var(--muted)"
           );
           await loadPortalJobs();
         }
@@ -1391,16 +2116,17 @@ function resetPortalBtn() {
   btn.innerHTML = `<i class="bi bi-play-fill"></i> Scan Now`;
 }
 
-// ── Portal status (last scan info + countdown) ─────────────────────────
+// ════════════════════════════════════════════════════════════════════════
+// PORTAL STATUS
+// ════════════════════════════════════════════════════════════════════════
 async function loadPortalStatus() {
   try {
     const r    = await fetch("/api/portal-scan/status");
     const data = await r.json();
 
-    // Last scan timestamp
     const lastEl = document.getElementById("pr-last-scan");
     if (data.last_scan_at) {
-      const d = new Date(data.last_scan_at);
+      const d    = new Date(data.last_scan_at);
       const mins = Math.floor((Date.now() - d) / 60000);
       lastEl.textContent = mins < 1 ? "just now"
         : mins < 60 ? `${mins}m ago`
@@ -1411,7 +2137,6 @@ async function loadPortalStatus() {
       lastEl.textContent = "never";
     }
 
-    // Countdown to next auto-scan
     const cdEl = document.getElementById("pr-countdown");
     if (data.next_auto_at) {
       const secsLeft = Math.max(0, Math.floor(data.next_auto_at - Date.now() / 1000));
@@ -1423,19 +2148,17 @@ async function loadPortalStatus() {
       cdEl.textContent = data.running ? "scanning now" : "—";
     }
 
-    // Per-source counts
     const src = data.sources || {};
     for (const [name, count] of Object.entries(src)) {
       const el = document.getElementById(`rs-count-${name}`);
       if (el) {
         el.textContent = count;
-        el.className = "rs-count" + (count === 0 ? " zero" : "");
+        el.className = el.className.replace(" zero", "") + (count === 0 ? " zero" : "");
       }
     }
 
-    // Added count badge
     if (data.last_scan_at && !data.running) {
-      const addedMsg = document.getElementById("pr-added-msg");
+      const addedMsg   = document.getElementById("pr-added-msg");
       const addedCount = document.getElementById("pr-added-count");
       if (data.added > 0) {
         addedCount.textContent = data.added;
@@ -1445,7 +2168,6 @@ async function loadPortalStatus() {
       }
     }
 
-    // Scan button state
     if (data.running && !portalScanRunning) {
       portalScanRunning = true;
       const btn = document.getElementById("btn-portal-scan");
@@ -1458,16 +2180,22 @@ async function loadPortalStatus() {
   } catch { return {}; }
 }
 
-// ── Boot ──────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════
+// BOOT
+// ════════════════════════════════════════════════════════════════════════
 (async () => {
   await Promise.all([loadJobs(), loadStats(), loadPortalJobs(), loadPortalCompanies()]);
+
+  // Refresh all-jobs + stats every 90s
   setInterval(() => Promise.all([loadJobs(), loadStats()]), 90_000);
-  // Refresh portal data every 60s (lightweight — no new scan, just re-render)
+
+  // Refresh portal data every 60s
   setInterval(async () => {
     await loadPortalJobs();
     if (activeTab === "portals") loadPortalStatus();
   }, 60_000);
-  // Countdown ticks every second when portal tab is visible
+
+  // Portal status countdown ticks
   setInterval(() => {
     if (activeTab === "portals") loadPortalStatus();
   }, 15_000);
