@@ -209,6 +209,18 @@ WORKDAY_COMPANIES: list[tuple[str, str, str]] = [
     ("accenture.wd103", "AccentureCareers",            "Accenture"),
 ]
 
+# ── Oracle HCM Companies ───────────────────────────────────────────────────
+# Tuple of (tenant_hostname, site_code, display_name)
+# Tenant hostname format: {company}.fa.{region}.oraclecloud.com
+# Site code is embedded in the careers page URL under /sites/{code}/
+ORACLE_HCM_COMPANIES: list[tuple[str, str, str]] = [
+    # Finance / Banking
+    ("jpmc.fa.oraclecloud.com",     "CX_1001",      "JPMorgan Chase"),
+    ("hdpc.fa.us2.oraclecloud.com", "LateralHiring", "Goldman Sachs"),
+    # Technology
+    ("eeho.fa.us2.oraclecloud.com", "jobsearch",     "Oracle Corporation"),
+]
+
 # ── Lever Companies ────────────────────────────────────────────────────────
 # URL pattern: https://jobs.lever.co/{slug}
 LEVER_COMPANIES = [

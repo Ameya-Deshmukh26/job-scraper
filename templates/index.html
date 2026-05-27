@@ -406,10 +406,13 @@
     /* Source stat cards in radar */
     .radar-sources {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 10px;
     }
-    @media (max-width: 700px) {
+    @media (max-width: 1100px) {
+      .radar-sources { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 600px) {
       .radar-sources { grid-template-columns: repeat(2, 1fr); }
     }
     .radar-source {
@@ -431,30 +434,15 @@
       gap: 5px;
       margin-bottom: 6px;
     }
-    .rs-companies { font-size: 10px; color: var(--muted); margin-bottom: 4px; }
     .rs-count {
-      font-size: 22px;
+      font-size: 26px;
       font-weight: 800;
       color: var(--green);
       line-height: 1;
+      margin: 6px 0 2px;
     }
     .rs-count.zero { color: var(--muted); }
-    .rs-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
-    .rs-list {
-      margin-top: 8px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-    .rs-tag {
-      font-size: 10px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 1px 6px;
-      color: var(--muted);
-      white-space: nowrap;
-    }
+    .rs-label { font-size: 10px; color: var(--muted); }
 
     /* ─── PORTAL FEED ─── */
     .portal-wrap { padding: 16px 24px 60px; }
@@ -699,31 +687,33 @@
     <div class="radar-sources">
       <div class="radar-source">
         <div class="rs-name"><i class="bi bi-briefcase" style="color:var(--green)"></i> Greenhouse</div>
-        <div class="rs-companies" id="rs-co-greenhouse">— companies</div>
         <div class="rs-count" id="rs-count-greenhouse">—</div>
         <div class="rs-label">jobs fetched last scan</div>
-        <div class="rs-list" id="rs-list-greenhouse"></div>
       </div>
       <div class="radar-source">
         <div class="rs-name"><i class="bi bi-building" style="color:#818cf8"></i> Lever</div>
-        <div class="rs-companies" id="rs-co-lever">— companies</div>
         <div class="rs-count" id="rs-count-lever">—</div>
         <div class="rs-label">jobs fetched last scan</div>
-        <div class="rs-list" id="rs-list-lever"></div>
       </div>
       <div class="radar-source">
         <div class="rs-name"><i class="bi bi-star" style="color:#c084fc"></i> Ashby</div>
-        <div class="rs-companies" id="rs-co-ashby">— companies</div>
         <div class="rs-count" id="rs-count-ashby">—</div>
         <div class="rs-label">jobs fetched last scan</div>
-        <div class="rs-list" id="rs-list-ashby"></div>
       </div>
       <div class="radar-source" style="border-color:#0e4c78">
         <div class="rs-name"><i class="bi bi-globe" style="color:#38bdf8"></i> Workday</div>
-        <div class="rs-companies" id="rs-co-workday">— companies</div>
         <div class="rs-count" id="rs-count-workday">—</div>
         <div class="rs-label">jobs fetched last scan</div>
-        <div class="rs-list" id="rs-list-workday"></div>
+      </div>
+      <div class="radar-source" style="border-color:#c9aa7144">
+        <div class="rs-name"><i class="bi bi-bank" style="color:#c9aa71"></i> Goldman Sachs</div>
+        <div class="rs-count" id="rs-count-goldman_sachs">—</div>
+        <div class="rs-label">jobs fetched last scan</div>
+      </div>
+      <div class="radar-source" style="border-color:#f0800044">
+        <div class="rs-name"><i class="bi bi-building-fill" style="color:#f08000"></i> Oracle HCM</div>
+        <div class="rs-count" id="rs-count-oracle_hcm">—</div>
+        <div class="rs-label">JPMorgan · Oracle · GS Lateral</div>
       </div>
     </div>
   </div>
@@ -1192,28 +1182,7 @@ function isUS(location) {
   return !_NON_US_TERMS.some(t => loc.includes(t));
 }
 
-async function loadPortalCompanies() {
-  try {
-    const r    = await fetch("/api/portal-companies");
-    const data = await r.json();
-
-    const configs = {
-      greenhouse: { names: data.greenhouse, color: "var(--green)" },
-      lever:      { names: data.lever,      color: "#818cf8" },
-      ashby:      { names: data.ashby,      color: "#c084fc" },
-      workday:    { names: data.workday.map(w => w.name), color: "#38bdf8" },
-    };
-
-    for (const [src, cfg] of Object.entries(configs)) {
-      const coEl   = document.getElementById(`rs-co-${src}`);
-      const listEl = document.getElementById(`rs-list-${src}`);
-      if (coEl)   coEl.textContent = `${cfg.names.length} companies`;
-      if (listEl) listEl.innerHTML = cfg.names
-        .map(n => `<span class="rs-tag" style="border-color:${cfg.color}22;color:${cfg.color}">${esc(n)}</span>`)
-        .join("");
-    }
-  } catch(e) { /* ignore */ }
-}
+async function loadPortalCompanies() { /* company lists removed */ }
 
 async function loadPortalJobs() {
   try {
@@ -1307,7 +1276,8 @@ function renderPortal() {
 
   const workdayJobs = filtered.filter(j => (j.source||"").toLowerCase() === "workday");
   const gsJobs      = filtered.filter(j => (j.source||"").toLowerCase() === "goldman_sachs");
-  const otherJobs   = filtered.filter(j => !["workday","goldman_sachs"].includes((j.source||"").toLowerCase()));
+  const oracleJobs  = filtered.filter(j => (j.source||"").toLowerCase() === "oracle_hcm");
+  const otherJobs   = filtered.filter(j => !["workday","goldman_sachs","oracle_hcm"].includes((j.source||"").toLowerCase()));
 
   function sectionHeader(label, count, color) {
     return `<div style="display:flex;align-items:center;gap:10px;padding:10px 2px 6px;margin-top:8px">
@@ -1325,6 +1295,10 @@ function renderPortal() {
   if (gsJobs.length) {
     html += sectionHeader("Goldman Sachs", gsJobs.length, "#c9aa71");
     html += gsJobs.map(renderCard).join("");
+  }
+  if (oracleJobs.length) {
+    html += sectionHeader("Oracle HCM — JPMorgan · Oracle Corp · GS Lateral", oracleJobs.length, "#f08000");
+    html += oracleJobs.map(renderCard).join("");
   }
   if (otherJobs.length) {
     html += sectionHeader("Greenhouse · Lever · Ashby", otherJobs.length, "var(--green)");

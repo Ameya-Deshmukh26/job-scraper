@@ -142,6 +142,16 @@ def fetch_goldman_sachs_jobs(cutoff: datetime) -> list[dict]:
                 if not role_id:
                     continue
 
+                # Skip LCA visa filings — these are legal notices, not job listings
+                # (they appear as "nothing found" on the careers site)
+                if "NOTICE_OF_FILING_LCA" in role_id:
+                    continue
+
+                # Skip any role with non-OPEN status
+                status = (item.get("status") or "").upper()
+                if status and status != "OPEN":
+                    continue
+
                 uid = f"gs_{role_id}"
                 if uid in seen_ids:
                     continue
@@ -159,13 +169,18 @@ def fetch_goldman_sachs_jobs(cutoff: datetime) -> list[dict]:
                 title    = (item.get("jobTitle") or "").strip()
                 location = _parse_location(locs)
 
+                # higher.gs.com SPA routes use only the numeric prefix of the roleId
+                # e.g. "151793_GS_MID_CAREER" → https://higher.gs.com/roles/151793
+                numeric_id = role_id.split("_")[0]
+                job_url    = f"{_JOB_BASE}/{numeric_id}"
+
                 results.append({
                     "id":        uid,
                     "source":    "goldman_sachs",
                     "company":   "Goldman Sachs",
                     "title":     title,
                     "location":  location,
-                    "url":       f"{_JOB_BASE}/{role_id}",
+                    "url":       job_url,
                     "posted_at": "",  # GS API does not expose posted date
                 })
 

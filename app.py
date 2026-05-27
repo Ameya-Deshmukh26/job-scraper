@@ -288,7 +288,7 @@ def api_hiringcafe_scan_status():
 
 # ── Portal scan (Greenhouse + Lever + Ashby + Workday combined) ───────────────
 
-PORTAL_SOURCES = {"greenhouse", "lever", "ashby", "workday", "goldman_sachs"}
+PORTAL_SOURCES = {"greenhouse", "lever", "ashby", "workday", "goldman_sachs", "oracle_hcm"}
 
 _portal_scan_lock  = threading.Lock()
 _portal_scan_state: dict = {
@@ -305,15 +305,16 @@ _PORTAL_LOOKBACK   = 2.0                          # look back 2 hours each run
 
 
 def _do_portal_scan(hours: float):
-    """Fetch Greenhouse + Lever + Ashby + Workday + Goldman Sachs, filter, and persist."""
+    """Fetch Greenhouse + Lever + Ashby + Workday + Goldman Sachs + Oracle HCM, filter, and persist."""
     import datetime as _dt
     from datetime import timedelta, timezone
-    from sources.greenhouse   import fetch_greenhouse_jobs
-    from sources.lever        import fetch_lever_jobs
-    from sources.ashby        import fetch_ashby_jobs
-    from sources.workday      import fetch_workday_jobs
+    from sources.greenhouse    import fetch_greenhouse_jobs
+    from sources.lever         import fetch_lever_jobs
+    from sources.ashby         import fetch_ashby_jobs
+    from sources.workday       import fetch_workday_jobs
     from sources.goldman_sachs import fetch_goldman_sachs_jobs
-    from config import GREENHOUSE_COMPANIES, LEVER_COMPANIES, ASHBY_COMPANIES, WORKDAY_COMPANIES
+    from sources.oracle_hcm    import fetch_oracle_hcm_jobs
+    from config import GREENHOUSE_COMPANIES, LEVER_COMPANIES, ASHBY_COMPANIES, WORKDAY_COMPANIES, ORACLE_HCM_COMPANIES
 
     try:
         cutoff = _dt.datetime.now(timezone.utc) - timedelta(hours=hours)
@@ -321,11 +322,12 @@ def _do_portal_scan(hours: float):
         all_jobs: list[dict] = []
 
         for src, jobs in [
-            ("greenhouse",   fetch_greenhouse_jobs(GREENHOUSE_COMPANIES, cutoff)),
-            ("lever",        fetch_lever_jobs(LEVER_COMPANIES, cutoff)),
-            ("ashby",        fetch_ashby_jobs(ASHBY_COMPANIES, cutoff)),
-            ("workday",      fetch_workday_jobs(WORKDAY_COMPANIES, cutoff)),
+            ("greenhouse",    fetch_greenhouse_jobs(GREENHOUSE_COMPANIES, cutoff)),
+            ("lever",         fetch_lever_jobs(LEVER_COMPANIES, cutoff)),
+            ("ashby",         fetch_ashby_jobs(ASHBY_COMPANIES, cutoff)),
+            ("workday",       fetch_workday_jobs(WORKDAY_COMPANIES, cutoff)),
             ("goldman_sachs", fetch_goldman_sachs_jobs(cutoff)),
+            ("oracle_hcm",    fetch_oracle_hcm_jobs(ORACLE_HCM_COMPANIES, cutoff)),
         ]:
             source_counts[src] = len(jobs)
             all_jobs.extend(jobs)
