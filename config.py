@@ -207,6 +207,10 @@ WORKDAY_COMPANIES: list[tuple[str, str, str]] = [
     # Defense / Aerospace / Consulting (all confirmed HTTP 200)
     ("boeing.wd1",      "EXTERNAL_CAREERS",            "Boeing"),
     ("accenture.wd103", "AccentureCareers",            "Accenture"),
+    ("globalhr.wd5",    "REC_RTX_Ext_Gateway",         "RTX / Raytheon"),
+    # Asset Management / Finance (all confirmed HTTP 200)
+    ("blackrock.wd1",      "BlackRock_Professional",   "BlackRock"),
+    ("statestreet.wd1",    "Global",                   "State Street"),
 ]
 
 # ── Oracle HCM Companies ───────────────────────────────────────────────────
@@ -214,10 +218,11 @@ WORKDAY_COMPANIES: list[tuple[str, str, str]] = [
 # Tenant hostname format: {company}.fa.{region}.oraclecloud.com
 # Site code is embedded in the careers page URL under /sites/{code}/
 ORACLE_HCM_COMPANIES: list[tuple[str, str, str]] = [
-    # Finance / Banking
+    # Finance / Banking (all confirmed HTTP 200)
     ("jpmc.fa.oraclecloud.com",     "CX_1001",      "JPMorgan Chase"),
     ("hdpc.fa.us2.oraclecloud.com", "LateralHiring", "Goldman Sachs"),
-    # Technology
+    ("egug.fa.us2.oraclecloud.com", "CX_1",          "American Express"),
+    # Technology (all confirmed HTTP 200)
     ("eeho.fa.us2.oraclecloud.com", "jobsearch",     "Oracle Corporation"),
 ]
 
