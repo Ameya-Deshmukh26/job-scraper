@@ -44,6 +44,7 @@ from sources.lever import fetch_lever_jobs
 from sources.linkedin import fetch_linkedin_jobs
 from sources.goldman_sachs import fetch_goldman_sachs_jobs
 from sources.oracle_hcm import fetch_oracle_hcm_jobs
+from sources.deloitte import fetch_deloitte_jobs
 from sources.hiringcafe import fetch_hiringcafe_jobs
 from sources.remotive import fetch_remotive_jobs
 from sources.workday import fetch_workday_jobs
@@ -284,6 +285,12 @@ def run_once(tracker: JobTracker, lookback_hours: float) -> list[dict]:
         _process(fetch_goldman_sachs_jobs(cutoff))
     except Exception as e:
         log.debug(f"Goldman Sachs: {e}")
+
+    # Deloitte (Avature ATS — HTML scrape, no date field, tracker handles dedup)
+    try:
+        _process(fetch_deloitte_jobs(cutoff))
+    except Exception as e:
+        log.debug(f"Deloitte: {e}")
 
     # Oracle HCM (JPMorgan, Goldman Sachs lateral, Oracle Corp, etc.)
     if ORACLE_HCM_COMPANIES:

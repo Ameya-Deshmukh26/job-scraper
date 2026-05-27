@@ -288,7 +288,7 @@ def api_hiringcafe_scan_status():
 
 # ── Portal scan (Greenhouse + Lever + Ashby + Workday combined) ───────────────
 
-PORTAL_SOURCES = {"greenhouse", "lever", "ashby", "workday", "goldman_sachs", "oracle_hcm"}
+PORTAL_SOURCES = {"greenhouse", "lever", "ashby", "workday", "goldman_sachs", "oracle_hcm", "deloitte"}
 
 _portal_scan_lock  = threading.Lock()
 _portal_scan_state: dict = {
@@ -305,7 +305,7 @@ _PORTAL_LOOKBACK   = 2.0                          # look back 2 hours each run
 
 
 def _do_portal_scan(hours: float):
-    """Fetch Greenhouse + Lever + Ashby + Workday + Goldman Sachs + Oracle HCM, filter, and persist."""
+    """Fetch Greenhouse + Lever + Ashby + Workday + Goldman Sachs + Oracle HCM + Deloitte, filter, and persist."""
     import datetime as _dt
     from datetime import timedelta, timezone
     from sources.greenhouse    import fetch_greenhouse_jobs
@@ -314,6 +314,7 @@ def _do_portal_scan(hours: float):
     from sources.workday       import fetch_workday_jobs
     from sources.goldman_sachs import fetch_goldman_sachs_jobs
     from sources.oracle_hcm    import fetch_oracle_hcm_jobs
+    from sources.deloitte      import fetch_deloitte_jobs
     from config import GREENHOUSE_COMPANIES, LEVER_COMPANIES, ASHBY_COMPANIES, WORKDAY_COMPANIES, ORACLE_HCM_COMPANIES
 
     try:
@@ -328,6 +329,7 @@ def _do_portal_scan(hours: float):
             ("workday",       fetch_workday_jobs(WORKDAY_COMPANIES, cutoff)),
             ("goldman_sachs", fetch_goldman_sachs_jobs(cutoff)),
             ("oracle_hcm",    fetch_oracle_hcm_jobs(ORACLE_HCM_COMPANIES, cutoff)),
+            ("deloitte",      fetch_deloitte_jobs(cutoff)),
         ]:
             source_counts[src] = len(jobs)
             all_jobs.extend(jobs)
@@ -402,13 +404,15 @@ def api_portal_scan_status():
 
 @app.get("/api/portal-companies")
 def api_portal_companies():
-    from config import GREENHOUSE_COMPANIES, LEVER_COMPANIES, ASHBY_COMPANIES, WORKDAY_COMPANIES
+    from config import GREENHOUSE_COMPANIES, LEVER_COMPANIES, ASHBY_COMPANIES, WORKDAY_COMPANIES, ORACLE_HCM_COMPANIES
     return jsonify({
         "greenhouse":    sorted(GREENHOUSE_COMPANIES),
         "lever":         sorted(LEVER_COMPANIES),
         "ashby":         sorted(ASHBY_COMPANIES),
         "workday":       [{"subdomain": s, "board": b, "name": n} for s, b, n in WORKDAY_COMPANIES],
         "goldman_sachs": ["Goldman Sachs"],
+        "oracle_hcm":    [n for _, _, n in ORACLE_HCM_COMPANIES],
+        "deloitte":      ["Deloitte"],
     })
 
 

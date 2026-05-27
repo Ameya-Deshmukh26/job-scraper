@@ -406,7 +406,7 @@
     /* Source stat cards in radar */
     .radar-sources {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(7, 1fr);
       gap: 10px;
     }
     @media (max-width: 1100px) {
@@ -714,6 +714,11 @@
         <div class="rs-name"><i class="bi bi-building-fill" style="color:#f08000"></i> Oracle HCM</div>
         <div class="rs-count" id="rs-count-oracle_hcm">—</div>
         <div class="rs-label">JPMorgan · Amex · GS · Oracle</div>
+      </div>
+      <div class="radar-source" style="border-color:#00a3e044">
+        <div class="rs-name"><i class="bi bi-diagram-3" style="color:#00a3e0"></i> Deloitte</div>
+        <div class="rs-count" id="rs-count-deloitte">—</div>
+        <div class="rs-label">jobs fetched last scan</div>
       </div>
     </div>
   </div>
@@ -1274,10 +1279,11 @@ function renderPortal() {
     </div>`;
   }
 
-  const workdayJobs = filtered.filter(j => (j.source||"").toLowerCase() === "workday");
-  const gsJobs      = filtered.filter(j => (j.source||"").toLowerCase() === "goldman_sachs");
-  const oracleJobs  = filtered.filter(j => (j.source||"").toLowerCase() === "oracle_hcm");
-  const otherJobs   = filtered.filter(j => !["workday","goldman_sachs","oracle_hcm"].includes((j.source||"").toLowerCase()));
+  const workdayJobs  = filtered.filter(j => (j.source||"").toLowerCase() === "workday");
+  const gsJobs       = filtered.filter(j => (j.source||"").toLowerCase() === "goldman_sachs");
+  const oracleJobs   = filtered.filter(j => (j.source||"").toLowerCase() === "oracle_hcm");
+  const deloitteJobs = filtered.filter(j => (j.source||"").toLowerCase() === "deloitte");
+  const otherJobs    = filtered.filter(j => !["workday","goldman_sachs","oracle_hcm","deloitte"].includes((j.source||"").toLowerCase()));
 
   function sectionHeader(label, count, color) {
     return `<div style="display:flex;align-items:center;gap:10px;padding:10px 2px 6px;margin-top:8px">
@@ -1299,6 +1305,10 @@ function renderPortal() {
   if (oracleJobs.length) {
     html += sectionHeader("Oracle HCM — JPMorgan · Oracle Corp · GS Lateral", oracleJobs.length, "#f08000");
     html += oracleJobs.map(renderCard).join("");
+  }
+  if (deloitteJobs.length) {
+    html += sectionHeader("Deloitte", deloitteJobs.length, "#00a3e0");
+    html += deloitteJobs.map(renderCard).join("");
   }
   if (otherJobs.length) {
     html += sectionHeader("Greenhouse · Lever · Ashby", otherJobs.length, "var(--green)");
