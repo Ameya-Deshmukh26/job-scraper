@@ -60,6 +60,7 @@ _SEARCH_TERMS = [
     "data engineer",
     "analytics",
     "ai engineer",
+    "business analyst",
 ]
 
 # Only include jobs from these country codes

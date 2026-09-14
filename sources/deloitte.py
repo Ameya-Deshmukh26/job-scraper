@@ -48,6 +48,7 @@ _SEARCH_TERMS = [
     "data engineer",
     "analytics engineer",
     "ai engineer",
+    "business analyst",
 ]
 
 

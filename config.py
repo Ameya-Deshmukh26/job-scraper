@@ -37,6 +37,8 @@ KEYWORDS = [
     "analytics engineer",
     "business intelligence",
     "bi analyst",
+    "business analyst",
+    "ai analyst",
     "ai engineer",
     "gen ai",
     "generative ai",
@@ -76,12 +78,6 @@ EXCLUDE_SENIOR = True
 # Example: ["remote", "new york", "boston", "san francisco"]
 LOCATION_FILTER = []  # empty = accept all US locations
 
-# ── Adzuna (optional) ─────────────────────────────────────────────────────
-# Free API key at https://developer.adzuna.com — 1,000 req/day free tier
-# Aggregates Indeed, ZipRecruiter, SimplyHired, and more.
-# Leave blank to skip Adzuna.
-ADZUNA_APP_ID  = ""
-ADZUNA_APP_KEY = ""
 
 # ── Notifications ──────────────────────────────────────────────────────────
 ENABLE_WINDOWS_TOAST = True
@@ -94,90 +90,80 @@ DISCORD_WEBHOOK_URL = ""
 # These are the board tokens used in the Greenhouse public API.
 # URL pattern: https://boards.greenhouse.io/{token}
 # 404s are silently skipped. Add/remove companies freely.
+# Only confirmed-live boards (HTTP 200 with >0 jobs, June 2026 audit).
+# 85 dead slugs removed — they 404'd and wasted a request every scan.
 GREENHOUSE_COMPANIES = [
+    # --- auto-discovered from YC via discover_boards.py ---
+    "aclu", "akidolabs", "albedo", "alpaca", "ansabiotechnologies", "aon3d", "apolloio", "assemblyai", "astranis", "axle", "baubap", "bird", "bitmovin", "carbonchain", "caribou", "clear", "coast", "cortex", "culturebiosciences", "daybreakhealth", "diligent", "dots", "enveritas", "extend", "faire", "focalsystems", "gather", "generalproximity", "gigs", "givecampus", "glide", "goatgroup", "gocardless", "grey", "hackerrank", "haven", "heartaerospace", "hive", "hubblenetwork", "humaninterest", "instawork", "inversionspace", "kalshi", "laika", "legalist", "lob", "lucidbots", "luminate", "marqvision", "mattermost", "maymobility", "meruhealth", "mesh", "nabis", "niraenergy", "novacredit", "observeai", "odeko", "ophelia", "outschool", "pairteam", "papa", "pelago", "postscript", "prodigal", "prolific", "pronto", "prospa", "qventus", "radar", "recidiviz", "reflex", "regent", "remi", "roofr", "saltsecurity", "sendbird", "sfox", "sirum", "smartasset", "submittable", "super", "swayable", "tempo", "usergems", "veriff", "warp", "webflow", "xendit", "zerocater",
+    # --- auto-discovered from YC via discover_boards.py ---
+    "icarus", "momentic", "orbitaloperations", "parallel", "starcloud", "weave",
     # Fintech / Payments
-    "stripe", "brex", "ramp", "mercury", "plaid", "robinhood",
-    "coinbase", "chime", "affirm", "klarna", "marqeta", "payoneer",
-    "wealthfront", "betterment", "sofi", "fundbox", "bluevine",
+    "stripe", "brex", "mercury", "robinhood", "coinbase", "chime",
+    "affirm", "marqeta", "payoneer", "betterment", "sofi",
     "tabapay", "lithic",
     # Data / Analytics / AI Infrastructure
-    "databricks", "snowflakecomputing", "dbtlabs", "fivetran",
-    "hightouch", "rudderstack", "metabase", "hex", "deepnote",
-    "amplitude", "mixpanel", "segment", "census",
-    "modal", "anyscale", "cohere", "groq", "together",
-    "starburst", "atlan", "montecarlodata", "greatexpectations",
-    "tecton", "feast", "weights-biases",
-    "clickhouse", "singlestore", "imply", "transform",
-    # AI / LLM Startups (confirmed working)
+    "databricks", "fivetran", "hightouch", "amplitude", "mixpanel",
+    "starburst", "clickhouse", "singlestore", "imply", "transform",
+    # AI / LLM Startups
     "anthropic", "xai", "togetherai", "fireworksai",
     "stabilityai", "imbue", "scaleai", "heygen",
-    "vectara", "truefoundry",
+    "vectara", "truefoundry", "deepmind",
     # Enterprise SaaS
-    "figma", "notion", "airtable", "lattice", "rippling",
-    "gusto", "checkr", "deel", "remote", "carta",
-    "algolia", "contentful", "retool", "linear", "loom",
-    "monday", "clickup", "asana", "smartsheet",
-    "zendesk", "freshworks", "intercom", "drift",
-    "salesloft", "outreach", "gong",
-    "descript", "lokalise",
+    "figma", "airtable", "lattice", "gusto", "checkr", "remote",
+    "carta", "algolia", "contentful", "asana", "smartsheet",
+    "intercom", "salesloft", "descript", "lokalise",
     # Cloud / Infra
-    "hashicorp", "confluent", "mongodb", "elastic",
-    "cockroachdb", "neon", "planetscale", "supabase", "vercel",
-    "digitalocean", "linode", "coreweave",
+    "mongodb", "elastic", "planetscale", "vercel", "coreweave",
     # Cybersecurity
-    "crowdstrike", "sentinelone", "lacework", "orca",
-    "snyk", "sysdig", "noname",
+    "orca",
     # Consumer / Marketplace
-    "airbnb", "doordash", "lyft", "pinterest", "instacart",
-    "etsy", "poshmark", "offerpath", "opendoor", "offerpad",
+    "airbnb", "lyft", "pinterest", "instacart", "poshmark",
     "duolingo", "coursera", "udemy",
-    # Healthcare / Biotech
-    "modernhealth", "cityblockhealth", "springhealth",
-    "headspace", "oscarhealthinc", "cloverhealth",
-    "ro", "hims", "cerebral", "nomi",
+    # Healthcare
+    "modernhealth", "cloverhealth", "cerebral",
     # Logistics / Ops
-    "flexport", "project44", "shippingbo",
-    # Finance / Trading
-    "palantir", "twosigma", "jane-street", "hudsonrivertrading",
+    "flexport", "project44",
     # Media / Gaming
-    "roblox", "unity", "epic", "zynga",
+    "roblox",
     # Other high-sponsorship tech
     "twilio", "okta", "hubspot", "dropbox",
-    "cloudflare", "datadog", "grafana", "newrelic",
-    "splunk", "dynatrace", "appdynamics",
-    "salesforce", "workday", "servicenow",
-    "zoom", "slack", "box",
-    "nvidia", "amd", "qualcomm",
-    # Observability / DevTools
-    "honeycomb",
-    # AI Research Labs
-    "deepmind",
-    # Startup / Growth companies
-    "cobo",
+    "cloudflare", "datadog", "newrelic", "honeycomb",
 ]
 
 # ── Ashby Companies ───────────────────────────────────────────────────────
 # URL pattern: https://jobs.ashbyhq.com/{slug}
+# Only confirmed-valid slugs (HTTP 200 from GraphQL, May 2026 audit)
+# Note: anthropic, perplexity-ai, mistral, brex, rippling, gong, scale-ai
+#       etc. are on Greenhouse/Lever — they show NULL on Ashby.
 ASHBY_COMPANIES = [
+    # --- auto-discovered from YC via discover_boards.py ---
+    "airgoods", "artie", "avoca", "benchling", "bluedot", "capimoney", "casca", "clueso", "conduit", "cosine", "deepgram", "electricair", "escape", "finni-health", "goveagle", "hockeystack", "hyperbound", "inkeep", "latent", "lio", "litellm", "magicpatterns", "mux", "numeral", "pirros", "pylon", "salient", "solveintelligence", "tennr", "twenty", "vanta", "vitalize", "vooma", "wallbit",
+    # --- auto-discovered from YC via discover_boards.py ---
+    "afterquery", "agentmail", "auctor", "complir", "dedalus-labs", "finto", "flai", "fleetline", "hud", "humanarchive", "idler", "lance", "lucis", "mastra", "mercura", "nox-metals", "reacher", "sazabi", "solva", "uplane", "veritus",
     # AI / LLM labs
-    "anthropic", "perplexity-ai", "cursor", "cognition", "harvey",
-    "cohere", "mistral", "imbue", "adept", "moonshot-ai",
-    "openai",       # some roles on Ashby
-    # Dev tools / infra
-    "linear", "posthog", "vercel", "railway", "clerk", "turso",
-    "resend", "highlight", "mintlify", "cal-com", "trigger",
-    "infisical", "novu", "dub",
-    # Data / Analytics
-    "evidence", "cube-dev", "rill-data", "tinybird",
+    "openai",           # 707 jobs
+    "harvey",           # 247 jobs
+    "cohere",           # 130 jobs
+    "cursor",           # 82 jobs
+    "cognition",        # 60 jobs
+    "moonshot-ai",      # 5 jobs
     # Finance / Fintech
-    "mercury", "ramp",          # some roles on Ashby too
-    "brex", "arc",
-    # Enterprise SaaS
-    "coda", "baseten", "modal",
-    "watershed", "rippling",
-    # Other high-growth
-    "wiz", "clari", "navan", "gong", "chorus",
-    "scale-ai", "labelbox",
+    "ramp",             # 122 jobs
+    # Data / Cloud infra
+    "baseten",          # 63 jobs
+    "watershed",        # 39 jobs
+    "modal",            # 29 jobs
+    # Dev tools
+    "linear",           # 23 jobs
+    "posthog",          # 16 jobs
+    "infisical",        # 15 jobs
+    "mintlify",         # 13 jobs
+    "railway",          # 9 jobs
+    "resend",           # 4 jobs
+    "vercel",           # 0 now but active board
+    "clerk",            # 0 now but active board
+    "wiz",              # 0 now but active board
+    "mercury",          # 0 now but active board
 ]
 
 # ── Workday Companies ─────────────────────────────────────────────────────
@@ -241,22 +227,11 @@ ORACLE_HCM_COMPANIES: list[tuple[str, str, str]] = [
 
 # ── Lever Companies ────────────────────────────────────────────────────────
 # URL pattern: https://jobs.lever.co/{slug}
+# Only confirmed-live boards (June 2026 audit) — 32 dead slugs removed.
+# mistral & netflix are valid boards currently showing 0 postings; kept
+# because they may repopulate and cost one cheap request each.
 LEVER_COMPANIES = [
-    # Big Tech / Media
-    "netflix", "reddit", "squarespace", "vimeo", "twitch",
-    # AI / ML
-    "scaleai", "huggingface", "together", "aleph-alpha",
-    "mistral", "anyscale",
-    # Fintech
-    "robinhood", "wise", "nubank", "chime", "brex",
-    # Data
-    "airbyte", "starburst", "preset", "lightdash",
-    # Dev tools
-    "sentry", "launchdarkly", "split",
-    # Enterprise
-    "canva", "intercom", "typeform", "miro", "pipedrive",
-    "invision", "lucidchart",
-    # Other high-growth
-    "wealthsimple", "benchling", "netsuite",
-    "grammarly", "duolingo", "brainly",
+    # --- auto-discovered from YC via discover_boards.py ---
+    "biorender", "bolster", "canarytechnologies", "captivateiq", "copia", "culdesac", "doola", "emilabs", "epsilon3", "fampay", "finch", "fintual", "fleetzero", "gridware", "handoff", "kinter", "livingcarbon", "mashgin", "maverickx", "multiplylabs", "mytos", "nimblerx", "people-ai", "picktrace", "porter", "postera", "pyka", "quartzy", "skyways", "snappr", "starkbank", "suger", "superside", "synapticure", "tendo", "thunkable", "toku", "tovala", "twodots", "verifiable", "zippi",
+    "anyscale", "pipedrive", "mistral", "netflix",
 ]

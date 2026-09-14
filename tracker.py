@@ -1,13 +1,29 @@
+import re
 import sqlite3
 from pathlib import Path
 
 DB_PATH = Path(__file__).parent / "seen_jobs.db"
+
+# Parenthetical noise that staffing agencies vary between reposts:
+# "Data Analyst (Remote)" / "(W2)" / "(Urgent)" are the same job
+_NOISE_PARENS = re.compile(
+    r"\s*\((?:remote|hybrid|on-?site|onsite|contract|w2|c2c|1099|"
+    r"urgent|immediate(?:ly)?|repost(?:ed)?|full[- ]?time|part[- ]?time)[^)]*\)",
+    re.IGNORECASE,
+)
+
+
+def _norm_title(title: str) -> str:
+    t = _NOISE_PARENS.sub("", title or "")
+    return re.sub(r"\s+", " ", t).strip().lower()
 
 
 class JobTracker:
     def __init__(self):
         self.conn = sqlite3.connect(DB_PATH)
         self.conn.row_factory = sqlite3.Row
+        # WAL lets the dashboard read while a scan thread writes
+        self.conn.execute("PRAGMA journal_mode=WAL")
         self._init_db()
         self._migrate()
 
@@ -36,12 +52,28 @@ class JobTracker:
             ("auto_applied_at", "TEXT"),
             ("needs_review",    "INTEGER DEFAULT 0"),
             ("review_reason",   "TEXT"),
+            ("fit_reason",      "TEXT"),   # agent: why this job fits
+            ("fit_gap",         "TEXT"),   # agent: honest gap
+            ("agent_match",     "INTEGER"),# agent: blended score
         ]:
             try:
                 self.conn.execute(f"ALTER TABLE seen_jobs ADD COLUMN {col} {definition}")
                 self.conn.commit()
             except sqlite3.OperationalError:
                 pass  # column already exists
+
+        # Indexes for the hot lookups (seen_by_title_company was a full scan)
+        self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_title_company "
+            "ON seen_jobs (lower(trim(title)), lower(trim(company)))"
+        )
+        self.conn.execute("CREATE INDEX IF NOT EXISTS idx_seen_at ON seen_jobs (seen_at)")
+        self.conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_company ON seen_jobs (lower(trim(company)))"
+        )
+        # One-time cleanup: sources were stored with mixed case (LinkedIn vs linkedin)
+        self.conn.execute("UPDATE seen_jobs SET source = lower(source) WHERE source != lower(source)")
+        self.conn.commit()
 
     # ── write ──────────────────────────────────────────────────────────────
 
@@ -52,12 +84,25 @@ class JobTracker:
         return cur.fetchone() is not None
 
     def seen_by_title_company(self, title: str, company: str) -> bool:
-        """Dedup reposts: same title+company already in DB under any ID."""
+        """Dedup reposts: same title+company already in DB under any ID.
+        Falls back to a normalized comparison that ignores parenthetical
+        noise like "(Remote)" / "(W2)" that agencies vary between reposts."""
         cur = self.conn.execute(
             "SELECT 1 FROM seen_jobs WHERE lower(trim(title))=lower(trim(?)) AND lower(trim(company))=lower(trim(?))",
             (title, company),
         )
-        return cur.fetchone() is not None
+        if cur.fetchone() is not None:
+            return True
+
+        # Normalized pass over this company's existing titles
+        target = _norm_title(title)
+        if not target:
+            return False
+        cur = self.conn.execute(
+            "SELECT title FROM seen_jobs WHERE lower(trim(company))=lower(trim(?)) AND title != '__repost__'",
+            (company,),
+        )
+        return any(_norm_title(row["title"]) == target for row in cur.fetchall())
 
     def mark_seen(self, job: dict):
         self.conn.execute(
@@ -65,7 +110,7 @@ class JobTracker:
                (job_id, source, company, title, location, url, posted_at)
                VALUES (?, ?, ?, ?, ?, ?, ?)""",
             (
-                job["id"], job["source"], job["company"],
+                job["id"], (job["source"] or "").lower(), job["company"],
                 job["title"], job["location"], job["url"],
                 job.get("posted_at"),
             ),
@@ -111,12 +156,24 @@ class JobTracker:
 
     # ── read ───────────────────────────────────────────────────────────────
 
+    def save_agent_assessment(self, job_id: str, match: int | None,
+                              reason: str | None, gap: str | None):
+        """Persist the agent's fit reasoning so the UI can show it."""
+        self.conn.execute(
+            "UPDATE seen_jobs SET agent_match = ?, fit_reason = ?, fit_gap = ? "
+            "WHERE job_id = ?",
+            (match, reason, gap, job_id),
+        )
+        self.conn.commit()
+
     def all_jobs(self) -> list[dict]:
         cur = self.conn.execute(
             """SELECT job_id, source, company, title, location,
                       url, posted_at, applied, auto_applied, auto_applied_at,
-                      needs_review, review_reason, seen_at
+                      needs_review, review_reason, seen_at,
+                      fit_reason, fit_gap, agent_match
                FROM seen_jobs
+               WHERE title != '__repost__'
                ORDER BY
                  CASE WHEN posted_at IS NOT NULL THEN posted_at ELSE seen_at END DESC"""
         )
@@ -133,6 +190,7 @@ class JobTracker:
               SUM(CASE WHEN datetime(COALESCE(posted_at, seen_at)) >=
                             datetime('now', '-24 hours') THEN 1 ELSE 0 END)      AS last_day
             FROM seen_jobs
+            WHERE title != '__repost__'
         """)
         row = cur.fetchone()
         return dict(row) if row else {}

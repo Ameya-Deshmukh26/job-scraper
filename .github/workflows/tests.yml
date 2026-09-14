@@ -1,0 +1,58 @@
+name: tests
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run test suite
+        # Every test is offline: no network, no API keys, no browser.
+        run: python -m pytest tests/ -q
+
+      - name: Check no secrets are committed
+        # A live Firecrawl key was once hardcoded in a tracked file. Fail the
+        # build rather than let that regress.
+        run: |
+          # Excludes this workflow, which contains the patterns itself.
+          PAT='(fc-[0-9a-f]{24,}|apify_api_[A-Za-z0-9]{20,}|sk-ant-[A-Za-z0-9-]{20,})'
+          if git grep -nIE "$PAT" -- . ':(exclude).github/workflows/*'; then
+            echo "::error::A credential-shaped string is committed. Move it to an env var."
+            exit 1
+          fi
+          echo "no committed credentials found"
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - name: Ruff (syntax and undefined names only)
+        # Deliberately narrow: catches real breakage such as the dangling
+        # ADZUNA_APP_ID reference, without enforcing style across the repo.
+        run: ruff check --select E9,F63,F7,F82 .

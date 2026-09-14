@@ -47,3 +47,20 @@ Thumbs.db
 .env
 .env.*
 secrets.json
+
+# MCP config - contains live API tokens, never commit
+.mcp.json
+
+# Regenerable caches (rebuild with: python discover_boards.py --fetch-yc,
+# and sources/h1b.py downloads its own on first use)
+data/yc_companies.json
+data/h1b_cache.pkl
+data/*.log
+server.log
+server_err.log
+
+# Stray one-off scripts kept out of the package surface
+check_db.py
+check_linkedin.py
+filter_linkedin.py
+test_headed*.py

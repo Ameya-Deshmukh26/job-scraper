@@ -17,7 +17,11 @@ By the time a job appears on LinkedIn, dozens of applications are already in. Th
 
 ## Features
 
-- **Multi-source scraping** — Greenhouse (80+ companies), Lever (30+), Ashby (30+), Workday (27 Fortune 500 companies), Goldman Sachs (custom GraphQL API), Remotive, HiringCafe, LinkedIn, Adzuna
+- **Multi-source scraping** - 293 company ATS boards (Greenhouse 173, Ashby 75, Lever 45) plus Workday, Oracle HCM, Avature, Goldman Sachs, Amazon/Netflix, LinkedIn, HiringCafe, Hacker News, Indeed
+- **Automated board discovery** - probes Y Combinator's 6,175-company API against Greenhouse/Lever/Ashby to find live boards instead of guessing slugs, with a collision guard for generic names
+- **H-1B sponsorship tagging** - every employer checked against USCIS Employer Data Hub (FY2021-23, ~44k employers); filter to sponsors only
+- **Match scoring** - 0-100 per job from role fit, level, company type, sponsorship, location and freshness; sortable
+- **LangGraph agent** - ranks jobs with reasoning and rewrites resume bullets, gated by a deterministic zero-LLM fabrication validator that blocks invented metrics and skill inflation
 - **Live dashboard** (Flask) — two-tab UI: all sources feed + company portal radar
 - **Portal Radar tab** — Workday Fortune 500 section first, Goldman Sachs section, then GH/Lever/Ashby; freshness badges (🔥 < 1h, ✨ 1–6h, 🔵 6–24h)
 - **Auto-scan every hour** — background thread refreshes portal jobs; countdown timer in UI
@@ -32,17 +36,24 @@ By the time a job appears on LinkedIn, dozens of applications are already in. Th
 
 ## Sources
 
-| Source | Type | Companies |
+| Source | Type | Coverage |
 |---|---|---|
-| Greenhouse | ATS API | 80+ startups & tech cos |
-| Lever | ATS API | 30+ companies |
-| Ashby | ATS API | 30+ AI/dev-tool startups |
-| Workday | CXS JSON API | 27 Fortune 500 (Capital One, Walmart, Cisco, Boeing, Citi, Wells Fargo, BofA, Accenture, …) |
+| Greenhouse | ATS API | 173 boards (auto-discovered + curated) |
+| Ashby | GraphQL | 75 boards |
+| Lever | ATS API | 45 boards |
+| Workday | CXS JSON API | 30 Fortune 500 (Capital One, Walmart, Cisco, Citi, Wells Fargo, ...) |
+| Oracle HCM | REST | JPMorgan, Goldman lateral, Amex, Oracle |
+| Avature | HTML | Deloitte |
 | Goldman Sachs | Custom GraphQL | `api-higher.gs.com` |
-| LinkedIn | Guest API | Keyword search |
-| Remotive | Public API | Remote-first jobs |
-| HiringCafe | Public API | Aggregator |
-| Adzuna | REST API | Indeed/ZipRecruiter/SimplyHired aggregate |
+| Amazon / Netflix | Public JSON | amazon.jobs, Netflix Eightfold |
+| LinkedIn | Guest API | Dynamic `f_TPR` window, Easy Apply excluded |
+| HiringCafe | Public API + Playwright | Aggregator |
+| Hacker News | Algolia API | Monthly "Who is hiring" thread, startup-heavy |
+| Indeed | Firecrawl | Paid credits, opt-in only |
+
+Google, Meta, Apple and Microsoft career APIs are bot-walled and deliberately
+not attempted. Handshake requires SSO. Removed as unproductive: Adzuna,
+Remotive, TheMuse, RemoteOK (zero jobs returned across the tracker's history).
 
 ---
 
@@ -154,3 +165,29 @@ CVS Health · Cigna · Humana · Pfizer · Johnson & Johnson · Nationwide · Tr
 ## License
 
 MIT
+
+---
+
+## Development
+
+```bash
+# Test suite: 125 tests, fully offline (no network, API keys or browser)
+python -m pytest tests/ -q
+
+# Discover new startup boards from the YC directory
+python discover_boards.py --fetch-yc
+python discover_boards.py --probe 500
+python discover_boards.py --write-config
+
+# Optional API keys, read from the environment (never committed)
+export FIRECRAWL_API_KEY=...   # enables Indeed + JS-rendered JD fallback
+export ANTHROPIC_API_KEY=...   # or sign in to Claude Code and the agent reuses that
+export OPIK_URL_OVERRIDE=http://localhost:5173/api   # self-hosted agent tracing
+```
+
+CI runs the suite on Python 3.11 and 3.12, plus a lint gate and a check that
+no credential-shaped strings are committed.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

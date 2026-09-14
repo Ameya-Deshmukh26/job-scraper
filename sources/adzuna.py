@@ -14,6 +14,8 @@ _SESSION = requests.Session()
 _SESSION.headers.update({"User-Agent": "JobScraper/1.0"})
 _BASE = "https://api.adzuna.com/v1/api/jobs/us/search/{page}"
 
+# Adzuna aggregates Indeed/ZipRecruiter/CareerBuilder, which is where staffing
+# and contract shops post most of their volume - the one free route to them.
 _SEARCHES = [
     "data analyst",
     "data scientist",
@@ -21,6 +23,9 @@ _SEARCHES = [
     "data engineer",
     "analytics engineer",
     "ai engineer",
+    "business analyst",
+    "data analyst contract",
+    "data engineer contract",
 ]
 
 

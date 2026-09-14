@@ -59,6 +59,7 @@ _SEARCH_TERMS = [
     "analytics",
     "quantitative",
     "ai engineer",
+    "business analyst",
 ]
 
 # Experience levels to include (skip Partner/Managing Director levels)

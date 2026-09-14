@@ -25,14 +25,12 @@
       --c-lever:        #818cf8;
       --c-ashby:        #c084fc;
       --c-workday:      #22d3ee;
-      --c-remotive:     #22d3ee;
-      --c-remoteok:     #10b981;
-      --c-themuse:      #f472b6;
+      --c-indeed:       #2d64e8;
+      --c-hackernews:   #ff6600;
       --c-hiringcafe:   #a78bfa;
       --c-goldman_sachs:#c9aa71;
       --c-oracle_hcm:   #f59e0b;
       --c-deloitte:     #00a3e0;
-      --c-adzuna:       #fb923c;
 
       /* tab accent colours */
       --t-all:     #818cf8;
@@ -338,10 +336,6 @@
     .chip[data-src="linkedin"].on   { color: var(--c-linkedin);     border-color: rgba(10,102,194,.5); }
     .chip[data-src="greenhouse"].on { color: var(--c-greenhouse);   border-color: rgba(52,211,153,.5); }
     .chip[data-src="lever"].on      { color: var(--c-lever);        border-color: rgba(129,140,248,.5); }
-    .chip[data-src="remotive"].on   { color: var(--c-remotive);     border-color: rgba(34,211,238,.5); }
-    .chip[data-src="remoteok"].on   { color: var(--c-remoteok);     border-color: rgba(16,185,129,.5); }
-    .chip[data-src="themuse"].on    { color: var(--c-themuse);      border-color: rgba(244,114,182,.5); }
-    .chip[data-src="adzuna"].on     { color: var(--c-adzuna);       border-color: rgba(251,146,60,.5); }
     .chip[data-src="hiringcafe"].on { color: var(--c-hiringcafe);   border-color: rgba(167,139,250,.5); }
     .chip[data-src="workday"].on    { color: var(--c-workday);      border-color: rgba(34,211,238,.5); }
     .chip[data-src="new"].on        { color: #fb923c;               border-color: rgba(251,146,60,.5); background: rgba(251,146,60,.06); }
@@ -396,11 +390,7 @@
     .job-card[data-src="lever"]::before       { background: var(--c-lever); }
     .job-card[data-src="ashby"]::before       { background: var(--c-ashby); }
     .job-card[data-src="workday"]::before     { background: var(--c-workday); }
-    .job-card[data-src="remotive"]::before    { background: var(--c-remotive); }
-    .job-card[data-src="remoteok"]::before    { background: var(--c-remoteok); }
-    .job-card[data-src="themuse"]::before     { background: var(--c-themuse); }
     .job-card[data-src="hiringcafe"]::before  { background: var(--c-hiringcafe); }
-    .job-card[data-src="adzuna"]::before      { background: var(--c-adzuna); }
 
     .job-card:hover { transform: translateY(-2px); }
     .job-card[data-src="linkedin"]:hover    { border-color: rgba(10,102,194,.5);   box-shadow: 0 8px 32px rgba(10,102,194,.12); }
@@ -408,11 +398,7 @@
     .job-card[data-src="lever"]:hover       { border-color: rgba(129,140,248,.5);  box-shadow: 0 8px 32px rgba(129,140,248,.12); }
     .job-card[data-src="ashby"]:hover       { border-color: rgba(192,132,252,.5);  box-shadow: 0 8px 32px rgba(192,132,252,.12); }
     .job-card[data-src="workday"]:hover     { border-color: rgba(34,211,238,.5);   box-shadow: 0 8px 32px rgba(34,211,238,.12); }
-    .job-card[data-src="remotive"]:hover    { border-color: rgba(34,211,238,.4);   box-shadow: 0 8px 32px rgba(34,211,238,.10); }
-    .job-card[data-src="remoteok"]:hover    { border-color: rgba(16,185,129,.5);   box-shadow: 0 8px 32px rgba(16,185,129,.12); }
-    .job-card[data-src="themuse"]:hover     { border-color: rgba(244,114,182,.5);  box-shadow: 0 8px 32px rgba(244,114,182,.12); }
     .job-card[data-src="hiringcafe"]:hover  { border-color: rgba(167,139,250,.5);  box-shadow: 0 8px 32px rgba(167,139,250,.12); }
-    .job-card[data-src="adzuna"]:hover      { border-color: rgba(251,146,60,.5);   box-shadow: 0 8px 32px rgba(251,146,60,.12); }
     .job-card.is-new  { }
     .job-card.applied { opacity: .38; }
 
@@ -479,6 +465,58 @@
       white-space: nowrap;
     }
     .tag-new            { background: rgba(251,146,60,.12); color: #fb923c; border: 1px solid rgba(251,146,60,.25); }
+    .tag-h1b            { background: rgba(34,197,94,.12);  color: #4ade80; border: 1px solid rgba(34,197,94,.25); font-weight:600; }
+    .tag-src-faang      { background: rgba(255,153,0,.12);  color: #ff9900; }
+    .dot-faang          { background: #ff9900; }
+    .tag-src-indeed     { background: rgba(45,100,232,.14); color: #6b93f0; }
+    .dot-indeed         { background: #2d64e8; }
+    .btn-indeed         { background: rgba(45,100,232,.15); color: #6b93f0; border: 1px solid rgba(45,100,232,.35); }
+    .tag-src-hackernews { background: rgba(255,102,0,.12); color: #ff8c33; }
+    .dot-hackernews     { background: #ff6600; }
+    .btn-hn             { background: rgba(255,102,0,.15); color: #ff8c33; border: 1px solid rgba(255,102,0,.35); }
+    /* ── LangGraph agent ── */
+    .btn-agent-rank { background: rgba(129,140,248,.15); color: var(--t-all); border: 1px solid rgba(129,140,248,.35); }
+    .agent-pill { font-size: 10px; padding: 3px 8px; border-radius: 20px; color: var(--muted);
+                  border: 1px solid var(--border); background: var(--surface); white-space: nowrap; }
+    .btn-agent { background: rgba(129,140,248,.12); color: var(--t-all); border: 1px solid rgba(129,140,248,.3);
+                 border-radius: 7px; padding: 6px 9px; cursor: pointer; font-size: 12px; transition: .15s; }
+    .btn-agent:hover:not(:disabled) { background: rgba(129,140,248,.25); }
+    .btn-agent:disabled { opacity: .5; cursor: not-allowed; }
+    .card-fit { display:flex; flex-direction:column; gap:3px; margin: 6px 0 2px; font-size: 11px; line-height: 1.35; }
+    .fit-why { color: #a5b4fc; }
+    .fit-gap { color: #fbbf24; }
+    .agent-modal { position: fixed; inset: 0; background: rgba(3,5,15,.78); backdrop-filter: blur(3px);
+                   display: none; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
+    .agent-modal.show { display: flex; }
+    .agent-box { background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+                 max-width: 780px; width: 100%; max-height: 84vh; display: flex; flex-direction: column; }
+    .agent-head { display:flex; justify-content:space-between; align-items:center; gap:12px;
+                  padding: 14px 18px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 14px; }
+    .agent-head button { background:none; border:none; color: var(--muted); cursor:pointer; font-size:14px; }
+    .agent-body { padding: 16px 18px; overflow-y: auto; }
+    .agent-verdict { display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:9px;
+                     font-size:13px; font-weight:600; margin-bottom:10px; }
+    .agent-verdict.ok  { background: rgba(34,197,94,.12);  color:#4ade80; border:1px solid rgba(34,197,94,.28); }
+    .agent-verdict.bad { background: rgba(248,113,113,.12); color:#f87171; border:1px solid rgba(248,113,113,.28); }
+    .agent-meta { font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+    .agent-finding { background: rgba(248,113,113,.08); border-left:3px solid #f87171; border-radius:6px;
+                     padding:8px 10px; margin-bottom:8px; font-size:12px; }
+    .agent-finding.warn { background: rgba(251,191,36,.08); border-left-color:#fbbf24; }
+    .af-bullet { color: var(--muted); font-size: 11px; margin-top: 4px; font-style: italic; }
+    .agent-bullets { margin:0; padding-left: 20px; display:flex; flex-direction:column; gap:10px; }
+    .agent-bullets li { font-size: 13px; line-height: 1.45; }
+    .ab-src { font-size: 10px; color: var(--muted); margin-top: 3px; }
+    .agent-notes { margin-top: 14px; padding-top: 10px; border-top:1px solid var(--border);
+                   font-size: 10px; color: var(--muted); }
+    .agent-wait, .agent-err { padding: 24px; text-align:center; color: var(--muted); font-size: 13px; }
+    .spin { display:inline-block; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .tag-staffing       { background: rgba(148,163,184,.12); color: #94a3b8; border: 1px solid rgba(148,163,184,.25); }
+    .tag-startup        { background: rgba(168,85,247,.14); color: #c084fc; border: 1px solid rgba(168,85,247,.3); font-weight:600; }
+    .tag-match          { font-weight:700; min-width:26px; text-align:center; }
+    .tag-match.hi       { background: rgba(34,197,94,.15);  color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+    .tag-match.mid      { background: rgba(251,191,36,.12); color: #fbbf24; border: 1px solid rgba(251,191,36,.25); }
+    .tag-match.lo       { background: rgba(148,163,184,.1); color: #94a3b8; border: 1px solid rgba(148,163,184,.2); }
     .tag-src-linkedin   { background: rgba(10,102,194,.1);  color: #60a5fa; }
     .tag-src-greenhouse { background: rgba(52,211,153,.1);  color: var(--c-greenhouse); }
     .tag-src-lever      { background: rgba(129,140,248,.1); color: var(--c-lever); }
@@ -973,10 +1011,6 @@
     .li-chip.active { color: var(--text); background: rgba(56,189,248,.08); border-color: rgba(56,189,248,.35); }
     .li-chip[data-src="linkedin"].active   { color: var(--c-linkedin); background: rgba(10,102,194,.08); border-color: rgba(10,102,194,.35); }
     .li-chip[data-src="hiringcafe"].active { color: var(--c-hiringcafe); background: rgba(167,139,250,.08); border-color: rgba(167,139,250,.35); }
-    .li-chip[data-src="remotive"].active   { color: var(--c-remotive); background: rgba(34,211,238,.07); border-color: rgba(34,211,238,.3); }
-    .li-chip[data-src="remoteok"].active   { color: var(--c-remoteok); background: rgba(16,185,129,.07); border-color: rgba(16,185,129,.3); }
-    .li-chip[data-src="themuse"].active    { color: var(--c-themuse); background: rgba(244,114,182,.08); border-color: rgba(244,114,182,.3); }
-    .li-chip[data-src="adzuna"].active     { color: var(--c-adzuna); background: rgba(251,146,60,.08); border-color: rgba(251,146,60,.3); }
 
     /* ─── TOAST ───────────────────────────────────────────────────────────── */
     .toasts {
@@ -1103,23 +1137,51 @@
     </div>
   </div>
 
+  <!-- Scan buttons (Live Feed) -->
+  <div class="filters" style="margin-bottom:8px">
+    <button class="btn btn-li js-btn-li" onclick="scanLinkedIn()">
+      <i class="bi bi-linkedin"></i> LinkedIn Scan
+    </button>
+    <button class="btn btn-gh" onclick="scanPortals()" style="font-size:12px">
+      <i class="bi bi-briefcase"></i> Portal Scan
+    </button>
+    <button class="btn btn-agent-rank" id="btn-agent-rank" onclick="agentRank()" style="font-size:12px"
+            title="LangGraph agent: score + explain fit and gaps">
+      <i class="bi bi-stars"></i> Agent Rank
+    </button>
+    <button class="btn btn-hn" id="btn-hn" onclick="scanHN()" style="font-size:12px"
+            title="Hacker News Who-is-hiring thread — free, startup-heavy">
+      <i class="bi bi-braces"></i> HN Startups
+    </button>
+    <button class="btn btn-indeed" id="btn-indeed" onclick="scanIndeed()" style="font-size:12px"
+            title="Indeed via Firecrawl — uses paid credits, manual only">
+      <i class="bi bi-search"></i> Indeed Scan
+    </button>
+    <span id="agent-backend" class="agent-pill" title="Active LLM backend / Opik tracing"></span>
+  </div>
+
   <!-- Filters -->
   <div class="filters">
     <input class="search" id="search" type="text" placeholder="&#128269;  Search role or company…" oninput="render()" />
     <button class="chip on" data-src="all"        onclick="setSource(this)">All</button>
     <button class="chip"    data-src="linkedin"   onclick="setSource(this)">LinkedIn</button>
     <button class="chip"    data-src="greenhouse" onclick="setSource(this)">Greenhouse</button>
-    <button class="chip"    data-src="lever"      onclick="setSource(this)">Lever</button>
-    <button class="chip"    data-src="remoteok"   onclick="setSource(this)">RemoteOK</button>
-    <button class="chip"    data-src="remotive"   onclick="setSource(this)">Remotive</button>
-    <button class="chip"    data-src="themuse"    onclick="setSource(this)">TheMuse</button>
-    <button class="chip"    data-src="adzuna"     onclick="setSource(this)">Adzuna</button>
     <button class="chip"    data-src="hiringcafe" onclick="setSource(this)">HiringCafe</button>
-    <button class="chip"    data-src="workday"    onclick="setSource(this)">Workday</button>
+    <button class="chip"    data-src="indeed"     onclick="setSource(this)">Indeed</button>
+    <button class="chip"    data-src="boards"     onclick="setSource(this)">Company Boards</button>
+    <button class="chip"    data-src="staffing"   onclick="setSource(this)">📋 Contract/Staffing</button>
+    <button class="chip"    data-src="startups"   onclick="setSource(this)">🚀 Startups</button>
     <button class="chip"    data-src="new"        onclick="setSource(this)">🔥 New</button>
     <label class="hide-toggle">
       <input type="checkbox" id="hide-applied" checked onchange="render()" /> Hide applied
     </label>
+    <label class="hide-toggle" style="margin-left:8px">
+      <input type="checkbox" id="h1b-only" onchange="render()" /> H-1B sponsors only
+    </label>
+    <span style="margin-left:auto;display:inline-flex;gap:6px;align-items:center">
+      <button class="chip sort-chip on" data-sort="match" onclick="setSort(this)">🎯 Best match</button>
+      <button class="chip sort-chip" data-sort="new" onclick="setSort(this)">🕒 Newest</button>
+    </span>
   </div>
 
   <!-- Jobs -->
@@ -1163,10 +1225,6 @@
     <button class="li-chip active" data-src="all" onclick="setLiFilter(this)">All Boards</button>
     <button class="li-chip" data-src="linkedin"   onclick="setLiFilter(this)"><i class="bi bi-linkedin" style="font-size:11px"></i> LinkedIn</button>
     <button class="li-chip" data-src="hiringcafe" onclick="setLiFilter(this)"><i class="bi bi-cup-hot" style="font-size:11px"></i> HiringCafe</button>
-    <button class="li-chip" data-src="remoteok"   onclick="setLiFilter(this)"><i class="bi bi-rocket" style="font-size:11px"></i> RemoteOK</button>
-    <button class="li-chip" data-src="remotive"   onclick="setLiFilter(this)">Remotive</button>
-    <button class="li-chip" data-src="themuse"    onclick="setLiFilter(this)">TheMuse</button>
-    <button class="li-chip" data-src="adzuna"     onclick="setLiFilter(this)">Adzuna</button>
     <label class="hide-toggle" style="margin-left:auto">
       <input type="checkbox" id="li-hide-applied" checked onchange="renderLinkedinTab()" /> Hide applied
     </label>
@@ -1340,7 +1398,10 @@ let activeLiSrc     = "all";
 let activeTab       = "all";
 let portalScanRunning = false;
 
-const LI_SOURCES = ["linkedin", "hiringcafe", "remoteok", "remotive", "themuse", "adzuna"];
+// Direct-ATS sources, grouped behind one chip instead of eight
+const BOARD_SOURCES = ["greenhouse", "lever", "ashby", "workday",
+                       "oracle_hcm", "deloitte", "goldman_sachs", "faang"];
+const LI_SOURCES = ["linkedin", "hiringcafe", "hackernews"];
 
 // ════════════════════════════════════════════════════════════════════════
 // UTILS
@@ -1372,15 +1433,31 @@ function toast(msg, color = "var(--c-greenhouse)") {
 // JOB CARD BUILDER (shared by Tab 1 & Tab 2)
 // ════════════════════════════════════════════════════════════════════════
 function buildJobCard(j, onToggle) {
-  const ts    = timeAgo(j.posted_at || j.seen_at);
+  const ts    = timeAgo(jobTs(j).toISOString());
   const src   = (j.source || "unknown").toLowerCase();
   const srcCap = src.charAt(0).toUpperCase() + src.slice(1);
   const isNew = ts.fresh;
   const isAp  = !!j.applied;
 
-  const newTag = isNew
+  const newTag  = isNew
     ? `<span class="tag tag-new"><i class="bi bi-lightning-charge-fill"></i> NEW</span>` : "";
-  const srcTag = `<span class="tag tag-src-${src}">${srcCap}</span>`;
+  const srcTag  = `<span class="tag tag-src-${src}">${srcCap}</span>`;
+  const h1bTag  = j.h1b_sponsor
+    ? `<span class="tag tag-h1b" title="This employer has approved H-1B petitions (USCIS FY2021-2023)">H-1B</span>` : "";
+  const startupTag = j.is_startup
+    ? `<span class="tag tag-startup" title="Startup${j.team_size ? ", team of " + j.team_size : ""}${j.yc_batch ? ", YC " + j.yc_batch : ""}">🚀${j.yc_batch ? " " + esc(j.yc_batch) : ""}${j.team_size ? " · " + j.team_size : ""}</span>`
+    : "";
+  const staffTag = j.is_staffing
+    ? `<span class="tag tag-staffing" title="Staffing agency or contract shop">agency</span>` : "";
+  const m = j.match ?? null;
+  const matchTag = m !== null
+    ? `<span class="tag tag-match ${m >= 75 ? "hi" : m >= 55 ? "mid" : "lo"}" title="Match score: role fit, level, company, H-1B, location, freshness">${m}</span>` : "";
+  // Agent fit reasoning, when /api/agent/rank has assessed this job
+  const fitLine = (j.fit_reason || j.fit_gap)
+    ? `<div class="card-fit">
+         ${j.fit_reason ? `<span class="fit-why"><i class="bi bi-stars"></i> ${esc(j.fit_reason)}</span>` : ""}
+         ${j.fit_gap ? `<span class="fit-gap"><i class="bi bi-exclamation-triangle"></i> ${esc(j.fit_gap)}</span>` : ""}
+       </div>` : "";
 
   const applyLabel = isAp
     ? `<i class="bi bi-check2-circle"></i> Applied`
@@ -1397,13 +1474,18 @@ function buildJobCard(j, onToggle) {
     <div class="card-meta">
       <span class="meta-item"><i class="bi bi-geo-alt"></i>${esc(j.location || "Unspecified")}</span>
       <span class="meta-item"><i class="bi bi-clock"></i>${ts.rel}</span>
-      ${srcTag}${newTag}
+      ${matchTag}${srcTag}${newTag}${h1bTag}${startupTag}${staffTag}
     </div>
+    ${fitLine}
     <div class="card-actions">
       <a class="btn-apply ${isAp ? "done" : ""}" href="${esc(j.url)}" target="_blank" rel="noopener"
          onclick="markApplied(event,'${esc(j.job_id)}',this)">
         ${applyLabel}
       </a>
+      <button class="btn-agent" title="Tailor bullets with the LangGraph agent"
+              onclick="agentTailor('${esc(j.job_id)}',this)">
+        <i class="bi bi-stars"></i>
+      </button>
       <button class="btn-mark ${isAp ? "done" : ""}" title="Toggle applied"
               onclick="toggleApplied('${esc(j.job_id)}',this)">
         <i class="bi bi-${isAp ? "bookmark-check-fill" : "bookmark"}"></i>
@@ -1415,17 +1497,197 @@ function buildJobCard(j, onToggle) {
 // ════════════════════════════════════════════════════════════════════════
 // TAB 1 — RENDER (All Jobs)
 // ════════════════════════════════════════════════════════════════════════
+// ── Capped grid rendering ─────────────────────────────────────────────────
+// Rendering 2000+ cards at once freezes the page. Show the newest RENDER_CAP
+// and let the user load more on demand.
+const RENDER_CAP = 250;
+const renderCaps = {};   // gridId → current cap
+
+// ════════════════════════════════════════════════════════════════════════
+// LANGGRAPH AGENT
+// ════════════════════════════════════════════════════════════════════════
+async function agentTailor(jobId, btn) {
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<i class="bi bi-hourglass-split"></i>`;
+  showAgentModal("Running agent…",
+    `<div class="agent-wait"><i class="bi bi-arrow-repeat spin"></i> load_corpus → tailor → validate_tailoring</div>`);
+  try {
+    const r = await fetch(`/api/agent/tailor/${encodeURIComponent(jobId)}?bullets=5`, { method: "POST" });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+    renderAgentResult(d);
+  } catch (e) {
+    showAgentModal("Agent failed", `<div class="agent-err">${esc(e.message)}</div>`);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+}
+
+function renderAgentResult(d) {
+  const v  = d.validation || {};
+  const ok = v.ok;
+  const prov = v.provenance || {};
+  const bullets = (d.bullets || []).map((b, i) => `
+    <li>
+      <div class="ab-text">${esc(b)}</div>
+      <div class="ab-src"><i class="bi bi-link-45deg"></i> traced to ${esc(prov[i] || prov[String(i)] || "?")}</div>
+    </li>`).join("");
+  const findings = (v.findings || []).map(f => `
+    <div class="agent-finding ${f.severity}">
+      <strong>${esc(f.kind)}</strong> ${esc(f.detail)}
+      <div class="af-bullet">${esc(f.bullet)}</div>
+    </div>`).join("");
+  const th = v.thresholds || {};
+
+  showAgentModal(
+    `${esc(d.job?.title || "")} — ${esc(d.job?.company || "")}`,
+    `<div class="agent-verdict ${ok ? "ok" : "bad"}">
+       <i class="bi bi-${ok ? "shield-check" : "shield-exclamation"}"></i>
+       ${ok ? "Validation clean — every bullet traced, no invented metrics"
+            : `Validation FAILED — ${(v.findings || []).length} finding(s)`}
+     </div>
+     <div class="agent-meta">
+       JD ${d.jd_chars || 0} chars · provenance floor ${th.provenance_floor ?? "?"} ·
+       corpus ${th.corpus_items ?? "?"} items · ${th.legit_numbers ?? "?"} legit metrics
+     </div>
+     ${findings}
+     <ol class="agent-bullets">${bullets}</ol>
+     <div class="agent-notes">${(d.notes || []).map(n => esc(n)).join(" · ")}</div>`
+  );
+}
+
+function showAgentModal(title, bodyHtml) {
+  let el = document.getElementById("agent-modal");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "agent-modal";
+    el.className = "agent-modal";
+    el.onclick = (e) => { if (e.target === el) el.classList.remove("show"); };
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `<div class="agent-box">
+      <div class="agent-head">
+        <span><i class="bi bi-diagram-3"></i> ${title}</span>
+        <button onclick="document.getElementById('agent-modal').classList.remove('show')">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="agent-body">${bodyHtml}</div>
+    </div>`;
+  el.classList.add("show");
+}
+
+async function agentRank() {
+  const btn = document.getElementById("btn-agent-rank");
+  btn.disabled = true;
+  btn.classList.add("scanning");
+  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Agent ranking…`;
+  try {
+    const r = await fetch("/api/agent/rank", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ limit: 40 }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error);
+    toast("Agent ranking started — reasoning over top 40 jobs", "var(--t-all)");
+    const iv = setInterval(async () => {
+      const s = await (await fetch("/api/agent/rank/status")).json();
+      if (!s.running) {
+        clearInterval(iv);
+        btn.disabled = false;
+        btn.classList.remove("scanning");
+        btn.innerHTML = `<i class="bi bi-stars"></i> Agent Rank`;
+        if (s.error) toast("Agent rank failed: " + s.error, "var(--red)");
+        else if (s.backend === "none")
+          toast("Agent ran with no LLM (backend: none) — sign in to <code>claude</code> for reasoning", "var(--c-adzuna)");
+        else toast(`Agent assessed <strong>${s.assessed}</strong> jobs`, "var(--t-all)");
+        await loadJobs();
+      }
+    }, 4000);
+  } catch (e) {
+    toast("Agent rank error: " + e.message, "var(--red)");
+    btn.disabled = false;
+    btn.classList.remove("scanning");
+    btn.innerHTML = `<i class="bi bi-stars"></i> Agent Rank`;
+  }
+}
+
+// ── Sort mode (Best match vs Newest) ─────────────────────────────────────
+let sortMode = "match";
+
+function setSort(btn) {
+  document.querySelectorAll(".sort-chip").forEach(b => b.classList.remove("on"));
+  btn.classList.add("on");
+  sortMode = btn.dataset.sort;
+  render();
+  renderLinkedinTab();
+  renderWorkdayTab();
+}
+
+function sortJobs(arr) {
+  if (sortMode === "match") {
+    arr.sort((a, b) => (b.match ?? 0) - (a.match ?? 0) || jobTs(b) - jobTs(a));
+  } else {
+    arr.sort((a, b) => jobTs(b) - jobTs(a));
+  }
+  return arr;
+}
+
+function showMoreCards(gridId) {
+  renderCaps[gridId] = (renderCaps[gridId] || RENDER_CAP) + RENDER_CAP;
+  if (gridId === "grid")               render();
+  else if (gridId === "linkedin-grid") renderLinkedinTab();
+  else if (gridId === "workday-feed")  renderWorkdayTab();
+}
+
+function cappedHtml(gridId, filtered, builder) {
+  const cap   = renderCaps[gridId] || RENDER_CAP;
+  const shown = filtered.slice(0, cap);
+  let html = shown.map(j => builder(j)).join("");
+  if (filtered.length > cap) {
+    html += `<div style="grid-column:1/-1;text-align:center;padding:16px">
+      <button class="btn" style="font-size:12px;padding:8px 18px" onclick="showMoreCards('${gridId}')">
+        <i class="bi bi-chevron-down"></i> Show ${Math.min(RENDER_CAP, filtered.length - cap)} more (${filtered.length - cap} hidden)
+      </button>
+    </div>`;
+  }
+  return html;
+}
+
+// Return the best timestamp for a job — prefer posted_at only when it has a
+// time component (LinkedIn gives date-only strings that parse as midnight UTC).
+function jobTs(j) {
+  const p = j.posted_at || "";
+  if (p && p.includes("T")) return new Date(p);  // full ISO datetime → trust it
+  return new Date(j.seen_at || 0);                // date-only or empty → use seen_at
+}
+
 function render() {
-  const q      = document.getElementById("search").value.toLowerCase();
-  const hideAp = document.getElementById("hide-applied").checked;
-  const now    = Date.now();
-  const twoH   = 2 * 60 * 60 * 1000;
+  const q        = document.getElementById("search").value.toLowerCase();
+  const hideAp   = document.getElementById("hide-applied").checked;
+  const h1bOnly  = document.getElementById("h1b-only").checked;
+  const now      = Date.now();
+  const twoH     = 2 * 60 * 60 * 1000;
 
   const filtered = allJobs.filter(j => {
-    if (hideAp && j.applied) return false;
+    if (hideAp  && j.applied)     return false;
+    if (h1bOnly && !j.h1b_sponsor) return false;
     const src = (j.source || "").toLowerCase();
-    if (activeSrc === "new") {
-      const ts = new Date(j.posted_at || j.seen_at);
+    if (activeSrc === "boards") {
+      if (!BOARD_SOURCES.includes(src)) return false;
+    } else if (activeSrc === "staffing") {
+      if (!j.is_staffing) return false;
+    } else if (activeSrc === "startups") {
+      // No time window on purpose: 293 boards yield few genuinely new
+      // startup postings per day, and rescans do not refresh seen_at, so
+      // a 24h filter was structurally empty. Recency shows on each card.
+      if (!j.is_startup) return false;
+    } else if (activeSrc === "new") {
+      // Use seen_at (when job was added to DB) so recently-scanned jobs always appear,
+      // even when posted_at is a date-only string (LinkedIn, Goldman, Deloitte, etc.)
+      const ts = new Date(j.seen_at || j.posted_at);
       if (isNaN(ts) || (now - ts) > twoH) return false;
     } else if (activeSrc !== "all" && src !== activeSrc) {
       return false;
@@ -1434,7 +1696,7 @@ function render() {
     return true;
   });
 
-  filtered.sort((a, b) => new Date(b.posted_at || b.seen_at || 0) - new Date(a.posted_at || a.seen_at || 0));
+  sortJobs(filtered);
 
   document.getElementById("jobs-count").textContent = `${filtered.length} job${filtered.length !== 1 ? "s" : ""}`;
 
@@ -1455,7 +1717,7 @@ function render() {
     return;
   }
 
-  grid.innerHTML = filtered.map(j => buildJobCard(j)).join("");
+  grid.innerHTML = cappedHtml("grid", filtered, buildJobCard);
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -1479,7 +1741,7 @@ function renderLinkedinTab() {
   // Hide applied
   if (hideAp) filtered = filtered.filter(j => !j.applied);
 
-  filtered.sort((a, b) => new Date(b.posted_at || b.seen_at || 0) - new Date(a.posted_at || a.seen_at || 0));
+  sortJobs(filtered);
 
   // Count for badge (all LI jobs regardless of filter/hide)
   const liTotal = allJobs.filter(j => LI_SOURCES.includes((j.source || "").toLowerCase())).length;
@@ -1501,7 +1763,7 @@ function renderLinkedinTab() {
     return;
   }
 
-  grid.innerHTML = filtered.map(j => buildJobCard(j)).join("");
+  grid.innerHTML = cappedHtml("linkedin-grid", filtered, buildJobCard);
 }
 
 function setLiFilter(btn) {
@@ -1528,7 +1790,7 @@ function renderWorkdayTab() {
     return true;
   });
 
-  filtered.sort((a, b) => new Date(b.posted_at || b.seen_at || 0) - new Date(a.posted_at || a.seen_at || 0));
+  sortJobs(filtered);
 
   // Badge: total workday count
   const wdTotal = portalJobs.filter(j => (j.source||"").toLowerCase() === "workday").length;
@@ -1550,7 +1812,7 @@ function renderWorkdayTab() {
     return;
   }
 
-  feed.innerHTML = filtered.map(j => renderPCard(j)).join("");
+  feed.innerHTML = cappedHtml("workday-feed", filtered, renderPCard);
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -1573,6 +1835,21 @@ async function loadJobs() {
   renderLinkedinTab();
 }
 
+async function loadAgentStatus() {
+  try {
+    const s = await (await fetch("/api/agent/status")).json();
+    const el = document.getElementById("agent-backend");
+    if (!el) return;
+    const live = s.llm_backend && s.llm_backend !== "none";
+    el.textContent = `agent: ${s.llm_backend}${s.opik_tracing ? " · opik" : ""}`;
+    el.style.color = live ? "#4ade80" : "var(--muted)";
+    el.title = live
+      ? `LLM backend ${s.llm_backend}; Opik tracing ${s.opik_tracing ? "on" : "off"}`
+      : "No LLM backend — ranking is heuristic and tailoring returns corpus text. "
+        + "Run `claude` in a terminal and sign in to enable reasoning.";
+  } catch { /* non-fatal */ }
+}
+
 async function loadStats() {
   const r = await fetch("/api/stats");
   const s = await r.json();
@@ -1581,10 +1858,7 @@ async function loadStats() {
   document.getElementById("s-applied").textContent = s.applied    ?? 0;
 
   const now  = Date.now();
-  const twoH = allJobs.filter(j => {
-    const t = new Date(j.posted_at || j.seen_at || 0);
-    return (now - t) <= 2 * 3600 * 1000;
-  }).length;
+  const twoH = allJobs.filter(j => (now - jobTs(j)) <= 2 * 3600 * 1000).length;
   document.getElementById("s-2h").textContent = twoH;
 }
 
@@ -1618,13 +1892,18 @@ async function toggleApplied(jobId, btn) {
 // ════════════════════════════════════════════════════════════════════════
 // LINKEDIN SCAN
 // ════════════════════════════════════════════════════════════════════════
+function liButtons() {
+  return document.querySelectorAll("#btn-li, .js-btn-li");
+}
+
 async function scanLinkedIn() {
-  const btn   = document.getElementById("btn-li");
   const hours = parseFloat(document.getElementById("scan-hours").value) || 2;
-  btn.disabled = true;
-  btn.classList.add("scanning");
-  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning LinkedIn…`;
-  setStatus("Running LinkedIn Apify scraper…");
+  liButtons().forEach(btn => {
+    btn.disabled = true;
+    btn.classList.add("scanning");
+    btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning LinkedIn…`;
+  });
+  setStatus("Running LinkedIn guest-API scraper…");
 
   try {
     const r = await fetch("/api/linkedin-scan", {
@@ -1653,7 +1932,7 @@ function pollLinkedInStatus() {
           toast("LinkedIn scan failed: " + data.error, "var(--red)");
           setStatus("LinkedIn scan failed.");
         } else {
-          toast(`LinkedIn scan done — <strong>+${data.added} new jobs</strong>`, "var(--c-linkedin)");
+          toast(`LinkedIn scan done — <strong>+${data.added} new</strong> (${data.fetched ?? "?"} fetched, rest already tracked)`, "var(--c-linkedin)");
           setStatus(`LinkedIn scan done at ${new Date(data.finished_at).toLocaleTimeString()}`);
           await Promise.all([loadJobs(), loadStats()]);
         }
@@ -1663,10 +1942,11 @@ function pollLinkedInStatus() {
 }
 
 function resetLiBtn() {
-  const btn = document.getElementById("btn-li");
-  btn.disabled = false;
-  btn.classList.remove("scanning");
-  btn.innerHTML = `<i class="bi bi-linkedin"></i> LinkedIn Scan`;
+  liButtons().forEach(btn => {
+    btn.disabled = false;
+    btn.classList.remove("scanning");
+    btn.innerHTML = `<i class="bi bi-linkedin"></i> LinkedIn Scan`;
+  });
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -1726,6 +2006,74 @@ function resetHcBtn() {
 // ════════════════════════════════════════════════════════════════════════
 // REMOTEOK SCAN (startups + small companies)
 // ════════════════════════════════════════════════════════════════════════
+async function scanHN() {
+  const btn = document.getElementById("btn-hn");
+  btn.disabled = true; btn.classList.add("scanning");
+  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Reading HN thread…`;
+  try {
+    const r = await fetch("/api/hn-scan", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hours: 720 }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error);
+    toast("Reading this month's Who-is-hiring thread…", "var(--c-hackernews)");
+    const iv = setInterval(async () => {
+      const st = await (await fetch("/api/hn-scan/status")).json();
+      if (!st.running) {
+        clearInterval(iv);
+        btn.disabled = false; btn.classList.remove("scanning");
+        btn.innerHTML = `<i class="bi bi-braces"></i> HN Startups`;
+        if (st.error) toast("HN scan failed: " + st.error, "var(--red)");
+        else toast(`HN done — <strong>+${st.added} new</strong> (${st.fetched} parsed)`,
+                   "var(--c-hackernews)");
+        await Promise.all([loadJobs(), loadStats()]);
+      }
+    }, 4000);
+  } catch (e) {
+    toast("HN scan error: " + e.message, "var(--red)");
+    btn.disabled = false; btn.classList.remove("scanning");
+    btn.innerHTML = `<i class="bi bi-braces"></i> HN Startups`;
+  }
+}
+
+async function scanIndeed() {
+  const btn = document.getElementById("btn-indeed");
+  const hours = parseFloat(document.getElementById("scan-hours").value) || 24;
+  if (!confirm("Indeed runs through Firecrawl and uses paid credits "
+             + "(up to 6 scrapes per run). Continue?")) return;
+  btn.disabled = true;
+  btn.classList.add("scanning");
+  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning Indeed…`;
+  try {
+    const r = await fetch("/api/indeed-scan", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hours }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error);
+    toast(`Indeed scan started (last ${hours}h) — takes ~2 min`, "var(--c-indeed)");
+    const iv = setInterval(async () => {
+      const s = await (await fetch("/api/indeed-scan/status")).json();
+      if (!s.running) {
+        clearInterval(iv);
+        btn.disabled = false;
+        btn.classList.remove("scanning");
+        btn.innerHTML = `<i class="bi bi-search"></i> Indeed Scan`;
+        if (s.error) toast("Indeed scan failed: " + s.error, "var(--red)");
+        else toast(`Indeed done — <strong>+${s.added} new</strong> (${s.fetched} fetched)`,
+                   "var(--c-indeed)");
+        await Promise.all([loadJobs(), loadStats()]);
+      }
+    }, 5000);
+  } catch (e) {
+    toast("Indeed scan error: " + e.message, "var(--red)");
+    btn.disabled = false;
+    btn.classList.remove("scanning");
+    btn.innerHTML = `<i class="bi bi-search"></i> Indeed Scan`;
+  }
+}
+
 async function scanRemoteOK() {
   const btn   = document.getElementById("btn-rok");
   const hours = parseFloat(document.getElementById("scan-hours").value) || 48;
@@ -1965,8 +2313,7 @@ async function loadPortalJobs() {
     const fresh = portalJobs.filter(j => {
       const src = (j.source||"").toLowerCase();
       if (src === "workday") return false;
-      const t = new Date(j.posted_at || j.seen_at || 0);
-      return (Date.now() - t) <= twoH;
+      return (Date.now() - jobTs(j)) <= twoH;
     }).length;
     const badge = document.getElementById("portals-badge");
     badge.textContent = fresh;
@@ -1989,8 +2336,8 @@ const SRC_COLOR = {
 
 function renderPCard(j) {
   const now   = Date.now();
-  const ts    = new Date(j.posted_at || j.seen_at || 0);
-  const mins  = isNaN(ts) ? 9999 : Math.floor((now - ts) / 60000);
+  const ts    = jobTs(j);
+  const mins  = Math.floor((now - ts) / 60000);
   const fc    = freshnessClass(mins);
   const icon  = freshnessIcon(mins);
   const label = freshnessLabel(mins);
@@ -2136,7 +2483,7 @@ async function scanPortals() {
     const r = await fetch("/api/portal-scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hours: 2 }),
+      body: JSON.stringify({ hours: parseFloat(document.getElementById("scan-hours").value) || 2 }),
     });
     if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
     toast("Portal scan started — GH + Lever + Ashby + Goldman + Oracle + Deloitte (takes ~30s)", "var(--t-portals)");
@@ -2246,6 +2593,7 @@ async function loadPortalStatus() {
 // ════════════════════════════════════════════════════════════════════════
 (async () => {
   await Promise.all([loadJobs(), loadStats(), loadPortalJobs(), loadPortalCompanies()]);
+  loadAgentStatus();   // fire-and-forget: backend import can take a few seconds
 
   // Refresh all-jobs + stats every 90s
   setInterval(() => Promise.all([loadJobs(), loadStats()]), 90_000);

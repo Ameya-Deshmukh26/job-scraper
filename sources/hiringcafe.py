@@ -34,10 +34,14 @@ from urllib.parse import quote
 
 log = logging.getLogger(__name__)
 
-_BASE_URL = "https://hiring.cafe/"
-_JOB_BASE = "https://hiring.cafe/job/"
+_BASE_URL = "https://hiringcafe.com/"
+# HiringCafe moved domains (hiring.cafe -> hiringcafe.com) and changed the job
+# route. Measured Aug 2026: /job/<id> now 404s, /jobs/<id> serves only the app
+# shell, and ?job=<id> is the one that actually renders the posting.
+_JOB_BASE = "https://hiringcafe.com/?job="
 
-_JOB_ID_RE = re.compile(r'/job/([A-Za-z0-9]{8,})')
+# Match ids from either the old /job/<id> path or the current ?job=<id> query
+_JOB_ID_RE = re.compile(r'(?:/jobs?/|[?&]job=)([A-Za-z0-9]{8,})')
 
 # Keywords to search for — aligned with config.py KEYWORDS
 _SEARCH_QUERIES = [
@@ -49,6 +53,7 @@ _SEARCH_QUERIES = [
     "ai engineer",
     "gen ai",
     "llm engineer",
+    "business analyst",
 ]
 
 # Pages to fetch per query
@@ -321,7 +326,7 @@ def fetch_hiringcafe_jobs(cutoff: datetime) -> list[dict]:
                     # Wait for job cards to appear
                     try:
                         page.wait_for_selector(
-                            'a[href*="/job/"]',
+                            'a[href*="/job/"], a[href*="/jobs/"], a[href*="job="]',
                             timeout=12_000,
                         )
                     except Exception:

@@ -1,10 +1,12 @@
 """
-Ashby ATS source — used by Anthropic, Perplexity, Cursor, Vercel, Posthog,
-Harvey, Cognition, Linear, and many other top startups.
+Ashby ATS source — used by Cursor, Linear, PostHog, Harvey, Cognition, and
+many other top startups.
 
-Public API: POST https://api.ashbyhq.com/posting-public/job-board
+Old REST endpoint (posting-public/job-board) now returns 401.
+New endpoint: POST https://jobs.ashbyhq.com/api/non-user-graphql
 """
 import logging
+import time
 from datetime import datetime, timezone
 
 import requests
@@ -12,51 +14,75 @@ import requests
 log = logging.getLogger(__name__)
 
 _SESSION = requests.Session()
-_SESSION.headers.update({"User-Agent": "JobScraper/1.0 (personal job alerts)"})
-_URL = "https://api.ashbyhq.com/posting-public/job-board"
+_SESSION.headers.update({
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Content-Type": "application/json",
+})
+_SESSION.mount("https://", requests.adapters.HTTPAdapter(pool_maxsize=16))
+
+_GQL_URL = "https://jobs.ashbyhq.com/api/non-user-graphql"
+
+_QUERY = """
+query($org: String!) {
+  jobBoardWithTeams(organizationHostedJobsPageName: $org) {
+    jobPostings {
+      id
+      title
+      locationName
+      secondaryLocations { locationName }
+      teamId
+    }
+  }
+}
+"""
 
 
 def fetch_ashby_jobs(company: str, cutoff: datetime) -> list[dict]:
     try:
         resp = _SESSION.post(
-            _URL,
-            json={"organizationHostedJobsPageName": company},
-            timeout=10,
+            _GQL_URL,
+            json={"query": _QUERY, "variables": {"org": company}},
+            headers={"Referer": f"https://jobs.ashbyhq.com/{company}"},
+            timeout=12,
         )
         resp.raise_for_status()
+        data = resp.json()
     except Exception as e:
         log.debug(f"Ashby {company}: {e}")
         return []
 
+    board = (data.get("data") or {}).get("jobBoardWithTeams")
+    if not board:
+        return []   # company not on Ashby
+
     jobs = []
-    for job in resp.json().get("jobPostings", []):
-        raw_ts = job.get("publishedAt", "")
-        if not raw_ts:
-            continue
-        try:
-            posted = datetime.fromisoformat(raw_ts.replace("Z", "+00:00"))
-        except Exception:
-            continue
-        if posted < cutoff:
+    for job in board.get("jobPostings", []):
+        jid  = job.get("id", "")
+        if not jid:
             continue
 
-        # Location: prefer locationName, fall back to secondaryLocations
-        location = job.get("locationName", "") or ""
+        title = (job.get("title") or "").strip()
+        if not title:
+            continue
+
+        # Location
+        location = (job.get("locationName") or "").strip()
         if not location:
-            locs = job.get("secondaryLocations", [])
-            location = locs[0].get("locationName", "Unknown") if locs else "Unknown"
+            sec = job.get("secondaryLocations") or []
+            location = sec[0].get("locationName", "Remote") if sec else "Remote"
 
-        # Link: externalLink > ashby hosted page
-        url = (job.get("externalLink") or
-               f"https://jobs.ashbyhq.com/{company}/{job.get('id', '')}")
+        # URL — no externalLink in list view; construct canonical URL
+        url = f"https://jobs.ashbyhq.com/{company}/{jid}"
 
+        # No publishedAt in list view — tracker handles dedup (same as Goldman/Deloitte)
         jobs.append({
-            "id":       f"ashby_{job['id']}",
-            "source":   "Ashby",
-            "company":  company,
-            "title":    job.get("title", ""),
-            "location": location,
-            "url":      url,
-            "posted_at": raw_ts,
+            "id":        f"ashby_{jid}",
+            "source":    "ashby",
+            "company":   company,
+            "title":     title,
+            "location":  location,
+            "url":       url,
+            "posted_at": "",
         })
+
     return jobs

@@ -43,8 +43,8 @@ def _log_attempt(company: str, title: str, url: str, success: bool, reason: str)
 
 
 def _can_auto_apply(job: dict) -> bool:
-    source = job.get("source", "")
-    return source in ("Greenhouse", "Lever")
+    source = job.get("source", "").lower()
+    return source in ("greenhouse", "lever")
 
 
 def run_auto_apply(jobs: list[dict], tracker: JobTracker) -> dict:
@@ -64,15 +64,15 @@ def run_auto_apply(jobs: list[dict], tracker: JobTracker) -> dict:
     attempted = succeeded = failed = 0
 
     for job in eligible[:MAX_PER_RUN]:
-        source  = job["source"]
+        source  = job["source"].lower()
         company = job["company"]
         title   = job["title"]
         url     = job["url"]
 
         try:
-            if source == "Greenhouse":
+            if source == "greenhouse":
                 ok, reason = apply_greenhouse(url, profile)
-            elif source == "Lever":
+            elif source == "lever":
                 ok, reason = apply_lever(url, profile)
             else:
                 continue

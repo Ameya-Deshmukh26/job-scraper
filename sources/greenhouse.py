@@ -7,6 +7,8 @@ log = logging.getLogger(__name__)
 
 _SESSION = requests.Session()
 _SESSION.headers.update({"User-Agent": "JobScraper/1.0 (personal job alerts)"})
+# Sized for the parallel scan engine (12 workers hit this host at once)
+_SESSION.mount("https://", requests.adapters.HTTPAdapter(pool_maxsize=16))
 _BASE = "https://boards-api.greenhouse.io/v1/boards/{}/jobs"
 
 

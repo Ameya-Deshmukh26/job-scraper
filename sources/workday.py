@@ -61,6 +61,7 @@ _SEARCH_TERMS = [
     "analytics engineer",
     "ml engineer",
     "ai engineer",
+    "business analyst",
 ]
 
 # Pages to fetch per (company, keyword) combination

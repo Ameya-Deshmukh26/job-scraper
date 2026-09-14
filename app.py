@@ -14,8 +14,12 @@ from pathlib import Path
 from flask import Flask, jsonify, render_template, request, send_file
 
 from config import ENABLE_AUTO_APPLY, OVERNIGHT_LOOKBACK_HRS, OVERNIGHT_POLL_HOURS, US_ONLY
-from main import run_once, _is_us, _matches_keyword, _is_right_level, _matches_location
+from main import (run_once, _is_us, _matches_keyword, _is_right_level,
+                  _matches_location, fetch_all_sources, process_jobs)
 from tracker import JobTracker
+from sources.h1b import is_h1b_sponsor
+from startups import annotate as annotate_startup
+from ranking import _STAFFING as _STAFFING_RE
 
 log = logging.getLogger(__name__)
 app = Flask(__name__)
@@ -58,7 +62,199 @@ def api_jobs():
     tracker.close()
     if US_ONLY:
         jobs = [j for j in jobs if _is_us(j.get("location", ""))]
+    # Tag each job with H-1B sponsor status (cached lookup, fast)
+    from ranking import match_score
+    for j in jobs:
+        j["h1b_sponsor"] = is_h1b_sponsor(j.get("company", ""))
+        j["match"] = match_score(j)
+        annotate_startup(j)
+        # Staffing/contract shops are ranked down, so flag them explicitly:
+        # contract roles matter for STEM OPT (needs a paid E-Verify employer).
+        j["is_staffing"] = bool(_STAFFING_RE.search(j.get("company") or ""))
     return jsonify(jobs)
+
+
+# -- Hacker News "Who is hiring" scan (free, startup-heavy) ----------------
+
+_hn_lock = threading.Lock()
+_hn_state: dict = {"running": False, "added": 0, "fetched": 0,
+                   "error": None, "finished_at": None}
+
+
+def _do_hn_scan(hours: float):
+    global _hn_state
+    import datetime
+    from datetime import timedelta, timezone as _tz
+    from sources.hackernews import fetch_hackernews_jobs
+    try:
+        cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
+        jobs = fetch_hackernews_jobs(cutoff)
+        tracker = JobTracker()
+        added = len(process_jobs(jobs, tracker, jd_check=False))
+        tracker.close()
+        _hn_state.update(running=False, added=added, fetched=len(jobs), error=None,
+                         finished_at=datetime.datetime.now().isoformat())
+    except Exception as exc:
+        log.exception("HN scan failed")
+        _hn_state.update(running=False, error=str(exc),
+                         finished_at=datetime.datetime.now().isoformat())
+    finally:
+        _hn_lock.release()
+
+
+@app.post("/api/hn-scan")
+def api_hn_scan():
+    hours = float(request.json.get("hours", 720) if request.is_json else 720)
+    if not _hn_lock.acquire(blocking=False):
+        return jsonify({"error": "HN scan already running"}), 409
+    _hn_state.update(running=True, added=0, fetched=0, error=None, finished_at=None)
+    threading.Thread(target=_do_hn_scan, args=(hours,), daemon=True).start()
+    return jsonify({"started": True, "hours": hours})
+
+
+@app.get("/api/hn-scan/status")
+def api_hn_scan_status():
+    return jsonify(_hn_state)
+
+
+# ── Indeed scan (Firecrawl - costs credits, manual trigger only) ──────────
+
+_indeed_lock = threading.Lock()
+_indeed_state: dict = {"running": False, "added": 0, "fetched": 0,
+                       "error": None, "finished_at": None}
+
+
+def _do_indeed_scan(hours: float):
+    global _indeed_state
+    import datetime
+    from datetime import timedelta, timezone as _tz
+    from sources.indeed import fetch_indeed_jobs
+    try:
+        cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
+        jobs = fetch_indeed_jobs(cutoff)
+        tracker = JobTracker()
+        added = len(process_jobs(jobs, tracker, jd_check=False))
+        tracker.close()
+        _indeed_state.update(running=False, added=added, fetched=len(jobs),
+                             error=None,
+                             finished_at=datetime.datetime.now().isoformat())
+    except Exception as exc:
+        log.exception("indeed scan failed")
+        _indeed_state.update(running=False, error=str(exc),
+                             finished_at=datetime.datetime.now().isoformat())
+    finally:
+        _indeed_lock.release()
+
+
+@app.post("/api/indeed-scan")
+def api_indeed_scan():
+    hours = float(request.json.get("hours", 24) if request.is_json else 24)
+    if not _indeed_lock.acquire(blocking=False):
+        return jsonify({"error": "Indeed scan already running"}), 409
+    _indeed_state.update(running=True, added=0, fetched=0, error=None, finished_at=None)
+    threading.Thread(target=_do_indeed_scan, args=(hours,), daemon=True).start()
+    return jsonify({"started": True, "hours": hours})
+
+
+@app.get("/api/indeed-scan/status")
+def api_indeed_scan_status():
+    return jsonify(_indeed_state)
+
+
+# ── LangGraph agent ───────────────────────────────────────────────────────
+
+@app.get("/api/agent/status")
+def api_agent_status():
+    """Which LLM backend and tracing are live."""
+    from agent.llm import backend
+    from agent.tracing import opik_enabled
+    return jsonify({"llm_backend": backend(), "opik_tracing": opik_enabled()})
+
+
+_agent_rank_lock = threading.Lock()
+_agent_rank_state: dict = {"running": False, "assessed": 0, "error": None,
+                           "finished_at": None, "backend": None}
+
+
+def _do_agent_rank(limit: int):
+    """Run the graph's rank path over the freshest jobs and persist reasoning."""
+    global _agent_rank_state
+    import datetime
+    from agent.graph import rank_with_notes
+    from agent.llm import backend
+    try:
+        tracker = JobTracker()
+        jobs = [j for j in tracker.all_jobs() if not j.get("applied")][:limit]
+        ranked, notes = rank_with_notes(jobs)
+        assessed = 0
+        for j in ranked:
+            if j.get("fit_reason") or j.get("fit_gap"):
+                tracker.save_agent_assessment(
+                    j["job_id"], j.get("match"),
+                    j.get("fit_reason"), j.get("fit_gap"))
+                assessed += 1
+        tracker.close()
+        _agent_rank_state.update(
+            running=False, assessed=assessed, error=None, backend=backend(),
+            candidates=len(jobs), notes=notes,
+            finished_at=datetime.datetime.now().isoformat())
+    except Exception as exc:
+        log.exception("agent rank failed")
+        _agent_rank_state.update(running=False, error=str(exc),
+                                 finished_at=datetime.datetime.now().isoformat())
+    finally:
+        _agent_rank_lock.release()
+
+
+@app.post("/api/agent/rank")
+def api_agent_rank():
+    limit = int(request.json.get("limit", 40) if request.is_json else 40)
+    if not _agent_rank_lock.acquire(blocking=False):
+        return jsonify({"error": "Agent rank already running"}), 409
+    _agent_rank_state.update(running=True, assessed=0, error=None, finished_at=None)
+    threading.Thread(target=_do_agent_rank, args=(limit,), daemon=True).start()
+    return jsonify({"started": True, "limit": limit})
+
+
+@app.get("/api/agent/rank/status")
+def api_agent_rank_status():
+    return jsonify(_agent_rank_state)
+
+
+@app.post("/api/agent/tailor/<job_id>")
+def api_agent_tailor(job_id: str):
+    """
+    Run the tailoring path of the LangGraph agent for one tracked job.
+    Returns grounded bullets plus the deterministic validation report.
+    """
+    from agent.graph import tailor as agent_tailor
+    from tailoring.jd_fetcher import fetch_jd
+
+    tracker = JobTracker()
+    job = next((j for j in tracker.all_jobs() if j["job_id"] == job_id), None)
+    tracker.close()
+    if job is None:
+        return jsonify({"error": "job not found"}), 404
+
+    jd = fetch_jd(job["url"])
+    if jd.startswith("[Could not"):
+        jd = ""
+    try:
+        result = agent_tailor(
+            {"title": job["title"], "company": job["company"], "jd": jd},
+            target_bullets=int(request.args.get("bullets", 5)),
+        )
+    except Exception as exc:
+        log.exception("agent tailor failed")
+        return jsonify({"error": str(exc)}), 500
+
+    return jsonify({
+        "job":        {"title": job["title"], "company": job["company"], "url": job["url"]},
+        "jd_chars":   len(jd),
+        "bullets":    result["bullets"],
+        "validation": result["validation"],
+        "notes":      result["notes"],
+    })
 
 
 @app.get("/api/stats")
@@ -191,26 +387,15 @@ def _do_linkedin_scan(hours: float):
     global _li_scan_state
     import datetime
     from datetime import timedelta, timezone as _tz
-    # Use free guest API (no token needed); fall back msg removed
-    from sources.linkedin import fetch_linkedin_jobs
+    from sources.linkedin import fetch_linkedin_jobs  # free guest API, no token
     try:
         cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
         jobs = fetch_linkedin_jobs(cutoff, us_only=True)
         tracker = JobTracker()
-        added = 0
-        for job in jobs:
-            # Skip if same job ID already tracked
-            if tracker.seen(job["id"]):
-                continue
-            # Skip reposts: same title+company already in DB under a different ID
-            if tracker.seen_by_title_company(job["title"], job["company"]):
-                # Still mark the new ID as seen so future scans skip it instantly
-                tracker.mark_seen({**job, "title": "__repost__"})
-                continue
-            tracker.mark_seen(job)
-            added += 1
+        added = len(process_jobs(jobs, tracker, jd_check=False))
         tracker.close()
-        _li_scan_state.update(running=False, added=added, error=None,
+        _li_scan_state.update(running=False, added=added, fetched=len(jobs),
+                               error=None,
                                finished_at=datetime.datetime.now().isoformat())
     except Exception as exc:
         _li_scan_state.update(running=False, error=str(exc),
@@ -249,21 +434,7 @@ def _do_hiringcafe_scan(hours: float):
         cutoff = datetime.datetime.now(timezone.utc) - timedelta(hours=hours)
         jobs = fetch_hiringcafe_jobs(cutoff)
         tracker = JobTracker()
-        added = 0
-        for job in jobs:
-            if not _matches_keyword(job["title"]):
-                continue
-            if not _is_right_level(job["title"]):
-                continue
-            if not _matches_location(job["location"]):
-                continue
-            if tracker.seen(job["id"]):
-                continue
-            if tracker.seen_by_title_company(job["title"], job["company"]):
-                tracker.mark_seen({**job, "title": "__repost__"})
-                continue
-            tracker.mark_seen(job)
-            added += 1
+        added = len(process_jobs(jobs, tracker, jd_check=False))
         tracker.close()
         _hc_scan_state.update(running=False, added=added, error=None,
                                finished_at=datetime.datetime.now().isoformat())
@@ -304,15 +475,7 @@ def _do_remoteok_scan(hours: float):
         cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
         jobs   = fetch_remoteok_jobs(cutoff)
         tracker = JobTracker()
-        added = 0
-        for job in jobs:
-            if tracker.seen(job["id"]):
-                continue
-            if tracker.seen_by_title_company(job["title"], job["company"]):
-                tracker.mark_seen({**job, "title": "__repost__"})
-                continue
-            tracker.mark_seen(job)
-            added += 1
+        added = len(process_jobs(jobs, tracker, jd_check=False))
         tracker.close()
         _rok_scan_state.update(running=False, added=added, error=None,
                                finished_at=datetime.datetime.now().isoformat())
@@ -340,7 +503,7 @@ def api_remoteok_scan_status():
 
 # ── Portal scan (Greenhouse + Lever + Ashby + Workday combined) ───────────────
 
-PORTAL_SOURCES = {"greenhouse", "lever", "ashby", "workday", "goldman_sachs", "oracle_hcm", "deloitte"}
+PORTAL_SOURCES = {"greenhouse", "lever", "ashby", "workday", "goldman_sachs", "oracle_hcm", "deloitte", "faang"}
 
 _portal_scan_lock  = threading.Lock()
 _portal_scan_state: dict = {
@@ -357,51 +520,17 @@ _PORTAL_LOOKBACK   = 2.0                          # look back 2 hours each run
 
 
 def _do_portal_scan(hours: float):
-    """Fetch Greenhouse + Lever + Ashby + Workday + Goldman Sachs + Oracle HCM + Deloitte, filter, and persist."""
+    """Fetch all portal sources (Greenhouse, Lever, Ashby, Workday, Goldman
+    Sachs, Oracle HCM, Deloitte) in parallel, filter, and persist."""
     import datetime as _dt
     from datetime import timedelta, timezone
-    from sources.greenhouse    import fetch_greenhouse_jobs
-    from sources.lever         import fetch_lever_jobs
-    from sources.ashby         import fetch_ashby_jobs
-    from sources.workday       import fetch_workday_jobs
-    from sources.goldman_sachs import fetch_goldman_sachs_jobs
-    from sources.oracle_hcm    import fetch_oracle_hcm_jobs
-    from sources.deloitte      import fetch_deloitte_jobs
-    from config import GREENHOUSE_COMPANIES, LEVER_COMPANIES, ASHBY_COMPANIES, WORKDAY_COMPANIES, ORACLE_HCM_COMPANIES
 
     try:
         cutoff = _dt.datetime.now(timezone.utc) - timedelta(hours=hours)
-        source_counts: dict[str, int] = {}
-        all_jobs: list[dict] = []
-
-        for src, jobs in [
-            ("greenhouse",    fetch_greenhouse_jobs(GREENHOUSE_COMPANIES, cutoff)),
-            ("lever",         fetch_lever_jobs(LEVER_COMPANIES, cutoff)),
-            ("ashby",         fetch_ashby_jobs(ASHBY_COMPANIES, cutoff)),
-            ("workday",       fetch_workday_jobs(WORKDAY_COMPANIES, cutoff)),
-            ("goldman_sachs", fetch_goldman_sachs_jobs(cutoff)),
-            ("oracle_hcm",    fetch_oracle_hcm_jobs(ORACLE_HCM_COMPANIES, cutoff)),
-            ("deloitte",      fetch_deloitte_jobs(cutoff)),
-        ]:
-            source_counts[src] = len(jobs)
-            all_jobs.extend(jobs)
+        all_jobs, source_counts = fetch_all_sources(cutoff, only=PORTAL_SOURCES)
 
         tracker = JobTracker()
-        added = 0
-        for job in all_jobs:
-            if not _matches_keyword(job["title"]):
-                continue
-            if not _is_right_level(job["title"]):
-                continue
-            if not _matches_location(job["location"]):
-                continue
-            if tracker.seen(job["id"]):
-                continue
-            if tracker.seen_by_title_company(job["title"], job["company"]):
-                tracker.mark_seen({**job, "title": "__repost__"})
-                continue
-            tracker.mark_seen(job)
-            added += 1
+        added = len(process_jobs(all_jobs, tracker, jd_check=False))
         tracker.close()
 
         now_iso = _dt.datetime.now().isoformat()
@@ -503,21 +632,7 @@ def _do_workday_scan(hours: float):
         cutoff = datetime.datetime.now(timezone.utc) - timedelta(hours=hours)
         jobs = fetch_workday_jobs(WORKDAY_COMPANIES, cutoff)
         tracker = JobTracker()
-        added = 0
-        for job in jobs:
-            if not _matches_keyword(job["title"]):
-                continue
-            if not _is_right_level(job["title"]):
-                continue
-            if not _matches_location(job["location"]):
-                continue
-            if tracker.seen(job["id"]):
-                continue
-            if tracker.seen_by_title_company(job["title"], job["company"]):
-                tracker.mark_seen({**job, "title": "__repost__"})
-                continue
-            tracker.mark_seen(job)
-            added += 1
+        added = len(process_jobs(jobs, tracker, jd_check=False))
         tracker.close()
         _wd_scan_state.update(running=False, added=added, error=None,
                               finished_at=datetime.datetime.now().isoformat())
@@ -597,8 +712,10 @@ def index():
 # ── Entry point ────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    import os
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=5000)
+    # PORT env var lets the preview panel assign a port; default stays 5000
+    parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", 5000)))
     parser.add_argument("--host", default="127.0.0.1")
     args = parser.parse_args()
 
