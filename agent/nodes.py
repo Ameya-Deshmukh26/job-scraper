@@ -14,8 +14,8 @@ import re
 from typing import Annotated, Any, TypedDict
 
 from .corpus import load_corpus
-from .llm import backend, complete
-from .tracing import log_metric, traced
+from .llm import backend, complete, last_usage
+from .tracing import log_metric, traced, update_trace
 from .validator import validate_bullets
 
 log = logging.getLogger(__name__)
@@ -65,6 +65,9 @@ class AgentState(TypedDict, total=False):
     tailored: list[str]
     validation: dict | None
     attempts: int          # tailor passes made; retries done == attempts - 1
+    strict: bool           # refuse unverifiable output instead of flagging it
+    refused: bool
+    refusal_reason: str
     notes: Annotated[list[str], lambda a, b: (a or []) + (b or [])]
 
 
@@ -225,8 +228,28 @@ def validate_node(state: AgentState) -> AgentState:
     bullets = state.get("tailored") or []
     corpus = state.get("corpus") or []
     report = validate_bullets(bullets, corpus)
+
+    # Accuracy = share of generated bullets that survive every check. This is
+    # the number that actually says whether the agent is telling the truth.
+    traced_ok = len(bullets) - len({f.bullet for f in report.errors})
+    accuracy = (traced_ok / len(bullets)) if bullets else 0.0
+
     log_metric("validation_ok", report.ok)
     log_metric("fabrication_findings", len(report.errors))
+    log_metric("validator_accuracy", round(accuracy, 3))
+    usage = last_usage()
+    log_metric("tokens_in", usage["input_tokens"])
+    log_metric("tokens_out", usage["output_tokens"])
+    log_metric("cost_usd", round(usage["cost_usd"], 6))
+
+    # Roll the run-level numbers onto the parent trace so a run can be judged
+    # without expanding spans: did it tell the truth, and what did it cost.
+    update_trace(validator_accuracy=round(accuracy, 3),
+                 validation_ok=report.ok,
+                 fabrication_findings=len(report.errors),
+                 tokens_in=usage["input_tokens"],
+                 tokens_out=usage["output_tokens"],
+                 cost_usd=round(usage["cost_usd"], 6))
     return {"validation": report.as_dict(),
             "notes": [f"validate: {report.summary()}"]}
 
@@ -245,6 +268,29 @@ def route_after_validate(state: AgentState) -> str:
         return "done"
     retries_done = max(0, state.get("attempts", 1) - 1)
     if retries_done >= state.get("max_retries", 2):
+        if state.get("strict", True):
+            # Refuse rather than hand back claims we could not trace.
+            return "refuse"
         log.warning("validation still failing at retry cap - returning flagged output")
         return "done"
     return "retry"
+
+
+@traced("refuse")
+def refuse_node(state: AgentState) -> AgentState:
+    """
+    Terminal state for output that never passed validation.
+
+    The tailored bullets are discarded, not returned with a warning attached:
+    a caller that receives text will paste it, so the only safe failure mode
+    is handing back nothing plus the reason.
+    """
+    report = state.get("validation") or {}
+    kinds = sorted({f["kind"] for f in report.get("findings", [])})
+    reason = ("could not trace every claim to the corpus after "
+              f"{state.get('attempts', 0)} attempts: {', '.join(kinds) or 'unknown'}")
+    log.warning(f"refusing output - {reason}")
+    log_metric("refused", True)
+    update_trace(refused=True, refusal_reason=reason)
+    return {"tailored": [], "refused": True, "refusal_reason": reason,
+            "notes": [f"REFUSED: {reason}"]}

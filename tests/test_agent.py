@@ -166,9 +166,16 @@ def test_route_after_validate_retries_when_dirty():
         {"validation": {"ok": False}, "attempts": 1, "max_retries": 2}) == "retry"
 
 
-def test_route_after_validate_stops_at_cap():
+def test_route_after_validate_refuses_at_cap_by_default():
+    """Strict is the default, so exhausting retries routes to refusal."""
     assert route_after_validate(
-        {"validation": {"ok": False}, "attempts": 3, "max_retries": 2}) == "done"
+        {"validation": {"ok": False}, "attempts": 3, "max_retries": 2}) == "refuse"
+
+
+def test_route_after_validate_flags_at_cap_when_not_strict():
+    assert route_after_validate(
+        {"validation": {"ok": False}, "attempts": 3,
+         "max_retries": 2, "strict": False}) == "done"
 
 
 # ── graph ─────────────────────────────────────────────────────────────────
@@ -233,3 +240,162 @@ def test_graph_compiles_and_has_expected_nodes():
     names = set(g.nodes)
     for n in {"load_corpus", "rank_jobs", "tailor", "validate_tailoring"}:
         assert n in names
+
+
+# ── refusal: the agent must hand back nothing rather than untraceable text ──
+
+def _always_fabricates(system, user):
+    return ('[{"source_id":"x","text":"Deployed RAG serving 7777+ users with 99% uplift."}]')
+
+
+def test_strict_mode_refuses_instead_of_returning_flagged_text(monkeypatch):
+    """
+    The public claim is that the agent 'refuses anything it cannot trace'.
+    Text handed back gets pasted, so at the retry cap strict mode must return
+    an empty bullet list plus a reason, not flagged prose.
+    """
+    monkeypatch.setattr(nodes, "backend", lambda: "sdk")
+    monkeypatch.setattr(nodes, "complete", _always_fabricates)
+    graph = build_graph()
+    out = graph.invoke({
+        "jobs": [], "selected_job": {"title": "Data Scientist", "company": "X"},
+        "target_bullets": 1, "max_retries": 2, "attempts": 0,
+        "strict": True, "notes": [],
+    })
+    assert out["tailored"] == [], "strict mode must discard untraceable output"
+    assert out["refused"] is True
+    assert out["refusal_reason"]
+    assert "fabricated_metric" in out["refusal_reason"]
+
+
+def test_non_strict_mode_still_returns_flagged_text(monkeypatch):
+    """strict=False keeps the old behaviour for callers that want to inspect."""
+    monkeypatch.setattr(nodes, "backend", lambda: "sdk")
+    monkeypatch.setattr(nodes, "complete", _always_fabricates)
+    graph = build_graph()
+    out = graph.invoke({
+        "jobs": [], "selected_job": {"title": "Data Scientist", "company": "X"},
+        "target_bullets": 1, "max_retries": 2, "attempts": 0,
+        "strict": False, "notes": [],
+    })
+    assert out["tailored"], "non-strict mode should still return the text"
+    assert not out.get("refused")
+
+
+def test_tailor_wrapper_defaults_to_strict(monkeypatch):
+    from agent import graph as G
+    monkeypatch.setattr(nodes, "backend", lambda: "sdk")
+    monkeypatch.setattr(nodes, "complete", _always_fabricates)
+    monkeypatch.setattr(G, "GRAPH", build_graph())
+    res = G.tailor({"title": "Data Scientist", "company": "X"}, target_bullets=1)
+    assert res["bullets"] == []
+    assert res["refused"] is True
+
+
+def test_validator_accuracy_metric_is_recorded(monkeypatch):
+    """Opik traces an accuracy number, so the node must compute one."""
+    recorded = {}
+    monkeypatch.setattr(nodes, "log_metric", lambda k, v, **kw: recorded.__setitem__(k, v))
+    monkeypatch.setattr(nodes, "backend", lambda: "none")
+    graph = build_graph()
+    graph.invoke({"jobs": [], "selected_job": {"title": "Data Scientist", "company": "X"},
+                  "target_bullets": 2, "max_retries": 2, "attempts": 0, "notes": []})
+    assert "validator_accuracy" in recorded
+    assert 0.0 <= recorded["validator_accuracy"] <= 1.0
+    for k in ("tokens_in", "tokens_out", "cost_usd"):
+        assert k in recorded, f"{k} not traced"
+
+
+# ── tracing: must be inert without credentials, and end to end with them ───
+
+def _clear_opik(monkeypatch):
+    from agent import tracing
+    for var in ("OPIK_API_KEY", "OPIK_URL_OVERRIDE", "OPIK_WORKSPACE"):
+        monkeypatch.delenv(var, raising=False)
+    tracing.reset_enabled_cache()
+    return tracing
+
+
+def test_tracing_noops_without_credentials(monkeypatch):
+    """The whole suite runs with no keys, so tracing must stay inert."""
+    tracing = _clear_opik(monkeypatch)
+    assert tracing.opik_enabled() is False
+
+    @tracing.traced("unit-test-span")
+    def add(a, b):
+        return a + b
+
+    assert add(2, 3) == 5          # decorator must not alter behaviour
+
+
+def test_opik_local_env_var_is_gone():
+    """
+    OPIK_LOCAL was invented, not a real Opik variable. Only OPIK_API_KEY
+    (cloud) and OPIK_URL_OVERRIDE (self-hosted) should gate tracing.
+    """
+    src = Path(__file__).resolve().parent.parent / "agent" / "tracing.py"
+    assert "OPIK_LOCAL" not in src.read_text(encoding="utf-8")
+
+
+def test_run_traced_returns_the_wrapped_result_when_disabled(monkeypatch):
+    tracing = _clear_opik(monkeypatch)
+    assert tracing.run_traced("unit-test-run", lambda: 42, foo="bar") == 42
+
+
+def test_run_traced_does_not_swallow_exceptions(monkeypatch):
+    """A tracing wrapper that hides real errors would be worse than none."""
+    tracing = _clear_opik(monkeypatch)
+
+    def boom():
+        raise ValueError("boom")
+
+    with pytest.raises(ValueError):
+        tracing.run_traced("unit-test-run", boom)
+
+
+def test_run_traced_wraps_the_work_not_just_the_entry(monkeypatch):
+    """
+    Regression: the first implementation was a context manager, so the parent
+    trace opened and closed BEFORE the body ran and every node became its own
+    top-level trace. The callable must execute inside the traced scope.
+    """
+    tracing = _clear_opik(monkeypatch)
+    order = []
+    tracing.run_traced("unit-test-run", lambda: order.append("body ran"))
+    assert order == ["body ran"]
+    assert not hasattr(tracing, "trace_run"), "context-manager form must stay removed"
+
+
+def test_update_trace_is_safe_when_disabled(monkeypatch):
+    tracing = _clear_opik(monkeypatch)
+    tracing.update_trace(validator_accuracy=1.0, cost_usd=0.0)   # must not raise
+
+
+def test_parent_trace_receives_run_metrics(monkeypatch):
+    """Accuracy and cost must reach the run level, not only the node span."""
+    seen = {}
+    monkeypatch.setattr(nodes, "update_trace", lambda **kw: seen.update(kw))
+    monkeypatch.setattr(nodes, "backend", lambda: "none")
+    graph = build_graph()
+    graph.invoke({"jobs": [], "selected_job": {"title": "Data Scientist",
+                                               "company": "X"},
+                  "target_bullets": 2, "max_retries": 2, "attempts": 0,
+                  "notes": []})
+    for key in ("validator_accuracy", "validation_ok", "cost_usd",
+                "tokens_in", "tokens_out"):
+        assert key in seen, f"{key} never reached the parent trace"
+    assert 0.0 <= seen["validator_accuracy"] <= 1.0
+
+
+def test_refusal_is_reported_at_run_level(monkeypatch):
+    seen = {}
+    monkeypatch.setattr(nodes, "update_trace", lambda **kw: seen.update(kw))
+    monkeypatch.setattr(nodes, "backend", lambda: "sdk")
+    monkeypatch.setattr(nodes, "complete", _always_fabricates)
+    graph = build_graph()
+    graph.invoke({"jobs": [], "selected_job": {"title": "Data Scientist",
+                                               "company": "X"},
+                  "target_bullets": 1, "max_retries": 2, "attempts": 0,
+                  "strict": True, "notes": []})
+    assert seen.get("refused") is True
+    assert seen.get("refusal_reason")

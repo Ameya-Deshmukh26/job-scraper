@@ -182,7 +182,12 @@ python discover_boards.py --write-config
 # Optional API keys, read from the environment (never committed)
 export FIRECRAWL_API_KEY=...   # enables Indeed + JS-rendered JD fallback
 export ANTHROPIC_API_KEY=...   # or sign in to Claude Code and the agent reuses that
-export OPIK_URL_OVERRIDE=http://localhost:5173/api   # self-hosted agent tracing
+
+# Agent tracing. Either one enables it; without them the agent runs
+# identically and just logs spans locally.
+export OPIK_API_KEY=...        # Comet cloud (free tier)
+export OPIK_WORKSPACE=...      # optional, defaults to your default workspace
+export OPIK_URL_OVERRIDE=http://localhost:5173/api   # or a self-hosted instance
 ```
 
 CI runs the suite on Python 3.11 and 3.12, plus a lint gate and a check that

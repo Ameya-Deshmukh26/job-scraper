@@ -55,6 +55,7 @@ class JobTracker:
             ("fit_reason",      "TEXT"),   # agent: why this job fits
             ("fit_gap",         "TEXT"),   # agent: honest gap
             ("agent_match",     "INTEGER"),# agent: blended score
+            ("pay",             "TEXT"),   # staffing sources expose a rate
         ]:
             try:
                 self.conn.execute(f"ALTER TABLE seen_jobs ADD COLUMN {col} {definition}")
@@ -107,12 +108,12 @@ class JobTracker:
     def mark_seen(self, job: dict):
         self.conn.execute(
             """INSERT OR IGNORE INTO seen_jobs
-               (job_id, source, company, title, location, url, posted_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+               (job_id, source, company, title, location, url, posted_at, pay)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 job["id"], (job["source"] or "").lower(), job["company"],
                 job["title"], job["location"], job["url"],
-                job.get("posted_at"),
+                job.get("posted_at"), job.get("pay"),
             ),
         )
         self.conn.commit()
@@ -171,7 +172,7 @@ class JobTracker:
             """SELECT job_id, source, company, title, location,
                       url, posted_at, applied, auto_applied, auto_applied_at,
                       needs_review, review_reason, seen_at,
-                      fit_reason, fit_gap, agent_match
+                      fit_reason, fit_gap, agent_match, pay
                FROM seen_jobs
                WHERE title != '__repost__'
                ORDER BY

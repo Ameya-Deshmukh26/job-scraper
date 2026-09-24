@@ -20,6 +20,29 @@ from contextlib import aclosing
 log = logging.getLogger(__name__)
 
 MODEL = os.environ.get("JOB_AGENT_MODEL", "claude-sonnet-5")
+
+# Usage from the most recent completion. The Claude Agent SDK reports real
+# token counts and a billed cost on its ResultMessage, so cost tracing is
+# measured rather than estimated.
+LAST_USAGE: dict = {"input_tokens": 0, "output_tokens": 0,
+                    "cache_read_tokens": 0, "cost_usd": 0.0}
+
+
+def last_usage() -> dict:
+    """Token counts and USD cost for the previous complete() call."""
+    return dict(LAST_USAGE)
+
+
+def _record_usage(usage: dict | None, cost) -> None:
+    u = usage or {}
+    LAST_USAGE.update(
+        input_tokens=int(u.get("input_tokens") or 0),
+        output_tokens=int(u.get("output_tokens") or 0),
+        cache_read_tokens=int(u.get("cache_read_input_tokens") or 0),
+        cost_usd=float(cost or 0.0),
+    )
+
+
 _BACKEND: str | None = None
 
 
@@ -82,6 +105,9 @@ def _complete_sdk(system: str, user: str) -> str:
                 if getattr(msg, "error", None) == "authentication_failed":
                     auth_failed = True
                     break
+                # ResultMessage carries the run's real usage and billed cost
+                if getattr(msg, "usage", None) is not None and not hasattr(msg, "content"):
+                    _record_usage(msg.usage, getattr(msg, "total_cost_usd", 0.0))
                 content = getattr(msg, "content", None)
                 if isinstance(content, str):
                     chunks.append(content)

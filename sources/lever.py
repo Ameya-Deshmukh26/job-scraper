@@ -7,6 +7,9 @@ log = logging.getLogger(__name__)
 
 _SESSION = requests.Session()
 _SESSION.headers.update({"User-Agent": "JobScraper/1.0 (personal job alerts)"})
+# One request per company, all through this session, so the default pool of 10
+# is smaller than the scan pool and connections get discarded and redialled.
+_SESSION.mount("https://", requests.adapters.HTTPAdapter(pool_maxsize=16))
 _BASE = "https://api.lever.co/v0/postings/{}"
 
 

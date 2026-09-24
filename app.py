@@ -90,7 +90,7 @@ def _do_hn_scan(hours: float):
         cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
         jobs = fetch_hackernews_jobs(cutoff)
         tracker = JobTracker()
-        added = len(process_jobs(jobs, tracker, jd_check=False))
+        added = len(process_jobs(jobs, tracker))
         tracker.close()
         _hn_state.update(running=False, added=added, fetched=len(jobs), error=None,
                          finished_at=datetime.datetime.now().isoformat())
@@ -133,7 +133,7 @@ def _do_indeed_scan(hours: float):
         cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
         jobs = fetch_indeed_jobs(cutoff)
         tracker = JobTracker()
-        added = len(process_jobs(jobs, tracker, jd_check=False))
+        added = len(process_jobs(jobs, tracker))
         tracker.close()
         _indeed_state.update(running=False, added=added, fetched=len(jobs),
                              error=None,
@@ -392,7 +392,7 @@ def _do_linkedin_scan(hours: float):
         cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
         jobs = fetch_linkedin_jobs(cutoff, us_only=True)
         tracker = JobTracker()
-        added = len(process_jobs(jobs, tracker, jd_check=False))
+        added = len(process_jobs(jobs, tracker))
         tracker.close()
         _li_scan_state.update(running=False, added=added, fetched=len(jobs),
                                error=None,
@@ -434,7 +434,7 @@ def _do_hiringcafe_scan(hours: float):
         cutoff = datetime.datetime.now(timezone.utc) - timedelta(hours=hours)
         jobs = fetch_hiringcafe_jobs(cutoff)
         tracker = JobTracker()
-        added = len(process_jobs(jobs, tracker, jd_check=False))
+        added = len(process_jobs(jobs, tracker))
         tracker.close()
         _hc_scan_state.update(running=False, added=added, error=None,
                                finished_at=datetime.datetime.now().isoformat())
@@ -475,7 +475,7 @@ def _do_remoteok_scan(hours: float):
         cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
         jobs   = fetch_remoteok_jobs(cutoff)
         tracker = JobTracker()
-        added = len(process_jobs(jobs, tracker, jd_check=False))
+        added = len(process_jobs(jobs, tracker))
         tracker.close()
         _rok_scan_state.update(running=False, added=added, error=None,
                                finished_at=datetime.datetime.now().isoformat())
@@ -513,6 +513,7 @@ _portal_scan_state: dict = {
     "finished_at":  None,
     "last_scan_at": None,
     "sources":      {},    # source_name → raw job count returned by fetcher
+    "source_stats": {},    # source_name → {jobs, seconds, tasks, method, errors}
 }
 _portal_auto_next: list[float | None] = [None]   # epoch of next auto-scan
 _PORTAL_INTERVAL   = 3600                         # auto-scan every 60 minutes
@@ -527,17 +528,19 @@ def _do_portal_scan(hours: float):
 
     try:
         cutoff = _dt.datetime.now(timezone.utc) - timedelta(hours=hours)
-        all_jobs, source_counts = fetch_all_sources(cutoff, only=PORTAL_SOURCES)
+        source_stats: dict = {}
+        all_jobs, source_counts = fetch_all_sources(
+            cutoff, only=PORTAL_SOURCES, stats=source_stats)
 
         tracker = JobTracker()
-        added = len(process_jobs(all_jobs, tracker, jd_check=False))
+        added = len(process_jobs(all_jobs, tracker))
         tracker.close()
 
         now_iso = _dt.datetime.now().isoformat()
         _portal_scan_state.update(
             running=False, added=added, error=None,
             finished_at=now_iso, last_scan_at=now_iso,
-            sources=source_counts,
+            sources=source_counts, source_stats=source_stats,
         )
     except Exception as exc:
         _portal_scan_state.update(
@@ -632,7 +635,7 @@ def _do_workday_scan(hours: float):
         cutoff = datetime.datetime.now(timezone.utc) - timedelta(hours=hours)
         jobs = fetch_workday_jobs(WORKDAY_COMPANIES, cutoff)
         tracker = JobTracker()
-        added = len(process_jobs(jobs, tracker, jd_check=False))
+        added = len(process_jobs(jobs, tracker))
         tracker.close()
         _wd_scan_state.update(running=False, added=added, error=None,
                               finished_at=datetime.datetime.now().isoformat())

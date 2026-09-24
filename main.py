@@ -46,6 +46,7 @@ from sources.deloitte import fetch_deloitte_jobs
 from sources.faang import fetch_faang_jobs
 from sources.indeed import fetch_indeed_jobs
 from sources.hackernews import fetch_hackernews_jobs
+from sources.staffing import fetch_staffing_jobs
 from sources.hiringcafe import fetch_hiringcafe_jobs
 from sources.workday import fetch_workday_jobs
 from tracker import JobTracker
@@ -215,11 +216,38 @@ PORTAL_SOURCE_NAMES = {"greenhouse", "lever", "ashby", "workday",
 # a broad scan - they only run when named explicitly via `only=`.
 PAID_SOURCE_NAMES = {"indeed"}
 
+# How each source fetches. Bucketing by access method shows at a glance which
+# kind of access is costing the time, rather than a single opaque total.
+SOURCE_METHOD = {
+    "greenhouse":    "REST API",
+    "lever":         "REST API",
+    "faang":         "REST API",
+    "staffing":      "REST API",
+    "oracle_hcm":    "REST API",
+    "ashby":         "GraphQL",
+    "workday":       "POST JSON",
+    "goldman_sachs": "GraphQL",
+    "linkedin":      "Guest API + HTML",
+    "hackernews":    "Algolia API",
+    "deloitte":      "HTML scrape",
+    "hiringcafe":    "Browser (Playwright)",
+    "indeed":        "Browser (Firecrawl, paid)",
+}
 
-def fetch_all_sources(cutoff: datetime, only: set | None = None) -> tuple[list[dict], dict]:
+
+def fetch_all_sources(cutoff: datetime, only: set | None = None,
+                      stats: dict | None = None) -> tuple[list[dict], dict]:
     """
     Fetch every enabled source in parallel.
     `only` limits the run to a subset of source names (see PORTAL_SOURCE_NAMES).
+
+    Pass `stats` (a dict) to receive per-source detail:
+        {source: {jobs, seconds, tasks, method, errors}}
+    `seconds` is fetch time summed over that source's tasks, not wall clock -
+    greenhouse alone fans out to one task per company and they run
+    concurrently. Summed time is what identifies the expensive source; wall
+    time would just report the pool size. `tasks` makes the difference visible.
+
     Returns (jobs, per-source raw counts).
     """
     from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -245,6 +273,8 @@ def fetch_all_sources(cutoff: datetime, only: set | None = None) -> tuple[list[d
         tasks.append(("hiringcafe", lambda: fetch_hiringcafe_jobs(cutoff)))
     if want("hackernews"):
         tasks.append(("hackernews", lambda: fetch_hackernews_jobs(cutoff)))
+    if want("staffing"):
+        tasks.append(("staffing", lambda: fetch_staffing_jobs(cutoff)))
     if want("workday") and WORKDAY_COMPANIES:
         # One task per company — the fetcher is slow (5 keywords × 3 pages each),
         # so running the 30 boards concurrently is a huge win
@@ -262,19 +292,54 @@ def fetch_all_sources(cutoff: datetime, only: set | None = None) -> tuple[list[d
         tasks += [("oracle_hcm", lambda c=c: fetch_oracle_hcm_jobs([c], cutoff))
                   for c in ORACLE_HCM_COMPANIES]
 
+    def timed(name, fn):
+        """Wrap a fetch so each source reports its own wall time."""
+        def run():
+            t0 = time.perf_counter()
+            try:
+                return name, fn(), time.perf_counter() - t0, None
+            except Exception as e:
+                return name, [], time.perf_counter() - t0, e
+        return run
+
     jobs: list[dict] = []
     counts: dict[str, int] = {}
+    timings: dict[str, float] = {}
+    errors: dict[str, int] = {}
+    task_counts: dict[str, int] = {}
+    for name, _ in tasks:
+        task_counts[name] = task_counts.get(name, 0) + 1
+
     with ThreadPoolExecutor(max_workers=12) as pool:
-        futures = {pool.submit(fn): name for name, fn in tasks}
+        futures = [pool.submit(timed(name, fn)) for name, fn in tasks]
         for fut in as_completed(futures):
-            name = futures[fut]
-            try:
-                result = fut.result()
+            name, result, secs, err = fut.result()
+            counts[name] = counts.get(name, 0) + len(result)
+            timings[name] = timings.get(name, 0.0) + secs
+            if err is not None:
+                errors[name] = errors.get(name, 0) + 1
+                log.debug(f"{name}: {err}")
+            else:
                 jobs.extend(result)
-                counts[name] = counts.get(name, 0) + len(result)
-            except Exception as e:
-                log.debug(f"{name}: {e}")
-                counts.setdefault(name, 0)
+
+    detail = {
+        name: {
+            "jobs":    counts.get(name, 0),
+            "seconds": round(timings.get(name, 0.0), 1),
+            "tasks":   task_counts.get(name, 0),
+            "method":  SOURCE_METHOD.get(name, "unknown"),
+            "errors":  errors.get(name, 0),
+        }
+        for name in counts
+    }
+    if stats is not None:
+        stats.clear()
+        stats.update(detail)
+    for name, st in sorted(detail.items(), key=lambda kv: -kv[1]["seconds"]):
+        log.info(f"  {name:<14} {st['seconds']:>6.1f}s  {st['jobs']:>5} jobs  "
+                 f"{st['tasks']:>3} req  [{st['method']}]"
+                 + (f"  {st['errors']} errors" if st["errors"] else ""))
+
     return jobs, counts
 
 
