@@ -159,26 +159,38 @@ double-click `start.bat` later). If port 5000 is busy, use
 http://localhost:5000 for them (use the preview tool, or tell them to open it
 in their browser).
 
-Kick off a first search by clicking **LinkedIn Scan** with "Lookback hrs" set
-to 24, or run it yourself:
+Kick off a first search: set "Lookback hrs" to 24 and click **Scan LinkedIn**
+on the LinkedIn tab, or run it yourself:
 
 ```
-curl -X POST localhost:5000/api/linkedin-scan -H "Content-Type: application/json" -d "{\"hours\": 24}"
+curl -X POST localhost:5000/api/group-scan/linkedin -H "Content-Type: application/json" -d "{\"hours\": 24}"
 ```
 
-A "Portal Scan" of company career pages also starts by itself when the
-dashboard opens. It takes a few minutes; the button shows progress.
+The other groups are `boards` and `big` (Workday + Google Jobs + Indeed; add
+`"paid": true` to include the paid two). Progress:
+`GET localhost:5000/api/group-scan/status`.
 
-Then show them around in plain words:
+A scan of the Boards tab and of Workday also starts by itself when the
+dashboard opens, then every hour. It takes a few minutes; the buttons show
+progress.
 
-- **Live Feed**: every matching job, best match first. The number on each
-  card is the match score out of 100.
+Then show them around in plain words. There are four tabs, each with one
+Scan button:
+
+- **All**: every matching job, best match first. The number on each card is
+  the match score out of 100. **Scan everything** runs every tab's scan.
+- **LinkedIn**: LinkedIn jobs only.
+- **Boards**: company career pages (Amazon, Stripe, OpenAI and a few hundred
+  others), startup boards and Hacker News.
+- **Workday + Google**: big-company Workday sites, plus Google Jobs and
+  Indeed if they have keys. It asks before spending credits.
 - **Apply** opens the real job posting. The bookmark marks it applied, so it
   hides from the list.
-- **LinkedIn Scan / Portal Scan / HN Startups**: search again now.
 - **Agent Rank**: asks the AI to re-rank the top jobs with a one-line reason
   for each. It uses their Claude Code login, so there is no extra cost.
 - **Lookback hrs**: how far back each scan looks.
+- The tiles on each tab show, per job site, how many jobs the last scan
+  found and how long it took.
 
 ### 7. Optional extras (explain, do not push)
 
@@ -199,8 +211,8 @@ How the key gets in:
   any other file.
 - Google Jobs picks the key up immediately. For Indeed, restart the
   dashboard after adding the key.
-- Then the red **Google Jobs** and blue **Indeed Scan** buttons work. Each
-  asks before spending credits.
+- Then **Scan** on the Workday + Google tab (and **Scan everything**) can
+  include them. It asks each time before spending credits.
 
 ### 8. Optional: resume tailoring
 

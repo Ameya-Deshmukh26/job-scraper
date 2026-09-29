@@ -1118,20 +1118,20 @@
 <!-- ══════════ TAB BAR ══════════ -->
 <div class="tab-bar">
   <button class="tab-btn active" id="tab-btn-all" data-tab="all" onclick="switchTab('all')">
-    <i class="bi bi-lightning-charge-fill"></i> Live Feed
+    <i class="bi bi-lightning-charge-fill"></i> All
     <span class="tab-badge accent-all" id="all-badge"></span>
   </button>
   <button class="tab-btn" id="tab-btn-linkedin" data-tab="linkedin" onclick="switchTab('linkedin')">
-    <i class="bi bi-linkedin"></i> LinkedIn &amp; Boards
+    <i class="bi bi-linkedin"></i> LinkedIn
     <span class="tab-badge accent-li" id="linkedin-badge"></span>
   </button>
-  <button class="tab-btn" id="tab-btn-workday" data-tab="workday" onclick="switchTab('workday')">
-    <i class="bi bi-building-fill"></i> Workday
-    <span class="tab-badge accent-wd" id="workday-badge"></span>
-  </button>
   <button class="tab-btn" id="tab-btn-portals" data-tab="portals" onclick="switchTab('portals')">
-    <i class="bi bi-radar"></i> Company Portals
+    <i class="bi bi-grid-3x3-gap"></i> Boards
     <span class="tab-badge accent-portal" id="portals-badge"></span>
+  </button>
+  <button class="tab-btn" id="tab-btn-workday" data-tab="workday" onclick="switchTab('workday')">
+    <i class="bi bi-building-fill"></i> Workday + Google
+    <span class="tab-badge accent-wd" id="workday-badge"></span>
   </button>
 </div>
 
@@ -1165,30 +1165,17 @@
     </div>
   </div>
 
-  <!-- Scan buttons (Live Feed) -->
+  <!-- Scan everything: starts every tab's scan -->
   <div class="filters" style="margin-bottom:8px">
-    <button class="btn btn-li js-btn-li" onclick="scanLinkedIn()">
-      <i class="bi bi-linkedin"></i> LinkedIn Scan
-    </button>
-    <button class="btn btn-gh" onclick="scanPortals()" style="font-size:12px">
-      <i class="bi bi-briefcase"></i> Portal Scan
+    <button class="btn-portal-scan" id="btn-scan-all" onclick="scanAll()"
+            title="Runs the LinkedIn, Boards and Workday + Google scans together">
+      <i class="bi bi-play-fill"></i> Scan everything
     </button>
     <button class="btn btn-agent-rank" id="btn-agent-rank" onclick="agentRank()" style="font-size:12px"
             title="LangGraph agent: score + explain fit and gaps">
       <i class="bi bi-stars"></i> Agent Rank
     </button>
-    <button class="btn btn-hn" id="btn-hn" onclick="scanHN()" style="font-size:12px"
-            title="Hacker News Who-is-hiring thread — free, startup-heavy">
-      <i class="bi bi-braces"></i> HN Startups
-    </button>
-    <button class="btn btn-indeed" id="btn-indeed" onclick="scanIndeed()" style="font-size:12px"
-            title="Indeed via Firecrawl — uses paid credits, manual only">
-      <i class="bi bi-search"></i> Indeed Scan
-    </button>
-    <button class="btn btn-google" id="btn-google" onclick="scanGoogle()" style="font-size:12px"
-            title="Google for Jobs via SerpApi — uses paid credits, manual only">
-      <i class="bi bi-google"></i> Google Jobs
-    </button>
+    <span id="scan-all-status" style="font-size:11px;color:var(--muted)"></span>
     <span id="agent-backend" class="agent-pill" title="Active LLM backend / Opik tracing"></span>
   </div>
 
@@ -1235,37 +1222,22 @@
 ════════════════════════════════════════════════════════ -->
 <div id="tab-linkedin" style="display:none">
 
-  <!-- Section header with scan buttons -->
+  <!-- Section header with scan button -->
   <div class="tab-section-header">
     <div>
-      <div class="tsh-title" style="background:linear-gradient(135deg,#38bdf8,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent">LinkedIn &amp; Job Boards</div>
-      <div class="tsh-sub">Live feed from LinkedIn · HiringCafe · Remotive · TheMuse · Adzuna</div>
+      <div class="tsh-title" style="background:linear-gradient(135deg,#38bdf8,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent">LinkedIn</div>
+      <div class="tsh-sub">Guest search, no login · Easy Apply excluded · looks back "Lookback hrs"</div>
     </div>
     <div class="tsh-actions">
-      <button class="btn btn-li" id="btn-li" onclick="scanLinkedIn()">
-        <i class="bi bi-linkedin"></i> LinkedIn Scan
+      <button class="btn btn-li" id="btn-scan-linkedin" onclick="scanGroup('linkedin')">
+        <i class="bi bi-play-fill"></i> Scan LinkedIn
       </button>
-      <button class="btn btn-hc" id="btn-hc" onclick="scanHiringCafe()">
-        <i class="bi bi-cup-hot"></i> HiringCafe Scan
-      </button>
-      <button class="btn btn-rok" id="btn-rok" onclick="scanRemoteOK()">
-        <i class="bi bi-rocket"></i> RemoteOK Scan
-      </button>
-      <span style="font-size:11px;color:var(--muted);white-space:nowrap">
-        <i class="bi bi-arrow-repeat" style="font-size:10px"></i> Remotive &amp; TheMuse auto-pull
-      </span>
+      <label class="hide-toggle">
+        <input type="checkbox" id="li-hide-applied" checked onchange="renderLinkedinTab()" /> Hide applied
+      </label>
     </div>
   </div>
-
-  <!-- Filter chips per board -->
-  <div class="li-filter-chips">
-    <button class="li-chip active" data-src="all" onclick="setLiFilter(this)">All Boards</button>
-    <button class="li-chip" data-src="linkedin"   onclick="setLiFilter(this)"><i class="bi bi-linkedin" style="font-size:11px"></i> LinkedIn</button>
-    <button class="li-chip" data-src="hiringcafe" onclick="setLiFilter(this)"><i class="bi bi-cup-hot" style="font-size:11px"></i> HiringCafe</button>
-    <label class="hide-toggle" style="margin-left:auto">
-      <input type="checkbox" id="li-hide-applied" checked onchange="renderLinkedinTab()" /> Hide applied
-    </label>
-  </div>
+  <div class="radar-sources" id="tiles-linkedin" style="margin:0 24px 12px"></div>
 
   <!-- Job grid -->
   <div class="jobs-wrap">
@@ -1286,13 +1258,13 @@
     <div class="workday-hero-glow"></div>
     <div class="wd-stat-big">
       <div class="wd-num" id="workday-count">—</div>
-      <div class="wd-lbl">Workday Jobs</div>
+      <div class="wd-lbl">Workday · Google · Indeed</div>
     </div>
     <div class="wd-divider"></div>
     <div class="wd-meta">
       <div class="wd-meta-item">
         <i class="bi bi-building" style="color:var(--c-workday)"></i>
-        <span>Fortune 500 &amp; enterprise companies</span>
+        <span>Fortune 500 career sites · Google Jobs and Indeed (paid, asks first)</span>
       </div>
       <div class="wd-meta-item">
         <i class="bi bi-clock-history" style="color:var(--muted)"></i>
@@ -1300,8 +1272,8 @@
       </div>
     </div>
     <div class="wd-actions">
-      <button class="btn-workday-scan" id="btn-wd" onclick="scanWorkday()">
-        <i class="bi bi-play-fill"></i> Workday Scan
+      <button class="btn-workday-scan" id="btn-scan-big" onclick="scanGroup('big')">
+        <i class="bi bi-play-fill"></i> Scan
       </button>
       <label class="hide-toggle" style="font-size:11px">
         <input type="checkbox" id="wd-hide-applied" checked onchange="renderWorkdayTab()" /> Hide applied
@@ -1309,10 +1281,12 @@
     </div>
   </div>
 
+  <div class="radar-sources" id="tiles-big" style="margin:0 24px 12px"></div>
+
   <!-- Feed -->
   <div class="portal-wrap">
     <div class="portal-toolbar">
-      <input class="search" id="wd-search" type="text" placeholder="&#128269;  Search Workday jobs…" oninput="renderWorkdayTab()" />
+      <input class="search" id="wd-search" type="text" placeholder="&#128269;  Search Workday, Google and Indeed jobs…" oninput="renderWorkdayTab()" />
       <span class="portal-count" id="wd-count-label"></span>
     </div>
     <div class="portal-feed" id="workday-feed"></div>
@@ -1330,7 +1304,7 @@
   <div class="portal-radar">
     <div class="radar-header">
       <div class="radar-title">
-        <i class="bi bi-radar"></i> Company Portal Radar
+        <i class="bi bi-grid-3x3-gap"></i> Boards
       </div>
       <div class="radar-meta">
         <span class="radar-meta-item">
@@ -1347,60 +1321,20 @@
         </span>
       </div>
       <div style="display:flex;gap:8px;margin-left:auto">
-        <button class="btn btn-gh" id="btn-gh" onclick="scanGreenhouse()" style="font-size:12px;padding:7px 13px">
-          <i class="bi bi-briefcase"></i> GH+Lever Quick
-        </button>
-        <button class="btn-portal-scan" id="btn-portal-scan" onclick="scanPortals()">
-          <i class="bi bi-play-fill"></i> Scan All Portals
+        <button class="btn-portal-scan" id="btn-scan-boards" onclick="scanGroup('boards')">
+          <i class="bi bi-play-fill"></i> Scan boards
         </button>
       </div>
     </div>
 
-    <!-- 6-card grid: GH, Lever, Ashby, Goldman, Oracle, Deloitte -->
-    <div class="radar-sources">
-      <div class="radar-source" style="border-color:rgba(52,211,153,.2)">
-        <div class="rs-name"><i class="bi bi-briefcase" style="color:var(--c-greenhouse)"></i> Greenhouse</div>
-        <div class="rs-count" id="rs-count-greenhouse" style="color:var(--c-greenhouse)">—</div>
-        <div class="rs-label">jobs last scan</div>
-      </div>
-      <div class="radar-source" style="border-color:rgba(129,140,248,.2)">
-        <div class="rs-name"><i class="bi bi-building" style="color:var(--c-lever)"></i> Lever</div>
-        <div class="rs-count" id="rs-count-lever" style="color:var(--c-lever)">—</div>
-        <div class="rs-label">jobs last scan</div>
-      </div>
-      <div class="radar-source" style="border-color:rgba(192,132,252,.2)">
-        <div class="rs-name"><i class="bi bi-star" style="color:var(--c-ashby)"></i> Ashby</div>
-        <div class="rs-count" id="rs-count-ashby" style="color:var(--c-ashby)">—</div>
-        <div class="rs-label">jobs last scan</div>
-      </div>
-      <div class="radar-source" style="border-color:rgba(201,170,113,.2)">
-        <div class="rs-name"><i class="bi bi-bank" style="color:var(--c-goldman_sachs)"></i> Goldman Sachs</div>
-        <div class="rs-count" id="rs-count-goldman_sachs" style="color:var(--c-goldman_sachs)">—</div>
-        <div class="rs-label">jobs last scan</div>
-      </div>
-      <div class="radar-source" style="border-color:rgba(245,158,11,.2)">
-        <div class="rs-name"><i class="bi bi-building-fill" style="color:var(--c-oracle_hcm)"></i> Oracle HCM</div>
-        <div class="rs-count" id="rs-count-oracle_hcm" style="color:var(--c-oracle_hcm)">—</div>
-        <div class="rs-label">JPMorgan · Amex · Oracle</div>
-      </div>
-      <div class="radar-source" style="border-color:rgba(0,163,224,.2)">
-        <div class="rs-name"><i class="bi bi-diagram-3" style="color:var(--c-deloitte)"></i> Deloitte</div>
-        <div class="rs-count" id="rs-count-deloitte" style="color:var(--c-deloitte)">—</div>
-        <div class="rs-label">jobs last scan</div>
-      </div>
-    </div>
-
-    <!-- Per-source latency, grouped by how the source is accessed -->
-    <div class="rs-latency" id="rs-latency"></div>
-
-    <!-- Hidden workday count for JS compatibility -->
-    <span id="rs-count-workday" style="display:none">—</span>
+    <!-- One tile per source: jobs fetched, time and requests on the last scan -->
+    <div class="radar-sources" id="tiles-boards"></div>
   </div>
 
   <!-- Portal feed -->
   <div class="portal-wrap">
     <div class="portal-toolbar">
-      <input class="search" id="portal-search" type="text" placeholder="&#128269;  Search portal jobs…" oninput="renderPortal()" />
+      <input class="search" id="portal-search" type="text" placeholder="&#128269;  Search board jobs…" oninput="renderPortal()" />
       <label class="hide-toggle">
         <input type="checkbox" id="portal-hide-applied" checked onchange="renderPortal()" /> Hide applied
       </label>
@@ -1434,14 +1368,21 @@
 let allJobs         = [];
 let portalJobs      = [];
 let activeSrc       = "all";
-let activeLiSrc     = "all";
 let activeTab       = "all";
-let portalScanRunning = false;
 
 // Direct-ATS sources, grouped behind one chip instead of eight
 const BOARD_SOURCES = ["greenhouse", "lever", "ashby", "workday",
                        "oracle_hcm", "deloitte", "goldman_sachs", "faang"];
-const LI_SOURCES = ["linkedin", "hiringcafe", "hackernews"];
+const LI_SOURCES = ["linkedin"];
+const BOARDS_SOURCES = ["greenhouse", "lever", "ashby", "faang", "goldman_sachs",
+                        "oracle_hcm", "deloitte", "hackernews", "hiringcafe", "staffing"];
+const BIG_SOURCES = ["workday", "google_jobs", "indeed"];
+const SOURCE_NAME = {
+  linkedin: "LinkedIn", greenhouse: "Greenhouse", lever: "Lever", ashby: "Ashby",
+  faang: "Amazon · Netflix", goldman_sachs: "Goldman Sachs", oracle_hcm: "Oracle HCM",
+  deloitte: "Deloitte", hackernews: "HN Who's Hiring", hiringcafe: "HiringCafe",
+  staffing: "Insight Global", workday: "Workday", google_jobs: "Google Jobs", indeed: "Indeed",
+};
 
 // ════════════════════════════════════════════════════════════════════════
 // UTILS
@@ -1789,11 +1730,6 @@ function renderLinkedinTab() {
     return LI_SOURCES.includes(src) && !isTooSenior(j);
   });
 
-  // Apply sub-filter chip
-  if (activeLiSrc !== "all") {
-    filtered = filtered.filter(j => (j.source || "").toLowerCase() === activeLiSrc);
-  }
-
   // Hide applied
   if (hideAp) filtered = filtered.filter(j => !j.applied);
 
@@ -1812,21 +1748,14 @@ function renderLinkedinTab() {
     grid.innerHTML = `<div style="grid-column:1/-1">
       <div class="empty-state">
         <div class="empty-state-icon" style="color:var(--t-li)"><i class="bi bi-linkedin"></i></div>
-        <h3>No board jobs yet</h3>
-        <p>Click <strong style="color:var(--text)">LinkedIn Scan</strong> or <strong style="color:var(--text)">HiringCafe Scan</strong> above to pull fresh listings.</p>
+        <h3>No LinkedIn jobs yet</h3>
+        <p>Click <strong style="color:var(--text)">Scan LinkedIn</strong> above.</p>
       </div>
     </div>`;
     return;
   }
 
   grid.innerHTML = cappedHtml("linkedin-grid", filtered, buildJobCard);
-}
-
-function setLiFilter(btn) {
-  document.querySelectorAll(".li-chip").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-  activeLiSrc = btn.dataset.src;
-  renderLinkedinTab();
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -1839,7 +1768,7 @@ function renderWorkdayTab() {
 
   let filtered = portalJobs.filter(j => {
     const src = (j.source || "").toLowerCase();
-    if (src !== "workday") return false;
+    if (!BIG_SOURCES.includes(src)) return false;
     if (hideAp && j.applied) return false;
     if (US_ONLY && !isUS(j.location)) return false;
     if (q && !j.title.toLowerCase().includes(q) && !(j.company||"").toLowerCase().includes(q)) return false;
@@ -1848,8 +1777,8 @@ function renderWorkdayTab() {
 
   sortJobs(filtered);
 
-  // Badge: total workday count
-  const wdTotal = portalJobs.filter(j => (j.source||"").toLowerCase() === "workday").length;
+  // Badge: all Workday + Google + Indeed jobs
+  const wdTotal = portalJobs.filter(j => BIG_SOURCES.includes((j.source||"").toLowerCase())).length;
   const wdBadge = document.getElementById("workday-badge");
   wdBadge.textContent = wdTotal;
   wdBadge.classList.toggle("show", wdTotal > 0);
@@ -1862,13 +1791,15 @@ function renderWorkdayTab() {
   if (!filtered.length) {
     feed.innerHTML = `<div class="empty-state">
       <div class="empty-state-icon" style="color:var(--c-workday)"><i class="bi bi-building-fill"></i></div>
-      <h3>No Workday jobs yet</h3>
-      <p>Click <strong style="color:var(--text)">Workday Scan</strong> to scrape Fortune 500 career portals.</p>
+      <h3>No jobs here yet</h3>
+      <p>Click <strong style="color:var(--text)">Scan</strong> to search Workday career sites, plus Google Jobs and Indeed if you choose.</p>
     </div>`;
     return;
   }
 
-  feed.innerHTML = cappedHtml("workday-feed", filtered, renderPCard);
+  feed.innerHTML = sectionedFeed(filtered, [
+    ["Workday", ["workday"]], ["Google Jobs", ["google_jobs"]], ["Indeed", ["indeed"]],
+  ]);
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -1887,8 +1818,17 @@ function setSource(btn) {
 async function loadJobs() {
   const r = await fetch("/api/jobs");
   allJobs = await r.json();
+  portalJobs = allJobs;          // the Boards and Workday + Google tabs filter this
   render();
   renderLinkedinTab();
+  renderPortal();
+  renderWorkdayTab();
+  const twoH = 2 * 60 * 60 * 1000;
+  const fresh = portalJobs.filter(j => BOARDS_SOURCES.includes((j.source||"").toLowerCase())
+                                    && (Date.now() - jobTs(j)) <= twoH).length;
+  const badge = document.getElementById("portals-badge");
+  badge.textContent = fresh;
+  badge.classList.toggle("show", fresh > 0);
 }
 
 async function loadAgentStatus() {
@@ -1946,366 +1886,6 @@ async function toggleApplied(jobId, btn) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
-// LINKEDIN SCAN
-// ════════════════════════════════════════════════════════════════════════
-function liButtons() {
-  return document.querySelectorAll("#btn-li, .js-btn-li");
-}
-
-async function scanLinkedIn() {
-  const hours = parseFloat(document.getElementById("scan-hours").value) || 2;
-  liButtons().forEach(btn => {
-    btn.disabled = true;
-    btn.classList.add("scanning");
-    btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning LinkedIn…`;
-  });
-  setStatus("Running LinkedIn guest-API scraper…");
-
-  try {
-    const r = await fetch("/api/linkedin-scan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hours }),
-    });
-    if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
-    toast(`LinkedIn scan started (last ${hours}h) — takes ~2 min`, "var(--c-linkedin)");
-    pollLinkedInStatus();
-  } catch(e) {
-    toast("LinkedIn scan error: " + e.message, "var(--red)");
-    resetLiBtn();
-  }
-}
-
-function pollLinkedInStatus() {
-  const iv = setInterval(async () => {
-    try {
-      const r    = await fetch("/api/linkedin-scan/status");
-      const data = await r.json();
-      if (!data.running) {
-        clearInterval(iv);
-        resetLiBtn();
-        if (data.error) {
-          toast("LinkedIn scan failed: " + data.error, "var(--red)");
-          setStatus("LinkedIn scan failed.");
-        } else {
-          toast(`LinkedIn scan done — <strong>+${data.added} new</strong> (${data.fetched ?? "?"} fetched, rest already tracked)`, "var(--c-linkedin)");
-          setStatus(`LinkedIn scan done at ${new Date(data.finished_at).toLocaleTimeString()}`);
-          await Promise.all([loadJobs(), loadStats()]);
-        }
-      }
-    } catch { /* server busy */ }
-  }, 5000);
-}
-
-function resetLiBtn() {
-  liButtons().forEach(btn => {
-    btn.disabled = false;
-    btn.classList.remove("scanning");
-    btn.innerHTML = `<i class="bi bi-linkedin"></i> LinkedIn Scan`;
-  });
-}
-
-// ════════════════════════════════════════════════════════════════════════
-// HIRINGCAFE SCAN
-// ════════════════════════════════════════════════════════════════════════
-async function scanHiringCafe() {
-  const btn   = document.getElementById("btn-hc");
-  const hours = parseFloat(document.getElementById("scan-hours").value) || 2;
-  btn.disabled = true;
-  btn.classList.add("scanning");
-  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning HiringCafe…`;
-  setStatus("Running HiringCafe scraper…");
-
-  try {
-    const r = await fetch("/api/hiringcafe-scan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hours }),
-    });
-    if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
-    toast(`HiringCafe scan started (last ${hours}h) — takes ~3 min`, "var(--c-hiringcafe)");
-    pollHiringCafeStatus();
-  } catch(e) {
-    toast("HiringCafe scan error: " + e.message, "var(--red)");
-    resetHcBtn();
-  }
-}
-
-function pollHiringCafeStatus() {
-  const iv = setInterval(async () => {
-    try {
-      const r    = await fetch("/api/hiringcafe-scan/status");
-      const data = await r.json();
-      if (!data.running) {
-        clearInterval(iv);
-        resetHcBtn();
-        if (data.error) {
-          toast("HiringCafe scan failed: " + data.error, "var(--red)");
-          setStatus("HiringCafe scan failed.");
-        } else {
-          toast(`HiringCafe scan done — <strong>+${data.added} new jobs</strong>`, "var(--c-hiringcafe)");
-          setStatus(`HiringCafe scan done at ${new Date(data.finished_at).toLocaleTimeString()}`);
-          await Promise.all([loadJobs(), loadStats()]);
-        }
-      }
-    } catch { /* server busy */ }
-  }, 5000);
-}
-
-function resetHcBtn() {
-  const btn = document.getElementById("btn-hc");
-  btn.disabled = false;
-  btn.classList.remove("scanning");
-  btn.innerHTML = `<i class="bi bi-cup-hot"></i> HiringCafe Scan`;
-}
-
-// ════════════════════════════════════════════════════════════════════════
-// REMOTEOK SCAN (startups + small companies)
-// ════════════════════════════════════════════════════════════════════════
-async function scanHN() {
-  const btn = document.getElementById("btn-hn");
-  btn.disabled = true; btn.classList.add("scanning");
-  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Reading HN thread…`;
-  try {
-    const r = await fetch("/api/hn-scan", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hours: 720 }),
-    });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error);
-    toast("Reading this month's Who-is-hiring thread…", "var(--c-hackernews)");
-    const iv = setInterval(async () => {
-      const st = await (await fetch("/api/hn-scan/status")).json();
-      if (!st.running) {
-        clearInterval(iv);
-        btn.disabled = false; btn.classList.remove("scanning");
-        btn.innerHTML = `<i class="bi bi-braces"></i> HN Startups`;
-        if (st.error) toast("HN scan failed: " + st.error, "var(--red)");
-        else toast(`HN done — <strong>+${st.added} new</strong> (${st.fetched} parsed)`,
-                   "var(--c-hackernews)");
-        await Promise.all([loadJobs(), loadStats()]);
-      }
-    }, 4000);
-  } catch (e) {
-    toast("HN scan error: " + e.message, "var(--red)");
-    btn.disabled = false; btn.classList.remove("scanning");
-    btn.innerHTML = `<i class="bi bi-braces"></i> HN Startups`;
-  }
-}
-
-async function scanGoogle() {
-  const btn = document.getElementById("btn-google");
-  const hours = parseFloat(document.getElementById("scan-hours").value) || 24;
-  if (!confirm("Google Jobs runs through SerpApi and uses paid credits "
-             + "(up to 8 searches per run). Continue?")) return;
-  const reset = () => {
-    btn.disabled = false;
-    btn.classList.remove("scanning");
-    btn.innerHTML = `<i class="bi bi-google"></i> Google Jobs`;
-  };
-  btn.disabled = true;
-  btn.classList.add("scanning");
-  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning Google…`;
-  try {
-    const r = await fetch("/api/google-scan", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hours }),
-    });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error);
-    toast(`Google Jobs scan started (last ${hours}h)`, "var(--c-google_jobs)");
-    const iv = setInterval(async () => {
-      const s = await (await fetch("/api/google-scan/status")).json();
-      if (s.running) return;
-      clearInterval(iv);
-      reset();
-      const left = s.credits_left != null ? ` · ${s.credits_left} credits left` : "";
-      if (s.error) toast("Google Jobs scan failed: " + s.error, "var(--red)");
-      else toast(`Google Jobs done — <strong>+${s.added} new</strong> (${s.fetched} fetched${left})`,
-                 "var(--c-google_jobs)");
-      await Promise.all([loadJobs(), loadStats()]);
-    }, 4000);
-  } catch (e) {
-    toast("Google Jobs scan error: " + e.message, "var(--red)");
-    reset();
-  }
-}
-
-async function scanIndeed() {
-  const btn = document.getElementById("btn-indeed");
-  const hours = parseFloat(document.getElementById("scan-hours").value) || 24;
-  if (!confirm("Indeed runs through Firecrawl and uses paid credits "
-             + "(up to 6 scrapes per run). Continue?")) return;
-  btn.disabled = true;
-  btn.classList.add("scanning");
-  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning Indeed…`;
-  try {
-    const r = await fetch("/api/indeed-scan", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hours }),
-    });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error);
-    toast(`Indeed scan started (last ${hours}h) — takes ~2 min`, "var(--c-indeed)");
-    const iv = setInterval(async () => {
-      const s = await (await fetch("/api/indeed-scan/status")).json();
-      if (!s.running) {
-        clearInterval(iv);
-        btn.disabled = false;
-        btn.classList.remove("scanning");
-        btn.innerHTML = `<i class="bi bi-search"></i> Indeed Scan`;
-        if (s.error) toast("Indeed scan failed: " + s.error, "var(--red)");
-        else toast(`Indeed done — <strong>+${s.added} new</strong> (${s.fetched} fetched)`,
-                   "var(--c-indeed)");
-        await Promise.all([loadJobs(), loadStats()]);
-      }
-    }, 5000);
-  } catch (e) {
-    toast("Indeed scan error: " + e.message, "var(--red)");
-    btn.disabled = false;
-    btn.classList.remove("scanning");
-    btn.innerHTML = `<i class="bi bi-search"></i> Indeed Scan`;
-  }
-}
-
-async function scanRemoteOK() {
-  const btn   = document.getElementById("btn-rok");
-  const hours = parseFloat(document.getElementById("scan-hours").value) || 48;
-  btn.disabled = true;
-  btn.classList.add("scanning");
-  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning…`;
-  setStatus("Running RemoteOK scraper (startups)…");
-
-  try {
-    const r = await fetch("/api/remoteok-scan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hours }),
-    });
-    if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
-    toast(`RemoteOK scan started (last ${hours}h) — startup + small-co jobs`, "var(--c-remoteok)");
-    const iv = setInterval(async () => {
-      try {
-        const data = await (await fetch("/api/remoteok-scan/status")).json();
-        if (!data.running) {
-          clearInterval(iv);
-          resetRokBtn();
-          if (data.error) {
-            toast("RemoteOK scan failed: " + data.error, "var(--red)");
-          } else {
-            toast(`RemoteOK done — <strong>+${data.added} new jobs</strong>`, "var(--c-remoteok)");
-            setStatus(`RemoteOK scan done at ${new Date(data.finished_at).toLocaleTimeString()}`);
-            await Promise.all([loadJobs(), loadStats()]);
-          }
-        }
-      } catch { /* retry */ }
-    }, 5000);
-  } catch(e) {
-    toast("RemoteOK scan error: " + e.message, "var(--red)");
-    resetRokBtn();
-  }
-}
-
-function resetRokBtn() {
-  const btn = document.getElementById("btn-rok");
-  btn.disabled = false;
-  btn.classList.remove("scanning");
-  btn.innerHTML = `<i class="bi bi-rocket"></i> RemoteOK Scan`;
-}
-
-// ════════════════════════════════════════════════════════════════════════
-// WORKDAY SCAN
-// ════════════════════════════════════════════════════════════════════════
-async function scanWorkday() {
-  const btn   = document.getElementById("btn-wd");
-  const hours = parseFloat(document.getElementById("scan-hours").value) || 24;
-  btn.disabled = true;
-  btn.classList.add("scanning");
-  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning Workday…`;
-  setStatus("Running Workday scraper…");
-
-  try {
-    const r = await fetch("/api/workday-scan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hours }),
-    });
-    if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
-    toast(`Workday scan started (last ${hours}h) — scanning ${hours <= 24 ? "~16 companies" : "all boards"}…`, "var(--c-workday)");
-    pollWorkdayStatus();
-  } catch(e) {
-    toast("Workday scan error: " + e.message, "var(--red)");
-    resetWdBtn();
-  }
-}
-
-function pollWorkdayStatus() {
-  const iv = setInterval(async () => {
-    try {
-      const r    = await fetch("/api/workday-scan/status");
-      const data = await r.json();
-      if (!data.running) {
-        clearInterval(iv);
-        resetWdBtn();
-        if (data.error) {
-          toast("Workday scan failed: " + data.error, "var(--red)");
-          setStatus("Workday scan failed.");
-        } else {
-          toast(`Workday scan done — <strong>+${data.added} new jobs</strong>`, "var(--c-workday)");
-          setStatus(`Workday scan done at ${new Date(data.finished_at).toLocaleTimeString()}`);
-          await Promise.all([loadJobs(), loadStats()]);
-        }
-      }
-    } catch { /* server busy */ }
-  }, 5000);
-}
-
-function resetWdBtn() {
-  const btn = document.getElementById("btn-wd");
-  btn.disabled = false;
-  btn.classList.remove("scanning");
-  btn.innerHTML = `<i class="bi bi-play-fill"></i> Workday Scan`;
-}
-
-// ════════════════════════════════════════════════════════════════════════
-// GH + LEVER SCAN
-// ════════════════════════════════════════════════════════════════════════
-async function scanGreenhouse() {
-  const btn   = document.getElementById("btn-gh");
-  const hours = parseFloat(document.getElementById("scan-hours").value) || 2;
-  btn.disabled = true;
-  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning…`;
-  setStatus("Running Greenhouse + Lever scan…");
-
-  try {
-    const r = await fetch("/api/scan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hours }),
-    });
-    const d = await r.json();
-    if (d.error) throw new Error(d.error);
-    toast(`GH + Lever scan started (last ${hours}h) — refreshing in 25s…`, "var(--c-greenhouse)");
-    setTimeout(async () => {
-      await Promise.all([loadJobs(), loadStats()]);
-      setStatus("GH + Lever scan finished");
-    }, 25000);
-  } catch(e) {
-    toast("Scan error: " + e.message, "var(--red)");
-    setStatus("");
-  } finally {
-    setTimeout(() => {
-      btn.disabled = false;
-      btn.innerHTML = `<i class="bi bi-briefcase"></i> GH + Lever Scan`;
-    }, 26000);
-  }
-}
-
-function setStatus(msg) {
-  document.getElementById("scan-status").textContent = msg;
-}
-
-// ════════════════════════════════════════════════════════════════════════
 // SCROLL TO TOP
 // ════════════════════════════════════════════════════════════════════════
 window.addEventListener("scroll", () => {
@@ -2326,7 +1906,6 @@ function switchTab(tab) {
   });
   if (tab === "portals") {
     renderPortal();
-    loadPortalStatus();
   }
   if (tab === "workday") {
     renderWorkdayTab();
@@ -2390,31 +1969,6 @@ function isUS(location) {
   return !_NON_US_TERMS.some(t => loc.includes(t));
 }
 
-async function loadPortalCompanies() { /* removed */ }
-
-// ════════════════════════════════════════════════════════════════════════
-// PORTAL DATA LOAD
-// ════════════════════════════════════════════════════════════════════════
-async function loadPortalJobs() {
-  try {
-    const r = await fetch("/api/portal-jobs");
-    portalJobs = await r.json();
-    renderPortal();
-    renderWorkdayTab();
-    renderLinkedinTab();
-
-    // Portals badge: non-workday portal jobs fresh in last 2h
-    const twoH = 2 * 60 * 60 * 1000;
-    const fresh = portalJobs.filter(j => {
-      const src = (j.source||"").toLowerCase();
-      if (src === "workday") return false;
-      return (Date.now() - jobTs(j)) <= twoH;
-    }).length;
-    const badge = document.getElementById("portals-badge");
-    badge.textContent = fresh;
-    badge.classList.toggle("show", fresh > 0);
-  } catch (e) { /* ignore */ }
-}
 
 // ════════════════════════════════════════════════════════════════════════
 // P-CARD BUILDER (shared by Tab 3 & Tab 4)
@@ -2427,7 +1981,30 @@ const SRC_COLOR = {
   goldman_sachs: "var(--c-goldman_sachs)",
   oracle_hcm:    "var(--c-oracle_hcm)",
   deloitte:      "var(--c-deloitte)",
+  linkedin:      "var(--c-linkedin)",
+  hackernews:    "var(--c-hackernews)",
+  hiringcafe:    "var(--c-hiringcafe)",
+  indeed:        "var(--c-indeed)",
+  google_jobs:   "var(--c-google_jobs)",
+  faang:         "#fbbf24",
+  staffing:      "#94a3b8",
 };
+
+// A feed split into labelled sections, one per source group, in order
+function sectionedFeed(jobs, sections) {
+  let html = "";
+  for (const [label, sources] of sections) {
+    const part = jobs.filter(j => sources.includes((j.source || "").toLowerCase()));
+    if (!part.length) continue;
+    const color = SRC_COLOR[sources[0]] || "var(--muted)";
+    html += `<div class="section-divider">
+      <span class="section-divider-label" style="color:${color}">${label}</span>
+      <span class="section-divider-count">${part.length} job${part.length !== 1 ? "s" : ""}</span>
+      <div class="section-divider-line"></div>
+    </div>` + part.map(renderPCard).join("");
+  }
+  return html;
+}
 
 function renderPCard(j) {
   const now   = Date.now();
@@ -2439,7 +2016,7 @@ function renderPCard(j) {
   const src   = (j.source || "").toLowerCase();
   const color = SRC_COLOR[src] || "var(--muted)";
   const isAp  = !!j.applied;
-  const srcCap = src.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  const srcCap = SOURCE_NAME[src] || src.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
   return `<div class="p-card ${fc} ${isAp ? "applied" : ""}" data-id="${esc(j.job_id)}">
     <div class="p-fresh">
@@ -2482,10 +2059,10 @@ function renderPortal() {
   const q      = (document.getElementById("portal-search")?.value || "").toLowerCase();
   const hideAp = document.getElementById("portal-hide-applied")?.checked ?? true;
 
-  // Portals tab shows everything EXCEPT workday (workday has its own tab)
+  // Boards tab: the free board and career-site sources
   let filtered = portalJobs.filter(j => {
     const src = (j.source||"").toLowerCase();
-    if (src === "workday") return false;
+    if (!BOARDS_SOURCES.includes(src)) return false;
     if (hideAp && j.applied) return false;
     if (US_ONLY && !isUS(j.location)) return false;
     if (q && !j.title.toLowerCase().includes(q) && !(j.company||"").toLowerCase().includes(q)) return false;
@@ -2499,44 +2076,22 @@ function renderPortal() {
   if (!filtered.length) {
     feed.innerHTML = `<div class="empty-state">
       <div class="empty-state-icon" style="color:var(--t-portals)"><i class="bi bi-radar"></i></div>
-      <h3>No portal jobs found</h3>
-      <p>Hit <strong style="color:var(--text)">Scan Now</strong> to pull fresh jobs from all company portals.<br/>Auto-scan runs every 60 minutes.</p>
+      <h3>No board jobs yet</h3>
+      <p>Hit <strong style="color:var(--text)">Scan boards</strong>. A background scan also runs every hour.</p>
     </div>`;
     return;
   }
 
-  function sectionHeader(label, count, color) {
-    return `<div class="section-divider">
-      <span class="section-divider-label" style="color:${color}">${label}</span>
-      <span class="section-divider-count">${count} job${count !== 1 ? "s" : ""}</span>
-      <div class="section-divider-line"></div>
-    </div>`;
-  }
-
-  const gsJobs       = filtered.filter(j => (j.source||"").toLowerCase() === "goldman_sachs");
-  const oracleJobs   = filtered.filter(j => (j.source||"").toLowerCase() === "oracle_hcm");
-  const deloitteJobs = filtered.filter(j => (j.source||"").toLowerCase() === "deloitte");
-  const otherJobs    = filtered.filter(j => !["goldman_sachs","oracle_hcm","deloitte"].includes((j.source||"").toLowerCase()));
-
-  let html = "";
-  if (otherJobs.length) {
-    html += sectionHeader("Greenhouse · Lever · Ashby", otherJobs.length, "var(--c-greenhouse)");
-    html += otherJobs.map(renderPCard).join("");
-  }
-  if (gsJobs.length) {
-    html += sectionHeader("Goldman Sachs", gsJobs.length, "var(--c-goldman_sachs)");
-    html += gsJobs.map(renderPCard).join("");
-  }
-  if (oracleJobs.length) {
-    html += sectionHeader("Oracle HCM — JPMorgan · Oracle Corp", oracleJobs.length, "var(--c-oracle_hcm)");
-    html += oracleJobs.map(renderPCard).join("");
-  }
-  if (deloitteJobs.length) {
-    html += sectionHeader("Deloitte", deloitteJobs.length, "var(--c-deloitte)");
-    html += deloitteJobs.map(renderPCard).join("");
-  }
-
-  feed.innerHTML = html;
+  feed.innerHTML = sectionedFeed(filtered, [
+    ["Greenhouse · Lever · Ashby", ["greenhouse", "lever", "ashby"]],
+    ["Amazon · Netflix", ["faang"]],
+    ["Goldman Sachs", ["goldman_sachs"]],
+    ["Oracle HCM · JPMorgan · Amex", ["oracle_hcm"]],
+    ["Deloitte", ["deloitte"]],
+    ["Hacker News · Who's hiring", ["hackernews"]],
+    ["HiringCafe", ["hiringcafe"]],
+    ["Insight Global · staffing", ["staffing"]],
+  ]);
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -2565,180 +2120,190 @@ async function portalToggleApplied(jobId, btn) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
-// PORTAL SCAN
+// SCANS: one button per tab, "Scan everything" starts all of them
 // ════════════════════════════════════════════════════════════════════════
-async function scanPortals() {
-  const btn = document.getElementById("btn-portal-scan");
-  btn.disabled = true;
-  btn.classList.add("scanning");
-  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning…`;
-  portalScanRunning = true;
+const GROUP_LABEL = { linkedin: "LinkedIn", boards: "Boards", big: "Workday + Google" };
+const GROUP_BTN   = { linkedin: "btn-scan-linkedin", boards: "btn-scan-boards", big: "btn-scan-big" };
+const GROUP_BTN_HTML = {};
+let scanStatus = null;
+let scanPoll = null;
+const wasRunning = {};
 
+function lookbackHours() {
+  return parseFloat(document.getElementById("scan-hours").value) || 2;
+}
+
+// Returns true to include the paid sources that have a key, false to skip them
+function askPaid() {
+  const keys = (scanStatus && scanStatus.paid_keys) || {};
+  const parts = [];
+  if (keys.google_jobs) parts.push("Google Jobs (up to 8 SerpApi searches)");
+  if (keys.indeed) parts.push("Indeed (up to 6 Firecrawl credits)");
+  if (!parts.length) return false;
+  return confirm(`Include ${parts.join(" and ")}?\n\nOK = include them.\nCancel = skip the paid sources this time.`);
+}
+
+async function startGroup(group, paid) {
+  const r = await fetch(`/api/group-scan/${group}`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ hours: lookbackHours(), paid }),
+  });
+  if (r.status === 409) return "attached";      // already running: watch it
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+  return "started";
+}
+
+async function scanGroup(group) {
+  const paid = group === "big" ? askPaid() : false;
   try {
-    const r = await fetch("/api/portal-scan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hours: parseFloat(document.getElementById("scan-hours").value) || 2 }),
-    });
-    // 409 means a scan is already in flight - usually the automatic one that
-    // fires when the server boots. The user asked to scan and a scan is
-    // running, so attach to it and poll. Reporting that as an error made the
-    // button look broken for the whole run.
-    if (r.status === 409) {
-      toast("A portal scan is already running — watching it", "var(--t-portals)");
-      pollPortalStatus();
-      return;
-    }
-    if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
-    toast("Portal scan started — GH + Lever + Ashby + Goldman + Oracle + Deloitte", "var(--t-portals)");
-    pollPortalStatus();
+    const how = await startGroup(group, paid);
+    toast(how === "attached"
+      ? `${GROUP_LABEL[group]} scan is already running, watching it`
+      : `${GROUP_LABEL[group]} scan started (last ${lookbackHours()}h)`, "var(--t-portals)");
   } catch (e) {
-    toast("Portal scan error: " + e.message, "var(--red)");
-    resetPortalBtn();
+    toast(`${GROUP_LABEL[group]} scan error: ${e.message}`, "var(--red)");
+  }
+  watchScans();
+}
+
+async function scanAll() {
+  const paid = askPaid();
+  for (const g of ["linkedin", "boards", "big"]) {
+    try { await startGroup(g, paid); }
+    catch (e) { toast(`${GROUP_LABEL[g]} scan error: ${e.message}`, "var(--red)"); }
+  }
+  toast(`Scanning everything (last ${lookbackHours()}h). Each tab shows its progress.`, "var(--t-portals)");
+  watchScans();
+}
+
+function renderGroupButton(group, st) {
+  const btn = document.getElementById(GROUP_BTN[group]);
+  if (!btn) return;
+  if (!(group in GROUP_BTN_HTML)) GROUP_BTN_HTML[group] = btn.innerHTML;
+  btn.disabled = st.running;
+  btn.classList.toggle("scanning", st.running);
+  btn.innerHTML = st.running ? `<i class="bi bi-hourglass-split"></i> Scanning…` : GROUP_BTN_HTML[group];
+}
+
+function renderTiles(group, st) {
+  const box = document.getElementById(`tiles-${group}`);
+  if (!box || !scanStatus) return;
+  const skipped = Object.fromEntries((st.skipped || []).map(x => x.split(": ")));
+  box.innerHTML = (scanStatus.sources[group] || []).map(src => {
+    const s = (st.source_stats || {})[src];
+    const color = SRC_COLOR[src] || "var(--muted)";
+    let count = "—";
+    let label = st.running ? "scanning…" : "not scanned yet";
+    if (s) {
+      count = s.jobs;
+      label = st.running ? "scanning…"
+        : `${s.seconds}s · ${s.tasks} req` + (s.errors ? ` · ${s.errors} failed` : "");
+    } else if (skipped[src]) {
+      label = skipped[src];
+    }
+    return `<div class="radar-source" style="border-top:2px solid ${color}" title="${esc(s ? s.method : "")}">
+      <div class="rs-name" style="color:${color}">${esc(SOURCE_NAME[src] || src)}</div>
+      <div class="rs-count${count === 0 ? " zero" : ""}" style="color:${color}">${count}</div>
+      <div class="rs-label">${esc(label)}</div>
+    </div>`;
+  }).join("");
+}
+
+function ago(iso) {
+  if (!iso) return "never";
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  return mins < 1 ? "just now" : mins < 60 ? `${mins}m ago` : `${Math.floor(mins / 60)}h ${mins % 60}m ago`;
+}
+
+function renderScanMeta() {
+  const g = scanStatus.groups;
+  const line = Object.keys(GROUP_LABEL).map(k =>
+    `${GROUP_LABEL[k]}: ${g[k].running ? "scanning…" : ago(g[k].finished_at)}`).join("  ·  ");
+  const allEl = document.getElementById("scan-all-status");
+  if (allEl) allEl.textContent = line;
+
+  const anyRunning = Object.values(g).some(st => st.running);
+  const allBtn = document.getElementById("btn-scan-all");
+  if (allBtn) {
+    allBtn.classList.toggle("scanning", anyRunning);
+    allBtn.innerHTML = anyRunning ? `<i class="bi bi-hourglass-split"></i> Scanning…`
+                                  : `<i class="bi bi-play-fill"></i> Scan everything`;
+  }
+
+  // Boards tab header: last scan, next background scan, new jobs
+  const b = g.boards;
+  const last = document.getElementById("pr-last-scan");
+  if (last) last.textContent = b.running ? "scanning…" : ago(b.finished_at);
+  const cd = document.getElementById("pr-countdown");
+  if (cd) {
+    if (scanStatus.next_auto_at) {
+      const left = Math.max(0, Math.floor(scanStatus.next_auto_at - Date.now() / 1000));
+      cd.textContent = `${Math.floor(left / 60)}m ${String(left % 60).padStart(2, "0")}s`;
+      cd.className = "countdown" + (left < 120 ? " soon" : "");
+    } else {
+      cd.textContent = "—";
+    }
+  }
+  const addedMsg = document.getElementById("pr-added-msg");
+  if (addedMsg) {
+    addedMsg.style.display = !b.running && b.added > 0 ? "" : "none";
+    document.getElementById("pr-added-count").textContent = b.added;
   }
 }
 
-function pollPortalStatus() {
-  const iv = setInterval(async () => {
-    try {
-      const data = await loadPortalStatus();
-      if (!data.running) {
-        clearInterval(iv);
-        resetPortalBtn();
-        portalScanRunning = false;
-        if (data.error) {
-          toast("Portal scan failed: " + data.error, "var(--red)");
-        } else {
-          const added = data.added || 0;
-          toast(
-            `Portal scan done — <strong>+${added} new job${added !== 1 ? "s" : ""}</strong>`,
-            added > 0 ? "var(--t-portals)" : "var(--muted)"
-          );
-          await loadPortalJobs();
-        }
-      }
-    } catch { /* server busy */ }
-  }, 4000);
-}
-
-function resetPortalBtn() {
-  const btn = document.getElementById("btn-portal-scan");
-  btn.disabled = false;
-  btn.classList.remove("scanning");
-  btn.innerHTML = `<i class="bi bi-play-fill"></i> Scan Now`;
-}
-
-// ════════════════════════════════════════════════════════════════════════
-// PORTAL STATUS
-// ════════════════════════════════════════════════════════════════════════
-async function loadPortalStatus() {
+async function loadScanStatus() {
   try {
-    const r    = await fetch("/api/portal-scan/status");
-    const data = await r.json();
-
-    const lastEl = document.getElementById("pr-last-scan");
-    if (data.last_scan_at) {
-      const d    = new Date(data.last_scan_at);
-      const mins = Math.floor((Date.now() - d) / 60000);
-      lastEl.textContent = mins < 1 ? "just now"
-        : mins < 60 ? `${mins}m ago`
-        : `${Math.floor(mins/60)}h ${mins % 60}m ago`;
-    } else if (data.running) {
-      lastEl.textContent = "scanning…";
-    } else {
-      lastEl.textContent = "never";
+    scanStatus = await (await fetch("/api/group-scan/status")).json();
+  } catch (e) {
+    return null;
+  }
+  let finished = false;
+  for (const [g, st] of Object.entries(scanStatus.groups)) {
+    renderGroupButton(g, st);
+    renderTiles(g, st);
+    if (wasRunning[g] && !st.running) {
+      finished = true;
+      if (st.error) toast(`${GROUP_LABEL[g]} scan failed: ${st.error}`, "var(--red)");
+      else toast(`${GROUP_LABEL[g]} done: <strong>+${st.added} new</strong> (${st.fetched} fetched)`,
+                 "var(--t-portals)");
     }
+    wasRunning[g] = st.running;
+  }
+  renderScanMeta();
+  if (finished) await Promise.all([loadJobs(), loadStats()]);
+  return scanStatus;
+}
 
-    const cdEl = document.getElementById("pr-countdown");
-    if (data.next_auto_at) {
-      const secsLeft = Math.max(0, Math.floor(data.next_auto_at - Date.now() / 1000));
-      const m = Math.floor(secsLeft / 60);
-      const s = secsLeft % 60;
-      cdEl.textContent = `${m}m ${String(s).padStart(2, "0")}s`;
-      cdEl.className = "countdown" + (secsLeft < 120 ? " soon" : "");
-    } else {
-      cdEl.textContent = data.running ? "scanning now" : "—";
+// Poll quickly while anything is scanning, then stop
+function watchScans() {
+  if (scanPoll) return;
+  scanPoll = setInterval(async () => {
+    const st = await loadScanStatus();
+    if (st && !Object.values(st.groups).some(x => x.running)) {
+      clearInterval(scanPoll);
+      scanPoll = null;
     }
-
-    const src   = data.sources || {};
-    const stats = data.source_stats || {};
-    for (const [name, count] of Object.entries(src)) {
-      const el = document.getElementById(`rs-count-${name}`);
-      if (!el) continue;
-      el.textContent = count;
-      el.className = el.className.replace(" zero", "") + (count === 0 ? " zero" : "");
-
-      // Swap the static caption for this source's own fetch time once we have it.
-      // Scope to the enclosing tile: workday's count is a hidden span with no
-      // tile of its own, and a parentElement lookup would walk up and clobber
-      // the first tile's label (greenhouse) with workday's numbers.
-      const st = stats[name];
-      const tile = el.closest(".radar-source");
-      const label = tile && tile.querySelector(".rs-label");
-      if (st && label) {
-        label.textContent = `${st.seconds}s · ${st.tasks} req`
-          + (st.errors ? ` · ${st.errors} failed` : "");
-        label.title = st.method;
-      }
-    }
-
-    // Group sources by access method so it is obvious which kind of access is
-    // costing the time, not just which source.
-    const strip = document.getElementById("rs-latency");
-    if (strip) {
-      const buckets = {};
-      for (const st of Object.values(stats)) {
-        buckets[st.method] = (buckets[st.method] || 0) + st.seconds;
-      }
-      const rows = Object.entries(buckets).sort((a, b) => b[1] - a[1]);
-      strip.innerHTML = rows.map(([method, secs]) =>
-        `<div class="rs-bucket"><b>${method}</b>`
-        + `<span class="${secs > 30 ? "slow" : ""}">${secs.toFixed(1)}s</span></div>`
-      ).join("");
-    }
-
-    if (data.last_scan_at && !data.running) {
-      const addedMsg   = document.getElementById("pr-added-msg");
-      const addedCount = document.getElementById("pr-added-count");
-      if (data.added > 0) {
-        addedCount.textContent = data.added;
-        addedMsg.style.display = "";
-      } else {
-        addedMsg.style.display = "none";
-      }
-    }
-
-    if (data.running && !portalScanRunning) {
-      portalScanRunning = true;
-      const btn = document.getElementById("btn-portal-scan");
-      btn.disabled = true;
-      btn.classList.add("scanning");
-      btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning…`;
-    }
-
-    return data;
-  } catch { return {}; }
+  }, 4000);
+  loadScanStatus();
 }
 
 // ════════════════════════════════════════════════════════════════════════
 // BOOT
 // ════════════════════════════════════════════════════════════════════════
 (async () => {
-  await Promise.all([loadJobs(), loadStats(), loadPortalJobs(), loadPortalCompanies()]);
+  await Promise.all([loadJobs(), loadStats(), loadScanStatus()]);
   loadAgentStatus();   // fire-and-forget: backend import can take a few seconds
+  if (scanStatus && Object.values(scanStatus.groups).some(x => x.running)) watchScans();
 
-  // Refresh all-jobs + stats every 90s
+  // Refresh all jobs + stats every 90s
   setInterval(() => Promise.all([loadJobs(), loadStats()]), 90_000);
 
-  // Refresh portal data every 60s
+  // Countdown, tiles, and picking up the hourly background scan
   setInterval(async () => {
-    await loadPortalJobs();
-    if (activeTab === "portals") loadPortalStatus();
-  }, 60_000);
-
-  // Portal status countdown ticks
-  setInterval(() => {
-    if (activeTab === "portals") loadPortalStatus();
+    if (scanPoll) return;
+    const st = await loadScanStatus();
+    if (st && Object.values(st.groups).some(x => x.running)) watchScans();
   }, 15_000);
 })();
 </script>

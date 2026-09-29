@@ -30,7 +30,8 @@ experience, the roles you want). Then it opens your dashboard.
 
 - **Open the dashboard:** double-click `start.bat` (Windows), or tell Claude
   "open the job board". It opens at http://localhost:5000
-- **Search again:** click **LinkedIn Scan** or **Portal Scan** on the dashboard.
+- **Search again:** each tab has a **Scan** button, and **Scan everything** on
+  the All tab runs them all.
 - **Change what you're looking for:** just tell Claude, e.g. "add Pune" or
   "I also want marketing roles".
 - **Ask Claude anything:** "anything new today?", "what are my best

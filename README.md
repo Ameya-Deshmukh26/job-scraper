@@ -141,16 +141,22 @@ in `portable/`.
 ## Dashboard
 
 ```
-http://localhost:5000
+python app.py      # then open http://localhost:5000
 ```
 
-- **All Jobs tab** — full feed from all sources, filterable by keyword / source / location
-- **Portal Radar tab** — company-portal jobs only, newest first, grouped by ATS:
-  1. Workday — Fortune 500
-  2. Goldman Sachs
-  3. Greenhouse · Lever · Ashby
-- **Scan Now** button — trigger an immediate portal scan
-- **Countdown timer** — shows time until next automatic hourly scan
+Four tabs, each with one **Scan** button. Every tab's scan runs its group of
+sources through the same engine, so each shows per-source jobs and timing.
+
+| Tab | Sources | Scan |
+|---|---|---|
+| **All** | every job, filterable by keyword / source / location | **Scan everything** runs the three below |
+| **LinkedIn** | LinkedIn guest search (Easy Apply excluded) | free |
+| **Boards** | Greenhouse, Lever, Ashby, Amazon/Netflix, Goldman, Oracle HCM, Deloitte, HN Who's Hiring, HiringCafe, Insight Global | free |
+| **Workday + Google** | Workday career sites, Google Jobs (SerpApi), Indeed (Firecrawl) | asks before spending credits |
+
+An hourly background scan covers Boards plus Workday, never LinkedIn or a paid
+source. API: `POST /api/group-scan/<linkedin|boards|big>` with
+`{"hours": 2, "paid": false}`, and `GET /api/group-scan/status`.
 
 ---
 

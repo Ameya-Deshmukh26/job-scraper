@@ -14,8 +14,7 @@ from pathlib import Path
 from flask import Flask, jsonify, render_template, request, send_file
 
 from config import ENABLE_AUTO_APPLY, OVERNIGHT_LOOKBACK_HRS, OVERNIGHT_POLL_HOURS, US_ONLY
-from main import (run_once, _is_us, _matches_keyword, _is_right_level,
-                  _matches_location, fetch_all_sources, process_jobs)
+from main import (run_once, _is_us, fetch_all_sources, process_jobs)
 from tracker import JobTracker
 from sources.h1b import is_h1b_sponsor
 from startups import annotate as annotate_startup
@@ -72,139 +71,6 @@ def api_jobs():
         # contract roles matter for STEM OPT (needs a paid E-Verify employer).
         j["is_staffing"] = is_staffing(j.get("company"))
     return jsonify(jobs)
-
-
-# -- Hacker News "Who is hiring" scan (free, startup-heavy) ----------------
-
-_hn_lock = threading.Lock()
-_hn_state: dict = {"running": False, "added": 0, "fetched": 0,
-                   "error": None, "finished_at": None}
-
-
-def _do_hn_scan(hours: float):
-    global _hn_state
-    import datetime
-    from datetime import timedelta, timezone as _tz
-    from sources.hackernews import fetch_hackernews_jobs
-    try:
-        cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
-        jobs = fetch_hackernews_jobs(cutoff)
-        tracker = JobTracker()
-        added = len(process_jobs(jobs, tracker))
-        tracker.close()
-        _hn_state.update(running=False, added=added, fetched=len(jobs), error=None,
-                         finished_at=datetime.datetime.now().isoformat())
-    except Exception as exc:
-        log.exception("HN scan failed")
-        _hn_state.update(running=False, error=str(exc),
-                         finished_at=datetime.datetime.now().isoformat())
-    finally:
-        _hn_lock.release()
-
-
-@app.post("/api/hn-scan")
-def api_hn_scan():
-    hours = float(request.json.get("hours", 720) if request.is_json else 720)
-    if not _hn_lock.acquire(blocking=False):
-        return jsonify({"error": "HN scan already running"}), 409
-    _hn_state.update(running=True, added=0, fetched=0, error=None, finished_at=None)
-    threading.Thread(target=_do_hn_scan, args=(hours,), daemon=True).start()
-    return jsonify({"started": True, "hours": hours})
-
-
-@app.get("/api/hn-scan/status")
-def api_hn_scan_status():
-    return jsonify(_hn_state)
-
-
-# ── Indeed scan (Firecrawl - costs credits, manual trigger only) ──────────
-
-_indeed_lock = threading.Lock()
-_indeed_state: dict = {"running": False, "added": 0, "fetched": 0,
-                       "error": None, "finished_at": None}
-
-
-def _do_indeed_scan(hours: float):
-    global _indeed_state
-    import datetime
-    from datetime import timedelta, timezone as _tz
-    from sources.indeed import fetch_indeed_jobs
-    try:
-        cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
-        jobs = fetch_indeed_jobs(cutoff)
-        tracker = JobTracker()
-        added = len(process_jobs(jobs, tracker))
-        tracker.close()
-        _indeed_state.update(running=False, added=added, fetched=len(jobs),
-                             error=None,
-                             finished_at=datetime.datetime.now().isoformat())
-    except Exception as exc:
-        log.exception("indeed scan failed")
-        _indeed_state.update(running=False, error=str(exc),
-                             finished_at=datetime.datetime.now().isoformat())
-    finally:
-        _indeed_lock.release()
-
-
-@app.post("/api/indeed-scan")
-def api_indeed_scan():
-    hours = float(request.json.get("hours", 24) if request.is_json else 24)
-    if not _indeed_lock.acquire(blocking=False):
-        return jsonify({"error": "Indeed scan already running"}), 409
-    _indeed_state.update(running=True, added=0, fetched=0, error=None, finished_at=None)
-    threading.Thread(target=_do_indeed_scan, args=(hours,), daemon=True).start()
-    return jsonify({"started": True, "hours": hours})
-
-
-@app.get("/api/indeed-scan/status")
-def api_indeed_scan_status():
-    return jsonify(_indeed_state)
-
-
-# ── Google Jobs scan (SerpApi - costs credits, manual trigger only) ───────
-
-_google_lock = threading.Lock()
-_google_state: dict = {"running": False, "added": 0, "fetched": 0,
-                       "error": None, "finished_at": None, "credits_left": None}
-
-
-def _do_google_scan(hours: float):
-    import datetime
-    from datetime import timedelta, timezone as _tz
-    from sources.google_jobs import credits_left, fetch_google_jobs
-    try:
-        cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
-        jobs = fetch_google_jobs(cutoff)
-        tracker = JobTracker()
-        added = len(process_jobs(jobs, tracker))
-        tracker.close()
-        _google_state.update(running=False, added=added, fetched=len(jobs),
-                             error=None, credits_left=credits_left(),
-                             finished_at=datetime.datetime.now().isoformat())
-    except Exception as exc:
-        log.exception("google jobs scan failed")
-        _google_state.update(running=False, error=str(exc),
-                             finished_at=datetime.datetime.now().isoformat())
-    finally:
-        _google_lock.release()
-
-
-@app.post("/api/google-scan")
-def api_google_scan():
-    from sources.google_jobs import api_key
-    if not api_key():
-        return jsonify({"error": "SERPAPI_API_KEY is not set"}), 400
-    hours = float(request.json.get("hours", 24) if request.is_json else 24)
-    if not _google_lock.acquire(blocking=False):
-        return jsonify({"error": "Google Jobs scan already running"}), 409
-    _google_state.update(running=True, added=0, fetched=0, error=None, finished_at=None)
-    threading.Thread(target=_do_google_scan, args=(hours,), daemon=True).start()
-    return jsonify({"started": True, "hours": hours})
-
-
-@app.get("/api/google-scan/status")
-def api_google_scan_status():
-    return jsonify(_google_state)
 
 
 # ── LangGraph agent ───────────────────────────────────────────────────────
@@ -423,288 +289,140 @@ def api_headed_status(job_id: str):
     return jsonify(_headed_sessions.get(job_id, {"status": "not_started", "reason": ""}))
 
 
-# ── LinkedIn scan (Apify) ─────────────────────────────────────────────────
+# ── Scans: one per dashboard tab ───────────────────────────────────────────
+# Every tab's Scan button runs one group of sources through fetch_all_sources,
+# so each gets the same parallel fetch, filters, dedup and per-source timing.
+# "All" on the dashboard starts every group.
 
-_li_scan_lock = threading.Lock()
-_li_scan_state: dict = {"running": False, "added": 0, "error": None, "finished_at": None}
-
-
-def _do_linkedin_scan(hours: float):
-    global _li_scan_state
-    import datetime
-    from datetime import timedelta, timezone as _tz
-    from sources.linkedin import fetch_linkedin_jobs  # free guest API, no token
-    try:
-        cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
-        jobs = fetch_linkedin_jobs(cutoff, us_only=US_ONLY)
-        tracker = JobTracker()
-        added = len(process_jobs(jobs, tracker))
-        tracker.close()
-        _li_scan_state.update(running=False, added=added, fetched=len(jobs),
-                               error=None,
-                               finished_at=datetime.datetime.now().isoformat())
-    except Exception as exc:
-        _li_scan_state.update(running=False, error=str(exc),
-                               finished_at=datetime.datetime.now().isoformat())
-    finally:
-        _li_scan_lock.release()
-
-
-@app.post("/api/linkedin-scan")
-def api_linkedin_scan():
-    hours = float(request.json.get("hours", 2) if request.is_json else 2)
-    if not _li_scan_lock.acquire(blocking=False):
-        return jsonify({"error": "LinkedIn scan already running"}), 409
-    _li_scan_state.update(running=True, added=0, error=None, finished_at=None)
-    threading.Thread(target=_do_linkedin_scan, args=(hours,), daemon=True).start()
-    return jsonify({"started": True, "hours": hours})
-
-
-@app.get("/api/linkedin-scan/status")
-def api_linkedin_scan_status():
-    return jsonify(_li_scan_state)
-
-
-# ── HiringCafe scan ───────────────────────────────────────────────────────
-
-_hc_scan_lock = threading.Lock()
-_hc_scan_state: dict = {"running": False, "added": 0, "error": None, "finished_at": None}
-
-
-def _do_hiringcafe_scan(hours: float):
-    global _hc_scan_state
-    from sources.hiringcafe import fetch_hiringcafe_jobs
-    import datetime
-    from datetime import timedelta, timezone
-    try:
-        cutoff = datetime.datetime.now(timezone.utc) - timedelta(hours=hours)
-        jobs = fetch_hiringcafe_jobs(cutoff)
-        tracker = JobTracker()
-        added = len(process_jobs(jobs, tracker))
-        tracker.close()
-        _hc_scan_state.update(running=False, added=added, error=None,
-                               finished_at=datetime.datetime.now().isoformat())
-    except Exception as exc:
-        _hc_scan_state.update(running=False, error=str(exc),
-                               finished_at=datetime.datetime.now().isoformat())
-    finally:
-        _hc_scan_lock.release()
-
-
-@app.post("/api/hiringcafe-scan")
-def api_hiringcafe_scan():
-    hours = float(request.json.get("hours", 2) if request.is_json else 2)
-    if not _hc_scan_lock.acquire(blocking=False):
-        return jsonify({"error": "HiringCafe scan already running"}), 409
-    _hc_scan_state.update(running=True, added=0, error=None, finished_at=None)
-    threading.Thread(target=_do_hiringcafe_scan, args=(hours,), daemon=True).start()
-    return jsonify({"started": True, "hours": hours})
-
-
-@app.get("/api/hiringcafe-scan/status")
-def api_hiringcafe_scan_status():
-    return jsonify(_hc_scan_state)
-
-
-# ── RemoteOK scan (startups + small companies) ────────────────────────────────
-
-_rok_scan_lock = threading.Lock()
-_rok_scan_state: dict = {"running": False, "added": 0, "error": None, "finished_at": None}
-
-
-def _do_remoteok_scan(hours: float):
-    global _rok_scan_state
-    from sources.remoteok import fetch_remoteok_jobs
-    import datetime
-    from datetime import timedelta, timezone as _tz
-    try:
-        cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
-        jobs   = fetch_remoteok_jobs(cutoff)
-        tracker = JobTracker()
-        added = len(process_jobs(jobs, tracker))
-        tracker.close()
-        _rok_scan_state.update(running=False, added=added, error=None,
-                               finished_at=datetime.datetime.now().isoformat())
-    except Exception as exc:
-        _rok_scan_state.update(running=False, error=str(exc),
-                               finished_at=datetime.datetime.now().isoformat())
-    finally:
-        _rok_scan_lock.release()
-
-
-@app.post("/api/remoteok-scan")
-def api_remoteok_scan():
-    hours = float(request.json.get("hours", 48) if request.is_json else 48)
-    if not _rok_scan_lock.acquire(blocking=False):
-        return jsonify({"error": "RemoteOK scan already running"}), 409
-    _rok_scan_state.update(running=True, added=0, error=None, finished_at=None)
-    threading.Thread(target=_do_remoteok_scan, args=(hours,), daemon=True).start()
-    return jsonify({"started": True, "hours": hours})
-
-
-@app.get("/api/remoteok-scan/status")
-def api_remoteok_scan_status():
-    return jsonify(_rok_scan_state)
-
-
-# ── Portal scan (Greenhouse + Lever + Ashby + Workday combined) ───────────────
-
-PORTAL_SOURCES = {"greenhouse", "lever", "ashby", "workday", "goldman_sachs", "oracle_hcm", "deloitte", "faang"}
-
-_portal_scan_lock  = threading.Lock()
-_portal_scan_state: dict = {
-    "running":      False,
-    "added":        0,
-    "error":        None,
-    "finished_at":  None,
-    "last_scan_at": None,
-    "sources":      {},    # source_name → raw job count returned by fetcher
-    "source_stats": {},    # source_name → {jobs, seconds, tasks, method, errors}
+SCAN_GROUPS: dict[str, set[str]] = {
+    "linkedin": {"linkedin"},
+    "boards":   {"greenhouse", "lever", "ashby", "faang", "goldman_sachs",
+                 "oracle_hcm", "deloitte", "hackernews", "hiringcafe", "staffing"},
+    "big":      {"workday", "google_jobs", "indeed"},
 }
-_portal_auto_next: list[float | None] = [None]   # epoch of next auto-scan
-_PORTAL_INTERVAL   = 3600                         # auto-scan every 60 minutes
-_PORTAL_LOOKBACK   = 2.0                          # look back 2 hours each run
+_PAID_SOURCES = {"google_jobs": "SERPAPI_API_KEY", "indeed": "FIRECRAWL_API_KEY"}
+_HN_LOOKBACK_H = 720      # the Who-is-hiring thread is monthly
+
+_AUTO_INTERVAL = 3600     # background scan every hour...
+_AUTO_LOOKBACK = 2.0      # ...looking back 2 hours
+_auto_next: list[float | None] = [None]
+
+_scan_locks = {g: threading.Lock() for g in SCAN_GROUPS}
+_scan_state: dict[str, dict] = {
+    g: {"running": False, "added": 0, "fetched": 0, "error": None,
+        "started_at": None, "finished_at": None, "hours": None,
+        "source_stats": {}, "skipped": []}
+    for g in SCAN_GROUPS
+}
 
 
-def _do_portal_scan(hours: float):
-    """Fetch all portal sources (Greenhouse, Lever, Ashby, Workday, Goldman
-    Sachs, Oracle HCM, Deloitte) in parallel, filter, and persist."""
+def _has_key(source: str) -> bool:
+    if source == "google_jobs":
+        from sources.google_jobs import api_key   # also re-reads .env
+        return bool(api_key())
+    import os
+    return bool(os.environ.get(_PAID_SOURCES[source]))
+
+
+def _run_group(group: str, hours: float, paid: bool):
+    """Body of one group scan. The caller already holds the group's lock."""
     import datetime as _dt
     from datetime import timedelta, timezone
 
+    state = _scan_state[group]
     try:
-        cutoff = _dt.datetime.now(timezone.utc) - timedelta(hours=hours)
-        source_stats: dict = {}
-        all_jobs, source_counts = fetch_all_sources(
-            cutoff, only=PORTAL_SOURCES, stats=source_stats)
+        sources = set(SCAN_GROUPS[group])
+        skipped = []
+        for src in sorted(sources & set(_PAID_SOURCES)):
+            if not paid:
+                sources.discard(src)
+                skipped.append(f"{src}: paid, not run")
+            elif not _has_key(src):
+                sources.discard(src)
+                skipped.append(f"{src}: no key in .env")
+
+        now = _dt.datetime.now(timezone.utc)
+        stats: dict = {}
+        jobs: list[dict] = []
+        regular = sources - {"hackernews"}
+        if regular:
+            got, _ = fetch_all_sources(now - timedelta(hours=hours), only=regular, stats=stats)
+            jobs += got
+        if "hackernews" in sources:
+            hn: dict = {}
+            got, _ = fetch_all_sources(now - timedelta(hours=max(hours, _HN_LOOKBACK_H)),
+                                       only={"hackernews"}, stats=hn)
+            jobs += got
+            stats.update(hn)
 
         tracker = JobTracker()
-        added = len(process_jobs(all_jobs, tracker))
+        added = len(process_jobs(jobs, tracker))
         tracker.close()
-
-        now_iso = _dt.datetime.now().isoformat()
-        _portal_scan_state.update(
-            running=False, added=added, error=None,
-            finished_at=now_iso, last_scan_at=now_iso,
-            sources=source_counts, source_stats=source_stats,
-        )
+        state.update(added=added, fetched=len(jobs), source_stats=stats,
+                     skipped=skipped, error=None)
     except Exception as exc:
-        _portal_scan_state.update(
-            running=False, error=str(exc),
-            finished_at=_dt.datetime.now().isoformat(),
-        )
+        log.exception(f"{group} scan failed")
+        state.update(error=str(exc))
     finally:
-        _portal_scan_lock.release()
+        state.update(running=False, finished_at=_dt.datetime.now().isoformat())
+        _scan_locks[group].release()
 
 
-def _portal_auto_loop():
-    """Background thread: run a portal scan every _PORTAL_INTERVAL seconds."""
+def _start_group(group: str, hours: float, paid: bool) -> bool:
+    """Start a group scan in the background. False if that group is already running."""
+    import datetime as _dt
+    if not _scan_locks[group].acquire(blocking=False):
+        return False
+    _scan_state[group].update(running=True, added=0, fetched=0, error=None, skipped=[],
+                              hours=hours, started_at=_dt.datetime.now().isoformat(),
+                              finished_at=None)
+    threading.Thread(target=_run_group, args=(group, hours, paid), daemon=True,
+                     name=f"scan-{group}").start()
+    return True
+
+
+def _auto_loop():
+    """
+    Hourly background scan of every free source except LinkedIn: the Boards
+    group, plus Workday from the Workday + Google tab. Paid sources and
+    LinkedIn only run when their button is clicked.
+    """
     while True:
-        if _portal_scan_lock.acquire(blocking=False):
-            _portal_scan_state.update(running=True, added=0, error=None, finished_at=None)
-            threading.Thread(target=_do_portal_scan, args=(_PORTAL_LOOKBACK,),
-                             daemon=True).start()
-        wake_at = time.time() + _PORTAL_INTERVAL
-        _portal_auto_next[0] = wake_at
+        _start_group("boards", _AUTO_LOOKBACK, paid=False)
+        _start_group("big", _AUTO_LOOKBACK, paid=False)
+        wake_at = time.time() + _AUTO_INTERVAL
+        _auto_next[0] = wake_at
         while time.time() < wake_at:
             time.sleep(10)
 
 
-# Start the portal auto-scan as soon as the Flask process comes up
-threading.Thread(target=_portal_auto_loop, daemon=True, name="portal-auto").start()
+def start_auto_scan():
+    """Start the hourly background scan. Called when the dashboard launches,
+    not at import, so importing app (tests, scripts) never starts scans."""
+    threading.Thread(target=_auto_loop, daemon=True, name="auto-scan").start()
 
 
-@app.post("/api/portal-scan")
-def api_portal_scan():
-    hours = float(request.json.get("hours", _PORTAL_LOOKBACK) if request.is_json else _PORTAL_LOOKBACK)
-    if not _portal_scan_lock.acquire(blocking=False):
-        return jsonify({"error": "Portal scan already running"}), 409
-    _portal_scan_state.update(running=True, added=0, error=None, finished_at=None)
-    threading.Thread(target=_do_portal_scan, args=(hours,), daemon=True).start()
-    return jsonify({"started": True, "hours": hours})
+@app.post("/api/group-scan/<group>")
+def api_group_scan(group: str):
+    if group not in SCAN_GROUPS:
+        return jsonify({"error": f"unknown scan group {group!r}"}), 404
+    body = request.get_json(silent=True) or {}
+    hours = float(body.get("hours", 2))
+    paid = bool(body.get("paid", False))
+    if not _start_group(group, hours, paid):
+        return jsonify({"error": f"{group} scan already running", "running": True}), 409
+    return jsonify({"started": True, "group": group, "hours": hours, "paid": paid})
 
 
-@app.get("/api/portal-scan/status")
-def api_portal_scan_status():
-    state = dict(_portal_scan_state)
-    state["next_auto_at"] = _portal_auto_next[0]
-    state["interval_seconds"] = _PORTAL_INTERVAL
-    return jsonify(state)
-
-
-@app.get("/api/portal-companies")
-def api_portal_companies():
-    from config import GREENHOUSE_COMPANIES, LEVER_COMPANIES, ASHBY_COMPANIES, WORKDAY_COMPANIES, ORACLE_HCM_COMPANIES
+@app.get("/api/group-scan/status")
+def api_group_scan_status():
     return jsonify({
-        "greenhouse":    sorted(GREENHOUSE_COMPANIES),
-        "lever":         sorted(LEVER_COMPANIES),
-        "ashby":         sorted(ASHBY_COMPANIES),
-        "workday":       [{"subdomain": s, "board": b, "name": n} for s, b, n in WORKDAY_COMPANIES],
-        "goldman_sachs": ["Goldman Sachs"],
-        "oracle_hcm":    [n for _, _, n in ORACLE_HCM_COMPANIES],
-        "deloitte":      ["Deloitte"],
+        "groups":       {g: dict(st) for g, st in _scan_state.items()},
+        "sources":      {g: sorted(srcs) for g, srcs in SCAN_GROUPS.items()},
+        "next_auto_at": _auto_next[0],
+        "interval_seconds": _AUTO_INTERVAL,
+        "paid_keys":    {src: _has_key(src) for src in _PAID_SOURCES},
     })
-
-
-@app.get("/api/portal-jobs")
-def api_portal_jobs():
-    tracker = JobTracker()
-    jobs = tracker.all_jobs()
-    tracker.close()
-    portal = [
-        j for j in jobs
-        if (j.get("source") or "").lower() in PORTAL_SOURCES
-        and j.get("title") not in ("__repost__", "", None)
-    ]
-    if US_ONLY:
-        portal = [j for j in portal if _is_us(j.get("location", ""))]
-    portal.sort(
-        key=lambda j: j.get("posted_at") or j.get("seen_at") or "",
-        reverse=True,
-    )
-    return jsonify(portal)
-
-
-# ── Workday scan ──────────────────────────────────────────────────────────
-
-_wd_scan_lock = threading.Lock()
-_wd_scan_state: dict = {"running": False, "added": 0, "error": None, "finished_at": None}
-
-
-def _do_workday_scan(hours: float):
-    global _wd_scan_state
-    from sources.workday import fetch_workday_jobs
-    from config import WORKDAY_COMPANIES
-    import datetime
-    from datetime import timedelta, timezone
-    try:
-        cutoff = datetime.datetime.now(timezone.utc) - timedelta(hours=hours)
-        jobs = fetch_workday_jobs(WORKDAY_COMPANIES, cutoff)
-        tracker = JobTracker()
-        added = len(process_jobs(jobs, tracker))
-        tracker.close()
-        _wd_scan_state.update(running=False, added=added, error=None,
-                              finished_at=datetime.datetime.now().isoformat())
-    except Exception as exc:
-        _wd_scan_state.update(running=False, error=str(exc),
-                              finished_at=datetime.datetime.now().isoformat())
-    finally:
-        _wd_scan_lock.release()
-
-
-@app.post("/api/workday-scan")
-def api_workday_scan():
-    hours = float(request.json.get("hours", 24) if request.is_json else 24)
-    if not _wd_scan_lock.acquire(blocking=False):
-        return jsonify({"error": "Workday scan already running"}), 409
-    _wd_scan_state.update(running=True, added=0, error=None, finished_at=None)
-    threading.Thread(target=_do_workday_scan, args=(hours,), daemon=True).start()
-    return jsonify({"started": True, "hours": hours})
-
-
-@app.get("/api/workday-scan/status")
-def api_workday_scan_status():
-    return jsonify(_wd_scan_state)
 
 
 # ── Resume tailoring ──────────────────────────────────────────────────────
@@ -778,4 +496,5 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s  %(levelname)s  %(message)s")
+    start_auto_scan()
     app.run(host=args.host, port=args.port, debug=False)
