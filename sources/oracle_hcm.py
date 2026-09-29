@@ -38,6 +38,7 @@ import uuid
 from datetime import datetime, timezone
 
 import requests
+from config import COUNTRY, SEARCH_TITLES
 
 log = logging.getLogger(__name__)
 
@@ -53,18 +54,11 @@ _SESSION.headers.update({
 _PAGE_SIZE = 25
 
 # Keywords aligned with config.py KEYWORDS
-_SEARCH_TERMS = [
-    "data analyst",
-    "data scientist",
-    "machine learning",
-    "data engineer",
-    "analytics",
-    "ai engineer",
-    "business analyst",
-]
+# From SEARCH_TITLES in search_profile.py
+_SEARCH_TERMS = list(SEARCH_TITLES)
 
 # Only include jobs from these country codes
-_US_COUNTRY_CODES = {"US", "USA"}
+_US_COUNTRY_CODES = {COUNTRY["iso2"].upper(), COUNTRY["iso3"]}   # the profile's country
 
 _SLEEP = 0.4   # seconds between requests
 

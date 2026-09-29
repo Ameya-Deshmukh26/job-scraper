@@ -11,7 +11,9 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-BASE_TEX = Path(r"C:\Users\ameya\Downloads\Ameya_Deshmukh_BASE_v3.tex")
+from config import RESUME_TEX
+
+BASE_TEX = RESUME_TEX   # BASE_TEX_PATH in search_profile.py, else resume.tex
 
 # \resumeItem{...} — brace-balanced so nested \textbf{} survives
 _ITEM_CMD = r"\resumeItem{"
@@ -47,7 +49,7 @@ def numbers_in(text: str) -> set[str]:
 
 @dataclass
 class CorpusItem:
-    """One addressable, factual unit of Ameya's history."""
+    """One addressable, factual unit of the candidate's history."""
     id: str
     section: str          # WORK EXPERIENCE | PROJECTS
     org: str              # employer or project name
@@ -86,6 +88,9 @@ def _balanced_items(body: str) -> list[str]:
 
 def load_corpus(tex_path: Path | str = BASE_TEX) -> list[CorpusItem]:
     """Parse the base resume into typed corpus items."""
+    if not Path(tex_path).exists():
+        raise FileNotFoundError(
+            f"No resume found at {tex_path}. Ask Claude to set up resume tailoring.")
     raw = Path(tex_path).read_text(encoding="utf-8", errors="replace")
     # Drop the preamble (macro definitions contain \resumeItem too)
     body = raw.split(r"\begin{document}", 1)[-1]
@@ -130,7 +135,7 @@ def load_corpus(tex_path: Path | str = BASE_TEX) -> list[CorpusItem]:
 
 
 def corpus_numbers(items: list[CorpusItem]) -> set[str]:
-    """Every numeric claim Ameya can legitimately make."""
+    """Every numeric claim the candidate can legitimately make."""
     out: set[str] = set()
     for it in items:
         out |= it.numbers

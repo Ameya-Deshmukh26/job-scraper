@@ -40,6 +40,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 import requests
+from config import SEARCH_TITLES
 
 log = logging.getLogger(__name__)
 
@@ -55,14 +56,9 @@ _SESSION.headers.update({
 })
 
 # Search terms aligned with config.py KEYWORDS
-_SEARCH_TERMS = [
-    "data engineer",
-    "data scientist",
-    "analytics engineer",
-    "ml engineer",
-    "ai engineer",
-    "business analyst",
-]
+# From SEARCH_TITLES in search_profile.py. Capped: every term costs up to
+# 3 requests per board, and Workday is already the slowest source.
+_SEARCH_TERMS = list(SEARCH_TITLES)[:6]
 
 # Pages to fetch per (company, keyword) combination
 _PAGES_PER_QUERY = 3

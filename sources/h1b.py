@@ -15,6 +15,8 @@ from pathlib import Path
 
 import requests
 
+from config import NEEDS_SPONSORSHIP
+
 log = logging.getLogger(__name__)
 
 _CACHE_PATH = Path(__file__).parent.parent / "data" / "h1b_cache.pkl"
@@ -128,8 +130,11 @@ def is_h1b_sponsor(company: str) -> bool:
     """
     Return True if the company has approved H-1B petitions in the last 3 years.
     O(1) lookup via precomputed prefix index.
+
+    Always False when the profile does not need sponsorship, so the USCIS
+    data is never downloaded for someone who has no use for it.
     """
-    if not company:
+    if not company or not NEEDS_SPONSORSHIP:
         return False
     sponsors, prefixes = get_sponsors()
     normalized = _normalize(company)

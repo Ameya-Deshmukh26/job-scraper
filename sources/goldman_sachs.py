@@ -12,6 +12,7 @@ import time
 from datetime import datetime, timezone
 
 import requests
+from config import SEARCH_COUNTRY, SEARCH_TITLES
 
 log = logging.getLogger(__name__)
 
@@ -51,16 +52,8 @@ query GetRoles($searchQueryInput: RoleSearchQueryInput!) {
 """
 
 # Keywords aligned with config.py KEYWORDS
-_SEARCH_TERMS = [
-    "data analyst",
-    "data scientist",
-    "machine learning",
-    "data engineer",
-    "analytics",
-    "quantitative",
-    "ai engineer",
-    "business analyst",
-]
+# From SEARCH_TITLES in search_profile.py
+_SEARCH_TERMS = list(SEARCH_TITLES)
 
 # Experience levels to include (skip Partner/Managing Director levels)
 _EXPERIENCES = ["EARLY_CAREER", "PROFESSIONAL"]
@@ -83,7 +76,7 @@ def _build_payload(search_term: str, page: int) -> dict:
                     {
                         "filterCategoryType": "LOCATION",
                         "filters": [
-                            {"filter": "United States", "subFilters": []},
+                            {"filter": SEARCH_COUNTRY, "subFilters": []},
                         ],
                     },
                 ],

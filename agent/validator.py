@@ -1,7 +1,7 @@
 """
 Deterministic fabrication validator — zero LLM calls.
 
-Tailoring is allowed to *reframe* Ameya's history toward a JD. It is not
+Tailoring is allowed to *reframe* the candidate's history toward a JD. It is not
 allowed to invent it. This module turns that rule into a mechanical check:
 
   1. provenance   every tailored bullet must trace to a corpus item

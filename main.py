@@ -28,6 +28,7 @@ from config import (
     LEVER_COMPANIES,
     LOCATION_FILTER,
     LOOKBACK_HOURS,
+    MAX_YEARS_REQUIRED,
     ORACLE_HCM_COMPANIES,
     OVERNIGHT_LOOKBACK_HRS,
     OVERNIGHT_POLL_HOURS,
@@ -166,27 +167,42 @@ def _matches_location(location: str) -> bool:
 
 
 # ── JD experience check ────────────────────────────────────────────────────
-# Patterns that signal 5+ years required — too senior for 2-3 yr experience
+# Phrases stating a years-of-experience requirement. The number is captured
+# and compared with MAX_YEARS_REQUIRED from search_profile.py, rather than
+# baking one threshold into the regex.
 
-_EXP_TOO_HIGH = re.compile(
+_YEARS_REQUIRED = re.compile(
     r"""
     (?:
-        \b([5-9]|\d{2,})\s*\+\s*years?          # "5+ years"
+        \b(\d{1,2})\s*\+\s*years?            # "5+ years"
         |
-        \b([5-9]|\d{2,})\s+or\s+more\s+years?   # "5 or more years"
+        \b(\d{1,2})\s+or\s+more\s+years?     # "5 or more years"
         |
-        minimum\s+(?:of\s+)?([5-9]|\d{2,})\s+years?   # "minimum 5 years"
+        minimum\s+(?:of\s+)?(\d{1,2})\s+years?   # "minimum 5 years"
         |
-        at\s+least\s+([5-9]|\d{2,})\s+years?    # "at least 5 years"
+        at\s+least\s+(\d{1,2})\s+years?      # "at least 5 years"
         |
-        \b([5-9]|\d{2,})\s*[-–]\s*\d+\s+years?  # "5-8 years" (lower bound ≥ 5)
+        \b(\d{1,2})\s*[-–]\s*\d+\s+years?    # "5-8 years" (the lower bound counts)
         |
-        (?<![-–\d.])\b([5-9]|\d{2,})\s+years?   # bare "7 years..." (not "3-5 years")
+        (?<![-–\d.])\b(\d{1,2})\s+years?     # bare "7 years..." (not the "5" in "3-5 years")
     )
     \s*(?:of\s+)?(?:[\w/&,.-]+\s+){0,5}experience   # up to 5 qualifier words before "experience"
     """,
     re.VERBOSE | re.IGNORECASE,
 )
+
+
+def too_senior(jd: str, max_years: int | None = None) -> str | None:
+    """
+    The phrase that asks for max_years or more of experience, or None.
+    max_years defaults to MAX_YEARS_REQUIRED.
+    """
+    limit = MAX_YEARS_REQUIRED if max_years is None else max_years
+    for m in _YEARS_REQUIRED.finditer(jd or ""):
+        years = next(int(g) for g in m.groups() if g)
+        if years >= limit:
+            return m.group(0).strip()
+    return None
 
 
 def _jd_ok_for_experience(url: str) -> bool:
@@ -199,8 +215,8 @@ def _jd_ok_for_experience(url: str) -> bool:
         jd = fetch_jd(url)
         if jd.startswith("[Could not fetch"):
             return True   # can't fetch → don't penalise
-        if _EXP_TOO_HIGH.search(jd):
-            log.debug(f"JD filter: 5+ yrs required — skipping {url}")
+        if too_senior(jd):
+            log.debug(f"JD filter: {MAX_YEARS_REQUIRED}+ yrs required — skipping {url}")
             return False
         return True
     except Exception:

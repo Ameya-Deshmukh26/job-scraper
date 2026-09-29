@@ -19,7 +19,7 @@ from main import (run_once, _is_us, _matches_keyword, _is_right_level,
 from tracker import JobTracker
 from sources.h1b import is_h1b_sponsor
 from startups import annotate as annotate_startup
-from ranking import _STAFFING as _STAFFING_RE
+from ranking import is_staffing
 
 log = logging.getLogger(__name__)
 app = Flask(__name__)
@@ -70,7 +70,7 @@ def api_jobs():
         annotate_startup(j)
         # Staffing/contract shops are ranked down, so flag them explicitly:
         # contract roles matter for STEM OPT (needs a paid E-Verify employer).
-        j["is_staffing"] = bool(_STAFFING_RE.search(j.get("company") or ""))
+        j["is_staffing"] = is_staffing(j.get("company"))
     return jsonify(jobs)
 
 
@@ -436,7 +436,7 @@ def _do_linkedin_scan(hours: float):
     from sources.linkedin import fetch_linkedin_jobs  # free guest API, no token
     try:
         cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
-        jobs = fetch_linkedin_jobs(cutoff, us_only=True)
+        jobs = fetch_linkedin_jobs(cutoff, us_only=US_ONLY)
         tracker = JobTracker()
         added = len(process_jobs(jobs, tracker))
         tracker.close()
@@ -745,7 +745,8 @@ def api_download(filename: str):
     # Guard against path traversal
     if any(c in filename for c in ("/", "\\", "..")):
         return "Invalid filename", 400
-    filepath = Path("C:/Users/ameya/Downloads") / filename
+    from tailoring.compiler import OUTPUT_DIR
+    filepath = OUTPUT_DIR / filename
     if not filepath.exists():
         return "Not found", 404
     return send_file(str(filepath), as_attachment=True, download_name=filename)
@@ -755,7 +756,14 @@ def api_download(filename: str):
 
 @app.get("/")
 def index():
-    return render_template("index.html")
+    from config import (MAX_YEARS_REQUIRED, NEEDS_SPONSORSHIP, SETUP_DONE,
+                        US_ONLY, YOUR_NAME)
+    name = YOUR_NAME.strip() or "Job Search"
+    return render_template("index.html", user_name=name,
+                           user_first=name.split()[0],
+                           needs_sponsorship=NEEDS_SPONSORSHIP,
+                           us_only=US_ONLY, max_years=MAX_YEARS_REQUIRED,
+                           setup_done=SETUP_DONE)
 
 
 # ── Entry point ────────────────────────────────────────────────────────────

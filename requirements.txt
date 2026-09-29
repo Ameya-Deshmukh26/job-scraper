@@ -3,4 +3,15 @@ plyer>=2.1.0
 flask>=3.0.0
 beautifulsoup4>=4.12.0
 playwright>=1.44.0
+python-dotenv>=1.0.0
 anthropic>=0.40.0
+
+# LangGraph agent (Agent Rank and the resume-tailoring button). Signs in
+# through Claude Code, so no API key is needed.
+langgraph>=1.0.0
+claude-agent-sdk>=0.2.0
+
+# Optional extras, not needed to run the dashboard:
+#   langchain-anthropic   agent backend when using ANTHROPIC_API_KEY directly
+#   opik                  tracing for the agent (needs OPIK_API_KEY)
+#   pytest                running the test suite

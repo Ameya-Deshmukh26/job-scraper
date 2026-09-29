@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Job Board — Ameya Deshmukh</title>
+  <title>Job Board — {{ user_name }}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -1090,12 +1090,20 @@
 </head>
 <body>
 
+{% if not setup_done %}
+<div style="background:#3b2f0b;color:#fde68a;border-bottom:1px solid #a16207;
+            padding:10px 16px;font-size:13px;text-align:center">
+  Setup isn't finished yet, so no jobs will match. Open this folder in
+  Claude Code and type <strong>set me up</strong>.
+</div>
+{% endif %}
+
 <!-- ══════════ NAV ══════════ -->
 <nav>
   <div class="brand">
     <span class="brand-name">JobBoard</span>
     <span class="brand-dot"></span>
-    <span class="brand-sub">Ameya</span>
+    <span class="brand-sub">{{ user_first }}</span>
   </div>
   <span id="scan-status"></span>
   <div class="nav-right">
@@ -1201,11 +1209,11 @@
     <label class="hide-toggle">
       <input type="checkbox" id="hide-applied" checked onchange="render()" /> Hide applied
     </label>
-    <label class="hide-toggle" style="margin-left:8px">
+    <label class="hide-toggle" style="margin-left:8px{% if not needs_sponsorship %};display:none{% endif %}">
       <input type="checkbox" id="h1b-only" onchange="render()" /> H-1B sponsors only
     </label>
     <label class="hide-toggle" style="margin-left:8px">
-      <input type="checkbox" id="show-too-senior" onchange="render()" /> Show 5+ yr roles
+      <input type="checkbox" id="show-too-senior" onchange="render()" /> Show {{ max_years }}+ yr roles
     </label>
     <span style="margin-left:auto;display:inline-flex;gap:6px;align-items:center">
       <button class="chip sort-chip on" data-sort="match" onclick="setSort(this)">🎯 Best match</button>
@@ -1696,10 +1704,10 @@ function cappedHtml(gridId, filtered, builder) {
 
 // Return the best timestamp for a job — prefer posted_at only when it has a
 // time component (LinkedIn gives date-only strings that parse as midnight UTC).
-// A job whose JD demands 5+ years is not applicable; the audit flags these
+// A job whose JD demands more years than MAX_YEARS_REQUIRED is not applicable; the audit flags these
 // via review_reason. Hidden unless explicitly requested.
 function isTooSenior(j) {
-  return (j.review_reason || "").startsWith("requires 5+");
+  return /^requires \d+\+ years/.test(j.review_reason || "");
 }
 
 function jobTs(j) {
@@ -1833,7 +1841,7 @@ function renderWorkdayTab() {
     const src = (j.source || "").toLowerCase();
     if (src !== "workday") return false;
     if (hideAp && j.applied) return false;
-    if (!isUS(j.location)) return false;
+    if (US_ONLY && !isUS(j.location)) return false;
     if (q && !j.title.toLowerCase().includes(q) && !(j.company||"").toLowerCase().includes(q)) return false;
     return true;
   });
@@ -2354,7 +2362,8 @@ function freshnessLabel(mins) {
   return `${Math.floor(mins/1440)}d ago`;
 }
 
-// Non-US location filter
+// Non-US location filter, applied only when US_ONLY is set in search_profile.py
+const US_ONLY = {{ 'true' if us_only else 'false' }};
 const _NON_US_TERMS = [
   "india","bangalore","bengaluru","mumbai","pune","hyderabad","delhi","chennai","kolkata","noida","gurugram","gurgaon",
   "pakistan","karachi","lahore","islamabad","bangladesh","dhaka","sri lanka",
@@ -2478,7 +2487,7 @@ function renderPortal() {
     const src = (j.source||"").toLowerCase();
     if (src === "workday") return false;
     if (hideAp && j.applied) return false;
-    if (!isUS(j.location)) return false;
+    if (US_ONLY && !isUS(j.location)) return false;
     if (q && !j.title.toLowerCase().includes(q) && !(j.company||"").toLowerCase().includes(q)) return false;
     return true;
   });

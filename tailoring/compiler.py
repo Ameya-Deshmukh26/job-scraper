@@ -1,10 +1,12 @@
-"""Save tailored LaTeX to Downloads and attempt pdflatex compilation."""
+"""Save tailored LaTeX to the resume folder and attempt pdflatex compilation."""
 import re
 import shutil
 import subprocess
 from pathlib import Path
 
-OUTPUT_DIR = Path("C:/Users/ameya/Downloads")
+from config import RESUME_DIR, YOUR_NAME
+
+OUTPUT_DIR = RESUME_DIR   # RESUME_OUTPUT_DIR in search_profile.py, else ./resumes
 
 
 def save_and_compile(latex: str, company: str) -> dict:
@@ -16,7 +18,9 @@ def save_and_compile(latex: str, company: str) -> dict:
       error     – None on full success, message otherwise
     """
     safe = re.sub(r"[^A-Za-z0-9_-]", "", company).title() or "Company"
-    stem = f"Ameya_Deshmukh_{safe}"
+    who = re.sub(r"[^A-Za-z0-9]+", "_", YOUR_NAME).strip("_") or "Resume"
+    stem = f"{who}_{safe}"
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     tex_path = OUTPUT_DIR / f"{stem}.tex"
     pdf_path = OUTPUT_DIR / f"{stem}.pdf"
 

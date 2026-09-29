@@ -19,13 +19,15 @@ import argparse
 import logging
 from concurrent.futures import ThreadPoolExecutor
 
-from main import _EXP_TOO_HIGH
+from main import too_senior
 from tailoring.jd_fetcher import fetch_jd
 from tracker import JobTracker
 
 logging.basicConfig(level=logging.WARNING, format="%(message)s")
 
-REASON = "requires 5+ years experience"
+from config import MAX_YEARS_REQUIRED
+
+REASON = f"requires {MAX_YEARS_REQUIRED}+ years experience"
 
 
 def _verdict(job):
@@ -36,15 +38,15 @@ def _verdict(job):
         return job, None
     if not jd or jd.startswith("[Could not"):
         return job, None          # cannot read it, so do not penalise
-    m = _EXP_TOO_HIGH.search(jd)
-    return job, (m.group(0).strip()[:60] if m else None)
+    hit = too_senior(jd)
+    return job, (hit[:60] if hit else None)
 
 
 def audit(limit, source=None, workers=6):
     tracker = JobTracker()
     jobs = [j for j in tracker.all_jobs()
             if not j.get("applied")
-            and not (j.get("review_reason") or "").startswith("requires 5+")]
+            and not (j.get("review_reason") or "").startswith("requires ")]
     if source:
         jobs = [j for j in jobs if (j.get("source") or "").lower() == source.lower()]
     jobs = jobs[:limit]
@@ -72,10 +74,10 @@ def stats():
     tracker = JobTracker()
     rows = tracker.conn.execute(
         "SELECT source, COUNT(*) n FROM seen_jobs "
-        "WHERE review_reason LIKE 'requires 5+%' GROUP BY source ORDER BY n DESC"
+        "WHERE review_reason LIKE 'requires %+ years%' GROUP BY source ORDER BY n DESC"
     ).fetchall()
     total = tracker.conn.execute(
-        "SELECT COUNT(*) FROM seen_jobs WHERE review_reason LIKE 'requires 5+%'"
+        "SELECT COUNT(*) FROM seen_jobs WHERE review_reason LIKE 'requires %+ years%'"
     ).fetchone()[0]
     tracker.close()
     print(f"{total} jobs flagged as requiring 5+ years")

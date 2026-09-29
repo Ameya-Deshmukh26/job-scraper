@@ -75,6 +75,11 @@ class AgentState(TypedDict, total=False):
 
 @traced("load_corpus")
 def load_corpus_node(state: AgentState) -> AgentState:
+    from config import RESUME_TEX
+    if not RESUME_TEX.exists():
+        # Ranking still works from the profile alone; tailoring checks for
+        # the resume itself and explains what is missing.
+        return {"corpus": [], "notes": [f"no resume at {RESUME_TEX}"]}
     items = load_corpus()
     log_metric("corpus_items", len(items))
     return {"corpus": items, "notes": [f"corpus: {len(items)} items"]}
@@ -112,15 +117,24 @@ def rank_jobs_node(state: AgentState) -> AgentState:
         )
         profile = f"CANDIDATE EXPERIENCE (the ground truth):\n{history}\n"
     else:
-        profile = ("CANDIDATE: ~2-3 years in data science, ML and GenAI "
-                   "engineering (LangChain RAG, PySpark, SQL, Tableau).\n")
+        profile = "CANDIDATE: no resume on file; judge from the summary below.\n"
+
+    # Who is searching comes from search_profile.py, not a hardcoded blurb
+    from config import (CANDIDATE_SUMMARY, NEEDS_SPONSORSHIP, SEARCH_COUNTRY,
+                        SEARCH_TITLES)
+    about = [CANDIDATE_SUMMARY.strip()] if CANDIDATE_SUMMARY.strip() else []
+    if SEARCH_TITLES:
+        about.append("Target roles: " + ", ".join(SEARCH_TITLES) + ".")
+    about.append(f"Searching for jobs in {SEARCH_COUNTRY}.")
+    if NEEDS_SPONSORSHIP and "sponsor" not in CANDIDATE_SUMMARY.lower():
+        about.append("Needs work-visa sponsorship.")
 
     system = (
         f"{profile}\n"
-        "The candidate has ~2-3 years of experience, needs H-1B sponsorship, "
-        "and is based in Boston but open to relocation. Assess job fit against "
-        "the experience above. Be blunt about real gaps, but do NOT claim a "
-        "domain is unfamiliar if the experience above covers it. Never inflate fit."
+        + " ".join(about) + " "
+        "Assess job fit against the experience above. Be blunt about real gaps, "
+        "but do NOT claim a domain is unfamiliar if the experience above covers "
+        "it. Never inflate fit."
     )
     user = (
         f"Jobs:\n{listing}\n\n"

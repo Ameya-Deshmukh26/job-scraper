@@ -1,7 +1,7 @@
 """
-Match scoring for the dashboard — ranks jobs by fit for Ameya's profile
-(2-3 yrs exp, DS/ML/AI focus, needs H-1B sponsorship, Boston-based,
-open to relocation). Pure heuristics, no LLM, so it runs on every
+Match scoring for the dashboard: ranks jobs by fit for the profile in
+search_profile.py (target titles, preferred locations, whether visa
+sponsorship matters). Pure heuristics, no LLM, so it runs on every
 /api/jobs response at zero cost.
 
 Score range 0-100. Rough bands: 75+ strong, 55-74 decent, <55 weak.
@@ -9,12 +9,14 @@ Score range 0-100. Rough bands: 75+ strong, 55-74 decent, <55 weak.
 import re
 from datetime import datetime, timezone
 
+from config import (NEEDS_SPONSORSHIP, PREFERRED_LOCATIONS, RANK_BONUS_WORDS,
+                    RANK_GOOD_TITLES, RANK_TOP_TITLES, SEARCH_COUNTRY)
+
 # Title tiers — what the role actually is
-_TIER_A = ["data scientist", "machine learning engineer", "ml engineer",
-           "ai engineer", "applied scientist", "research engineer"]
-_TIER_B = ["data analyst", "analytics engineer", "data engineer",
-           "business intelligence", "bi analyst", "nlp engineer",
-           "business analyst", "ai analyst"]
+_TIER_A = [t.lower() for t in RANK_TOP_TITLES]
+_TIER_B = [t.lower() for t in RANK_GOOD_TITLES]
+_PREFERRED = [loc.lower() for loc in PREFERRED_LOCATIONS]
+_COUNTRY = SEARCH_COUNTRY.lower()
 
 # Junior-friendly markers (fits 2-3 yrs experience)
 _JUNIOR = re.compile(r"\b(junior|associate|entry[- ]level|early career|"
@@ -22,8 +24,8 @@ _JUNIOR = re.compile(r"\b(junior|associate|entry[- ]level|early career|"
                      r"\b(junior|associate|entry[- ]level|early career|"
                      r"graduate|new grad)\b", re.IGNORECASE)
 
-# GenAI/LLM signals — matches Ameya's strongest recent experience
-_GENAI = ["llm", "genai", "gen ai", "generative", "nlp", "agent", "rag"]
+# Title words that line up with the searcher's strongest experience
+_GENAI = [w.lower() for w in RANK_BONUS_WORDS]
 
 # Staffing-agency tells in company names — high-volume, low-conversion
 _STAFFING = re.compile(
@@ -32,6 +34,22 @@ _STAFFING = re.compile(
     r"solutions? (inc|llc|group)|resourc|global source|placement",
     re.IGNORECASE,
 )
+
+
+# Large direct employers whose names trip the staffing tells above
+# ("consultancy", "solutions group"). They hire for themselves.
+_NOT_STAFFING = re.compile(
+    r"tata consultancy|infosys|wipro|hcl|tech mahindra|capgemini|cognizant|"
+    r"accenture|deloitte|kpmg|pwc|ernst|mckinsey|boston consulting|bain|kearney|"
+    r"zs associates|mu sigma|fractal|tiger analytics|latentview",
+    re.IGNORECASE,
+)
+
+
+def is_staffing(company: str) -> bool:
+    """True when the company name looks like a staffing agency."""
+    company = company or ""
+    return bool(_STAFFING.search(company)) and not _NOT_STAFFING.search(company)
 
 
 def match_score(job: dict) -> int:
@@ -59,15 +77,15 @@ def match_score(job: dict) -> int:
         score += 5
 
     # Company quality
-    if _STAFFING.search(company):
+    if is_staffing(company):
         score -= 22
-    if job.get("h1b_sponsor"):
-        score += 12   # sponsorship track record is critical on OPT
+    if NEEDS_SPONSORSHIP and job.get("h1b_sponsor"):
+        score += 12   # sponsorship track record is critical on a visa
 
     # Location
-    if any(loc in location for loc in ["boston", "cambridge", "massachusetts"]):
+    if any(loc in location for loc in _PREFERRED):
         score += 6
-    elif "remote" in location or location.strip() == "united states":
+    elif "remote" in location or location.strip() == _COUNTRY:
         score += 4
 
     # Direct-ATS sources are auto-applyable and less crowded than LinkedIn

@@ -24,7 +24,57 @@ except ImportError:
 # ── Resume Tailoring ───────────────────────────────────────────────────────
 # Get a key at https://console.anthropic.com — or set the ANTHROPIC_API_KEY env var.
 ANTHROPIC_API_KEY = ""  # or: export ANTHROPIC_API_KEY=sk-ant-...
-BASE_TEX_PATH = "C:/Users/ameya/Downloads/Ameya_Deshmukh_BASE_v3.tex"
+
+
+# ── Search profile ─────────────────────────────────────────────────────────
+# Who is searching, for what, and where lives in search_profile.py. The
+# defaults here only cover a profile file that predates a setting.
+SETUP_DONE = False
+YOUR_NAME = ""
+CANDIDATE_SUMMARY = ""
+SEARCH_TITLES: list[str] = []
+KEYWORDS: list[str] = []
+SEARCH_COUNTRY = "United States"
+SEARCH_CITIES: list[str] = []
+US_ONLY = True
+LOCATION_FILTER: list[str] = []
+PREFERRED_LOCATIONS: list[str] = []
+EXCLUDE_LEVELS: list[str] = []
+EXCLUDE_SENIOR = True
+MAX_YEARS_REQUIRED = 5
+RANK_TOP_TITLES: list[str] = []
+RANK_GOOD_TITLES: list[str] = []
+RANK_BONUS_WORDS: list[str] = []
+NEEDS_SPONSORSHIP = False
+BASE_TEX_PATH = ""
+RESUME_OUTPUT_DIR = ""
+ENABLE_AUTO_APPLY = False
+
+from search_profile import *  # noqa: E402,F401,F403
+
+# ── Countries ──────────────────────────────────────────────────────────────
+# SEARCH_COUNTRY -> the codes each source wants. iso2/iso3 are ISO 3166;
+# indeed is the country's Indeed host.
+COUNTRIES = {
+    "United States":        {"iso2": "us", "iso3": "USA", "indeed": "www.indeed.com"},
+    "India":                {"iso2": "in", "iso3": "IND", "indeed": "in.indeed.com"},
+    "United Kingdom":       {"iso2": "gb", "iso3": "GBR", "indeed": "uk.indeed.com"},
+    "Canada":               {"iso2": "ca", "iso3": "CAN", "indeed": "ca.indeed.com"},
+    "Australia":            {"iso2": "au", "iso3": "AUS", "indeed": "au.indeed.com"},
+    "Singapore":            {"iso2": "sg", "iso3": "SGP", "indeed": "sg.indeed.com"},
+    "United Arab Emirates": {"iso2": "ae", "iso3": "ARE", "indeed": "ae.indeed.com"},
+    "Germany":              {"iso2": "de", "iso3": "DEU", "indeed": "de.indeed.com"},
+    "Ireland":              {"iso2": "ie", "iso3": "IRL", "indeed": "ie.indeed.com"},
+    "Netherlands":          {"iso2": "nl", "iso3": "NLD", "indeed": "nl.indeed.com"},
+}
+COUNTRY = COUNTRIES.get(SEARCH_COUNTRY, COUNTRIES["United States"])
+IN_US = SEARCH_COUNTRY == "United States"
+
+# Resume files. With no BASE_TEX_PATH the resume is resume.tex in the project
+# folder, which is where first-time setup writes one.
+PROJECT_DIR = _Path(__file__).resolve().parent
+RESUME_TEX = _Path(BASE_TEX_PATH) if BASE_TEX_PATH else PROJECT_DIR / "resume.tex"
+RESUME_DIR = _Path(RESUME_OUTPUT_DIR) if RESUME_OUTPUT_DIR else PROJECT_DIR / "resumes"
 
 
 # How far back to look on each run (hours). 1 = last 60 minutes.
@@ -34,9 +84,6 @@ LOOKBACK_HOURS = 6
 # Polling interval when running in --loop mode (minutes)
 POLL_INTERVAL_MINUTES = 15
 
-# Filter to US-based jobs only (removes India, UK, Canada, etc.)
-US_ONLY = True
-
 # Enable LinkedIn scraping (guest API, no login needed)
 ENABLE_LINKEDIN = True
 
@@ -44,59 +91,7 @@ ENABLE_LINKEDIN = True
 # python main.py --overnight   → runs every 2 hrs, auto-applies to GH + Lever
 OVERNIGHT_POLL_HOURS    = 2     # how often to scan overnight
 OVERNIGHT_LOOKBACK_HRS  = 3     # look back 3 hours each scan
-ENABLE_AUTO_APPLY       = True  # set False to disable bot submissions
 
-# ── Keywords ───────────────────────────────────────────────────────────────
-# Job title must contain at least one of these (case-insensitive)
-KEYWORDS = [
-    "data analyst",
-    "data scientist",
-    "machine learning",
-    "ml engineer",
-    "data engineer",
-    "analytics engineer",
-    "business intelligence",
-    "bi analyst",
-    "business analyst",
-    "ai analyst",
-    "ai engineer",
-    "gen ai",
-    "generative ai",
-    "llm",
-    "applied scientist",
-    "nlp engineer",
-    "research scientist",
-    "analytics",
-]
-
-# ── Experience level filter ────────────────────────────────────────────────
-# Titles containing any of these words are excluded (targets 2-3 yr exp roles)
-# Add "senior" here if you want to exclude Sr. roles too
-EXCLUDE_LEVELS = [
-    "staff ",        # Staff Engineer, Staff ML Engineer
-    "principal",     # Principal Engineer / Scientist
-    "manager",       # Engineering Manager, Data Manager
-    "director",      # Director of Engineering
-    "head of",       # Head of Data
-    " vp",           # VP of Engineering
-    "vice president",
-    "tech lead",
-    "lead engineer",
-    "lead data",
-    "lead ml",
-    "lead scientist",
-    "distinguished",
-    "fellow",
-    "(l5)", "(l6)", "(l7)", "(l8)",
-    " l5,", " l6,", " l7,",
-]
-
-# Set True to also exclude "Senior" titles (Senior usually = 4-6 yrs)
-EXCLUDE_SENIOR = True
-
-# Fine-grained location allowlist (leave empty to rely on US_ONLY flag alone)
-# Example: ["remote", "new york", "boston", "san francisco"]
-LOCATION_FILTER = []  # empty = accept all US locations
 
 
 # ── Notifications ──────────────────────────────────────────────────────────

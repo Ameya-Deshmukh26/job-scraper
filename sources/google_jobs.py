@@ -31,6 +31,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import requests
+from config import COUNTRY, SEARCH_COUNTRY, SEARCH_TITLES
 
 log = logging.getLogger(__name__)
 
@@ -40,14 +41,10 @@ _ENV = "SERPAPI_API_KEY"
 
 # Every entry is a paid search. Phrased for new-grad to ~2 yr roles; the
 # normal keyword / level / JD-experience filters still run afterwards.
-_QUERIES = [
-    "entry level data scientist",
-    "junior machine learning engineer",
-    "entry level data engineer",
-    "AI engineer new grad",
-    "data analyst entry level",
-]
-_LOCATION = "United States"
+# From SEARCH_TITLES in search_profile.py. The search cap below limits how
+# many of them a run actually pays for.
+_QUERIES = list(SEARCH_TITLES)
+_LOCATION = SEARCH_COUNTRY
 _PAGES_PER_QUERY = 2      # ~10 results a page
 _MAX_SEARCHES = 8         # hard ceiling per run, protects the credit budget
 _TIMEOUT = 60
@@ -166,7 +163,7 @@ def _job_uid(job: dict) -> str:
 
 def _search(key: str, query: str, page_token: str | None) -> dict:
     params = {"engine": "google_jobs", "q": query, "location": _LOCATION,
-              "gl": "us", "hl": "en", "api_key": key}
+              "gl": COUNTRY["iso2"], "hl": "en", "api_key": key}
     if page_token:
         params["next_page_token"] = page_token
     try:

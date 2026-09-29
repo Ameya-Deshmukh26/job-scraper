@@ -43,7 +43,7 @@ _TITLE_RE = re.compile(
     re.I,
 )
 
-# Comments mentioning these are not for Ameya
+# Comments mentioning these are too senior for the target level
 _SENIOR = re.compile(r"\b(staff|principal|director|head of|vp of|vice president|"
                      r"distinguished|fellow|lead engineer|engineering manager)\b", re.I)
 

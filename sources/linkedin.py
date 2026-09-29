@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 
 import requests
 from bs4 import BeautifulSoup
+from config import IN_US, SEARCH_COUNTRY, SEARCH_TITLES
 
 log = logging.getLogger(__name__)
 
@@ -57,16 +58,8 @@ def _fetch(params: dict) -> requests.Response | None:
     log.warning(f"LinkedIn: all endpoints failed (last HTTP {last_status})")
     return None
 
-_QUERIES = [
-    "data analyst",
-    "data scientist",
-    "machine learning engineer",
-    "data engineer",
-    "analytics engineer",
-    "AI engineer",
-    "gen ai engineer",
-    "business analyst AI",
-]
+# Searched terms come from SEARCH_TITLES in search_profile.py
+_QUERIES = list(SEARCH_TITLES)
 
 
 def _get_ids(params: dict) -> set:
@@ -96,12 +89,15 @@ def fetch_linkedin_jobs(cutoff: datetime, us_only: bool = True) -> list[dict]:
         try:
             base_params = {
                 "keywords": query,
-                "location": "United States",
-                "geoId":    "103644278",
+                "location": SEARCH_COUNTRY,
                 "f_TPR":    f_tpr,
                 "position": 1,
                 "pageNum":  0,
             }
+            # geoId is LinkedIn's id for the US and only narrows a US search.
+            # Other countries work from the location string alone.
+            if IN_US:
+                base_params["geoId"] = "103644278"
 
             # Collect Easy Apply IDs for this query (both pages)
             easy_ids: set = set()

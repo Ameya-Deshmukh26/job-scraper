@@ -5,7 +5,7 @@ Usage:
     python apply.py <job_url>
     python apply.py <job_url> --company "Stripe"
 
-Fetches the JD, tailors Ameya's resume via Claude API, saves .tex to Downloads.
+Fetches the JD, tailors the resume via Claude API, saves .tex to the resume folder.
 Prints JSON result so the skill can parse it.
 """
 import argparse

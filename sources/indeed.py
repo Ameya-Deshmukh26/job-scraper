@@ -16,6 +16,7 @@ import re
 from datetime import datetime, timedelta, timezone
 
 import requests
+from config import COUNTRY, SEARCH_CITIES, SEARCH_COUNTRY, SEARCH_TITLES
 
 log = logging.getLogger(__name__)
 
@@ -23,12 +24,11 @@ _API = "https://api.firecrawl.dev/v2/scrape"
 _KEY = os.environ.get("FIRECRAWL_API_KEY", "")
 
 # Kept small on purpose - every entry here is a paid scrape
-_QUERIES = [
-    "data scientist",
-    "machine learning engineer",
-    "data analyst",
-]
-_LOCATIONS = ["Boston, MA", "Remote"]
+# From SEARCH_TITLES in search_profile.py. Kept small on purpose: every
+# query x city pair is a paid scrape.
+_QUERIES = list(SEARCH_TITLES)[:3]
+_LOCATIONS = list(SEARCH_CITIES) or [SEARCH_COUNTRY]
+_HOST = COUNTRY["indeed"]           # www.indeed.com, in.indeed.com, ...
 _MAX_SCRAPES = 6          # hard ceiling per run, protects the credit budget
 _TIMEOUT = 180
 
@@ -101,7 +101,7 @@ def _posted_to_iso(posted: str) -> str:
 
 
 def _scrape(query: str, location: str, days: int) -> list[dict]:
-    url = (f"https://www.indeed.com/jobs?q={requests.utils.quote(query)}"
+    url = (f"https://{_HOST}/jobs?q={requests.utils.quote(query)}"
            f"&l={requests.utils.quote(location)}&fromage={days}&sort=date")
     try:
         r = requests.post(
@@ -146,12 +146,12 @@ def fetch_indeed_jobs(cutoff: datetime) -> list[dict]:
                 jk = _clean_jk(j.get("job_key", ""))
                 if jk:
                     uid = f"indeed_{jk}"
-                    url = f"https://www.indeed.com/viewjob?jk={jk}"
+                    url = f"https://{_HOST}/viewjob?jk={jk}"
                 else:
                     # No stable id - synthesise one so dedup still works
                     uid = "indeed_" + re.sub(r"[^a-z0-9]+", "-",
                                              f"{company}-{title}".lower())[:60]
-                    url = ("https://www.indeed.com/jobs?q="
+                    url = (f"https://{_HOST}/jobs?q="
                            + requests.utils.quote(f"{title} {company}"))
                 if uid in seen:
                     continue

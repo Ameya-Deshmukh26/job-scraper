@@ -26,6 +26,7 @@ import re
 from datetime import datetime, timezone
 
 import requests
+from config import IN_US, SEARCH_TITLES
 
 log = logging.getLogger(__name__)
 
@@ -42,18 +43,8 @@ IG_SEARCH = "https://insightglobal.com/jobs/search/united-states/{kw}"
 
 # Tailored to Ameya's background: data/ML/AI plus the analyst lane, and the
 # GenAI terms that staffing firms now use for contract AI work.
-_QUERIES = [
-    "data-scientist",
-    "data-analyst",
-    "machine-learning-engineer",
-    "data-engineer",
-    "ai-engineer",
-    "llm",
-    "generative-ai",
-    "business-intelligence",
-    "analytics-engineer",
-    "business-analyst",
-]
+# From SEARCH_TITLES in search_profile.py, as Insight Global URL slugs
+_QUERIES = [re.sub(r"[^a-z0-9]+", "-", t.lower()).strip("-") for t in SEARCH_TITLES]
 
 _PAGE_SIZE = 50
 
@@ -106,6 +97,11 @@ def fetch_staffing_jobs(cutoff: datetime) -> list[dict]:
     """Fetch recent staffing-agency postings. Free, no auth."""
     results: list[dict] = []
     seen: set[str] = set()
+
+    if not IN_US:
+        # Insight Global's search here only covers US jobs
+        log.info("Insight Global: skipped, SEARCH_COUNTRY is not the United States")
+        return []
 
     for kw in _QUERIES:
         for j in _fetch_insight_global(kw):

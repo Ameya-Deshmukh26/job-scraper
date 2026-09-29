@@ -15,6 +15,7 @@ import time
 from datetime import datetime, timezone
 
 import requests
+from config import COUNTRY, SEARCH_TITLES
 
 log = logging.getLogger(__name__)
 
@@ -24,22 +25,16 @@ _SESSION.headers.update({
     "Accept": "application/json",
 })
 
-_QUERIES = [
-    "data scientist",
-    "data analyst",
-    "machine learning engineer",
-    "data engineer",
-    "ai engineer",
-    "business analyst",
-]
+# From SEARCH_TITLES in search_profile.py
+_QUERIES = list(SEARCH_TITLES)[:6]
 
 _SLEEP = 0.5
 
 
 def _amazon_location(loc: str) -> str:
-    # "US, WA, Seattle" → "Seattle, WA"
+    # "US, WA, Seattle" → "Seattle, WA"; "IN, KA, Bengaluru" → "Bengaluru, KA"
     parts = [p.strip() for p in (loc or "").split(",")]
-    if len(parts) == 3 and parts[0] == "US":
+    if len(parts) == 3 and len(parts[0]) == 2:
         return f"{parts[2]}, {parts[1]}"
     return loc or "Unknown"
 
@@ -52,7 +47,7 @@ def fetch_amazon_jobs(cutoff: datetime) -> list[dict]:
             r = _SESSION.get(
                 "https://www.amazon.jobs/en/search.json",
                 params={"base_query": q, "result_limit": 50, "offset": 0,
-                        "sort": "recent", "country": "USA"},
+                        "sort": "recent", "country": COUNTRY["iso3"]},
                 timeout=15,
             )
             r.raise_for_status()

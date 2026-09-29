@@ -25,6 +25,7 @@ from datetime import datetime, timezone
 
 import requests
 from bs4 import BeautifulSoup
+from config import IN_US, SEARCH_TITLES
 
 log = logging.getLogger(__name__)
 
@@ -41,15 +42,8 @@ _SESSION.headers.update({
 })
 
 # Keywords to search (keep concise — Deloitte ATS handles broad matching)
-_SEARCH_TERMS = [
-    "data analyst",
-    "data scientist",
-    "machine learning",
-    "data engineer",
-    "analytics engineer",
-    "ai engineer",
-    "business analyst",
-]
+# From SEARCH_TITLES in search_profile.py
+_SEARCH_TERMS = list(SEARCH_TITLES)
 
 
 def _fetch_page(keyword: str, offset: int) -> list[dict]:
@@ -120,6 +114,11 @@ def fetch_deloitte_jobs(cutoff: datetime) -> list[dict]:
     """
     all_jobs:  list[dict] = []
     seen_ids:  set[str]   = set()
+
+    if not IN_US:
+        # Deloitte's search here only covers US jobs
+        log.info("Deloitte: skipped, SEARCH_COUNTRY is not the United States")
+        return []
 
     for term in _SEARCH_TERMS:
         for page in range(_MAX_PAGES):

@@ -103,6 +103,10 @@ def tailor(job: dict, target_bullets: int = 5, max_retries: int = 2,
 
     Returns {bullets, validation, notes, refused, refusal_reason}.
     """
+    from config import RESUME_TEX
+    if not RESUME_TEX.exists():
+        raise FileNotFoundError(
+            f"No resume found at {RESUME_TEX}. Ask Claude to set up resume tailoring.")
     out = run_traced(
         "agent.tailor",
         lambda: GRAPH.invoke({

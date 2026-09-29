@@ -1,4 +1,4 @@
-"""Call Claude Opus 4.7 to tailor Ameya's LaTeX resume to a job description."""
+"""Call Claude to tailor the candidate's LaTeX resume to a job description."""
 import os
 import re
 from pathlib import Path
@@ -7,7 +7,7 @@ import anthropic
 
 
 _SYSTEM = """\
-You are a professional resume writer. Tailor Ameya Deshmukh's LaTeX resume to the job description below.
+You are a professional resume writer. Tailor the candidate's LaTeX resume to the job description below.
 
 Rules:
 1. Keep ALL LaTeX commands and section structure exactly as-is.
@@ -25,7 +25,7 @@ Rules:
 
 def tailor_resume(jd_text: str, company: str) -> tuple[str, int]:
     """Return (tailored_latex_string, match_percent_int)."""
-    from config import ANTHROPIC_API_KEY, BASE_TEX_PATH
+    from config import ANTHROPIC_API_KEY, RESUME_TEX
 
     api_key = os.environ.get("ANTHROPIC_API_KEY") or ANTHROPIC_API_KEY
     if not api_key:
@@ -33,7 +33,10 @@ def tailor_resume(jd_text: str, company: str) -> tuple[str, int]:
             "ANTHROPIC_API_KEY is not set. Add it to config.py or set the env var."
         )
 
-    base_tex = Path(BASE_TEX_PATH).read_text(encoding="utf-8")
+    if not RESUME_TEX.exists():
+        raise FileNotFoundError(
+            f"No resume found at {RESUME_TEX}. Ask Claude to set up resume tailoring.")
+    base_tex = Path(RESUME_TEX).read_text(encoding="utf-8")
     client = anthropic.Anthropic(api_key=api_key)
 
     response = client.messages.create(
