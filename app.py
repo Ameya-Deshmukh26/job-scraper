@@ -161,6 +161,52 @@ def api_indeed_scan_status():
     return jsonify(_indeed_state)
 
 
+# ── Google Jobs scan (SerpApi - costs credits, manual trigger only) ───────
+
+_google_lock = threading.Lock()
+_google_state: dict = {"running": False, "added": 0, "fetched": 0,
+                       "error": None, "finished_at": None, "credits_left": None}
+
+
+def _do_google_scan(hours: float):
+    import datetime
+    from datetime import timedelta, timezone as _tz
+    from sources.google_jobs import credits_left, fetch_google_jobs
+    try:
+        cutoff = datetime.datetime.now(_tz.utc) - timedelta(hours=hours)
+        jobs = fetch_google_jobs(cutoff)
+        tracker = JobTracker()
+        added = len(process_jobs(jobs, tracker))
+        tracker.close()
+        _google_state.update(running=False, added=added, fetched=len(jobs),
+                             error=None, credits_left=credits_left(),
+                             finished_at=datetime.datetime.now().isoformat())
+    except Exception as exc:
+        log.exception("google jobs scan failed")
+        _google_state.update(running=False, error=str(exc),
+                             finished_at=datetime.datetime.now().isoformat())
+    finally:
+        _google_lock.release()
+
+
+@app.post("/api/google-scan")
+def api_google_scan():
+    from sources.google_jobs import api_key
+    if not api_key():
+        return jsonify({"error": "SERPAPI_API_KEY is not set"}), 400
+    hours = float(request.json.get("hours", 24) if request.is_json else 24)
+    if not _google_lock.acquire(blocking=False):
+        return jsonify({"error": "Google Jobs scan already running"}), 409
+    _google_state.update(running=True, added=0, fetched=0, error=None, finished_at=None)
+    threading.Thread(target=_do_google_scan, args=(hours,), daemon=True).start()
+    return jsonify({"started": True, "hours": hours})
+
+
+@app.get("/api/google-scan/status")
+def api_google_scan_status():
+    return jsonify(_google_state)
+
+
 # ── LangGraph agent ───────────────────────────────────────────────────────
 
 @app.get("/api/agent/status")

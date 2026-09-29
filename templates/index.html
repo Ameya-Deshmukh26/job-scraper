@@ -26,6 +26,7 @@
       --c-ashby:        #c084fc;
       --c-workday:      #22d3ee;
       --c-indeed:       #2d64e8;
+      --c-google_jobs:  #ea4335;
       --c-hackernews:   #ff6600;
       --c-hiringcafe:   #a78bfa;
       --c-goldman_sachs:#c9aa71;
@@ -469,10 +470,12 @@
     .tag-src-faang      { background: rgba(255,153,0,.12);  color: #ff9900; }
     .dot-faang          { background: #ff9900; }
     .tag-src-indeed     { background: rgba(45,100,232,.14); color: #6b93f0; }
+    .tag-src-google_jobs { background: rgba(234,67,53,.14); color: #f28b82; }
     .dot-indeed         { background: #2d64e8; }
     .btn-indeed         { background: rgba(45,100,232,.15); color: #6b93f0; border: 1px solid rgba(45,100,232,.35); }
     .tag-src-hackernews { background: rgba(255,102,0,.12); color: #ff8c33; }
     .dot-hackernews     { background: #ff6600; }
+    .btn-google         { background: rgba(234,67,53,.15); color: #f28b82; border: 1px solid rgba(234,67,53,.35); }
     .btn-hn             { background: rgba(255,102,0,.15); color: #ff8c33; border: 1px solid rgba(255,102,0,.35); }
     /* ── LangGraph agent ── */
     .btn-agent-rank { background: rgba(129,140,248,.15); color: var(--t-all); border: 1px solid rgba(129,140,248,.35); }
@@ -1174,6 +1177,10 @@
             title="Indeed via Firecrawl — uses paid credits, manual only">
       <i class="bi bi-search"></i> Indeed Scan
     </button>
+    <button class="btn btn-google" id="btn-google" onclick="scanGoogle()" style="font-size:12px"
+            title="Google for Jobs via SerpApi — uses paid credits, manual only">
+      <i class="bi bi-google"></i> Google Jobs
+    </button>
     <span id="agent-backend" class="agent-pill" title="Active LLM backend / Opik tracing"></span>
   </div>
 
@@ -1185,6 +1192,7 @@
     <button class="chip"    data-src="greenhouse" onclick="setSource(this)">Greenhouse</button>
     <button class="chip"    data-src="hiringcafe" onclick="setSource(this)">HiringCafe</button>
     <button class="chip"    data-src="indeed"     onclick="setSource(this)">Indeed</button>
+    <button class="chip"    data-src="google_jobs" onclick="setSource(this)">Google Jobs</button>
     <button class="chip"    data-src="staffing-src" onclick="setSource(this)">Insight Global</button>
     <button class="chip"    data-src="boards"     onclick="setSource(this)">Company Boards</button>
     <button class="chip"    data-src="staffing"   onclick="setSource(this)">📋 Contract/Staffing</button>
@@ -1456,10 +1464,14 @@ function toast(msg, color = "var(--c-greenhouse)") {
 // ════════════════════════════════════════════════════════════════════════
 // JOB CARD BUILDER (shared by Tab 1 & Tab 2)
 // ════════════════════════════════════════════════════════════════════════
+const SOURCE_LABELS = { google_jobs: "Google Jobs", oracle_hcm: "Oracle HCM",
+                        goldman_sachs: "Goldman Sachs", hackernews: "Hacker News" };
+
 function buildJobCard(j, onToggle) {
   const ts    = timeAgo(jobTs(j).toISOString());
   const src   = (j.source || "unknown").toLowerCase();
-  const srcCap = src.charAt(0).toUpperCase() + src.slice(1);
+  const srcCap = SOURCE_LABELS[src]
+    || (src.charAt(0).toUpperCase() + src.slice(1)).replace(/_/g, " ");
   const isNew = ts.fresh;
   const isAp  = !!j.applied;
 
@@ -2070,6 +2082,44 @@ async function scanHN() {
     toast("HN scan error: " + e.message, "var(--red)");
     btn.disabled = false; btn.classList.remove("scanning");
     btn.innerHTML = `<i class="bi bi-braces"></i> HN Startups`;
+  }
+}
+
+async function scanGoogle() {
+  const btn = document.getElementById("btn-google");
+  const hours = parseFloat(document.getElementById("scan-hours").value) || 24;
+  if (!confirm("Google Jobs runs through SerpApi and uses paid credits "
+             + "(up to 8 searches per run). Continue?")) return;
+  const reset = () => {
+    btn.disabled = false;
+    btn.classList.remove("scanning");
+    btn.innerHTML = `<i class="bi bi-google"></i> Google Jobs`;
+  };
+  btn.disabled = true;
+  btn.classList.add("scanning");
+  btn.innerHTML = `<i class="bi bi-hourglass-split"></i> Scanning Google…`;
+  try {
+    const r = await fetch("/api/google-scan", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hours }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error);
+    toast(`Google Jobs scan started (last ${hours}h)`, "var(--c-google_jobs)");
+    const iv = setInterval(async () => {
+      const s = await (await fetch("/api/google-scan/status")).json();
+      if (s.running) return;
+      clearInterval(iv);
+      reset();
+      const left = s.credits_left != null ? ` · ${s.credits_left} credits left` : "";
+      if (s.error) toast("Google Jobs scan failed: " + s.error, "var(--red)");
+      else toast(`Google Jobs done — <strong>+${s.added} new</strong> (${s.fetched} fetched${left})`,
+                 "var(--c-google_jobs)");
+      await Promise.all([loadJobs(), loadStats()]);
+    }, 4000);
+  } catch (e) {
+    toast("Google Jobs scan error: " + e.message, "var(--red)");
+    reset();
   }
 }
 

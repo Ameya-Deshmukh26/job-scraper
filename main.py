@@ -45,6 +45,7 @@ from sources.oracle_hcm import fetch_oracle_hcm_jobs
 from sources.deloitte import fetch_deloitte_jobs
 from sources.faang import fetch_faang_jobs
 from sources.indeed import fetch_indeed_jobs
+from sources.google_jobs import fetch_google_jobs
 from sources.hackernews import fetch_hackernews_jobs
 from sources.staffing import fetch_staffing_jobs
 from sources.hiringcafe import fetch_hiringcafe_jobs
@@ -214,7 +215,7 @@ PORTAL_SOURCE_NAMES = {"greenhouse", "lever", "ashby", "workday",
 
 # Sources that cost real money per run (Firecrawl credits). Never included in
 # a broad scan - they only run when named explicitly via `only=`.
-PAID_SOURCE_NAMES = {"indeed"}
+PAID_SOURCE_NAMES = {"indeed", "google_jobs"}
 
 # How each source fetches. Bucketing by access method shows at a glance which
 # kind of access is costing the time, rather than a single opaque total.
@@ -232,6 +233,7 @@ SOURCE_METHOD = {
     "deloitte":      "HTML scrape",
     "hiringcafe":    "Browser (Playwright)",
     "indeed":        "Browser (Firecrawl, paid)",
+    "google_jobs":   "SerpApi (paid)",
 }
 
 
@@ -288,6 +290,8 @@ def fetch_all_sources(cutoff: datetime, only: set | None = None,
         tasks.append(("faang", lambda: fetch_faang_jobs(cutoff)))
     if want("indeed"):
         tasks.append(("indeed", lambda: fetch_indeed_jobs(cutoff)))
+    if want("google_jobs"):
+        tasks.append(("google_jobs", lambda: fetch_google_jobs(cutoff)))
     if want("oracle_hcm") and ORACLE_HCM_COMPANIES:
         tasks += [("oracle_hcm", lambda c=c: fetch_oracle_hcm_jobs([c], cutoff))
                   for c in ORACLE_HCM_COMPANIES]
