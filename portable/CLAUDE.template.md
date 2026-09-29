@@ -23,10 +23,17 @@ ever answer questions, click buttons in the dashboard, and paste API keys.
 
 ## First run
 
-If `search_profile.py` has `SETUP_DONE = False`, run **Setup** below as soon
-as they say anything ("hi", "start", "set me up", or a question). Do it even
-if they did not ask for it, after explaining in two lines what you are about
-to do.
+`search_profile.py` ships with a **starter search** already filled in:
+MBA-track roles (Associate Product Manager, Product Manager, Business
+Analyst, Strategy Associate, Management Consultant, Product Marketing, Brand
+and Category Manager, Founder's Office, Program Manager) anywhere in India,
+for someone with 0-3 years of experience. It works without any changes.
+
+If `SETUP_DONE = False`, run **Setup** below as soon as they say anything
+("hi", "start", "set me up", or a question), after explaining in two lines
+what you are about to do. Setup installs everything, then personalises the
+starter search. If they just want to get going, install, keep the starter
+search as it is, and open the dashboard. They can personalise it any time.
 
 ## Setup
 
@@ -68,9 +75,15 @@ python -m playwright install chromium
 The second command downloads a browser used by one job site (HiringCafe). If
 it fails, carry on: everything else still works.
 
-### 4. Ask about their search
+### 4. Personalise the starter search
 
-Ask these one at a time. Suggest answers; do not make them type long lists.
+First read the starter search back to them in 3-4 lines (roles, "anywhere in
+India", 0-3 years of experience) and ask whether to keep it or adjust it. If
+they keep it, only ask for their name and go to step 5.
+
+To adjust, ask these one at a time, **starting from what is already in
+`search_profile.py`**: show the current values as the suggested choices so
+they only change what they want. Do not make them type long lists.
 
 1. **Their name** (shown on the dashboard).
 2. **Background**: degree and specialisation (e.g. MBA Marketing), college,
@@ -236,8 +249,8 @@ file, which they can upload to https://overleaf.com to make a PDF.
 
 - **No jobs showing:** usually `KEYWORDS` or `LOCATION_FILTER` is too
   narrow. Check `job_scraper.log`, loosen the filters, restart, rescan.
-- **Setup banner still showing:** `SETUP_DONE` is not True, or the dashboard
-  was not restarted after saving.
+- **"Starter search" banner still showing:** `SETUP_DONE` is not True, or
+  the dashboard was not restarted after saving.
 - **LinkedIn returns nothing / HTTP 429:** LinkedIn is rate-limiting. Wait
   15-30 minutes. The company-page and Google searches are unaffected.
 - **Port 5000 in use:** `python app.py --port 5050`.

@@ -163,3 +163,31 @@ def test_real_environment_wins_over_dotenv(monkeypatch, tmp_path):
     monkeypatch.setattr(gj, "_DOTENV", env)
     monkeypatch.setenv("SERPAPI_API_KEY", "from-env")
     assert gj.api_key() == "from-env"
+
+
+# ── apply-link ranking ────────────────────────────────────────────────────
+
+def test_ats_link_beats_an_unknown_board():
+    """A live run picked jobserve / career.io because they weren't blocklisted."""
+    job = _job(1, "1 hour ago", company="Latitude", apply=[
+        {"title": "JobServe", "link": "https://www.jobserve.com/us/en/extjob/1"},
+        {"title": "SomeNewBoard", "link": "https://newjobboard.example/1"},
+        {"title": "Greenhouse", "link": "https://job-boards.greenhouse.io/latitude/jobs/1"},
+    ])
+    assert "greenhouse.io" in gj._best_apply_link(job)[0]
+
+
+def test_company_domain_counts_as_the_employer():
+    job = _job(1, "1 hour ago", company="Purplle.com", apply=[
+        {"title": "Naukri", "link": "https://www.naukri.com/job/1"},
+        {"title": "Purplle", "link": "https://careers.purplle.com/jobs/1"},
+    ])
+    assert gj._best_apply_link(job)[0] == "https://careers.purplle.com/jobs/1"
+
+
+def test_unknown_site_beats_a_known_board():
+    job = _job(1, "1 hour ago", company="Acme", apply=[
+        {"title": "LinkedIn", "link": "https://www.linkedin.com/jobs/view/1"},
+        {"title": "Other", "link": "https://smallboard.example/1"},
+    ])
+    assert gj._best_apply_link(job)[0] == "https://smallboard.example/1"

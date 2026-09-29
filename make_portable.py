@@ -8,7 +8,7 @@ What goes in: only files git tracks, so the local database, logs, .env,
 .mcp.json, profile.json and caches are never candidates. Then the personal
 parts are swapped for the blank versions in portable/:
 
-    portable/search_profile.py    -> search_profile.py  (blank, SETUP_DONE=False)
+    portable/search_profile.py    -> search_profile.py  (starter MBA search, India)
     portable/env.template         -> .env               (empty key slots)
     portable/CLAUDE.template.md   -> CLAUDE.md          (setup guide for Claude)
     portable/START_HERE.md        -> START_HERE.md
@@ -185,10 +185,19 @@ def verify(files: list[str]) -> list[str]:
     except ImportError:
         pass
 
-    # The shipped profile must start the guided setup
-    profile = (BUILD / "search_profile.py").read_text(encoding="utf-8")
-    if "SETUP_DONE = False" not in profile:
+    # The shipped profile must search something out of the box, offer the
+    # guided setup, and never submit applications on its own
+    profile: dict = {}
+    exec((BUILD / "search_profile.py").read_text(encoding="utf-8"), profile)
+    if profile.get("SETUP_DONE") is not False:
         problems.append("search_profile.py: SETUP_DONE is not False")
+    for name in ("SEARCH_TITLES", "KEYWORDS", "LOCATION_FILTER"):
+        if not profile.get(name):
+            problems.append(f"search_profile.py: {name} is empty, so nothing would be found")
+    if profile.get("ENABLE_AUTO_APPLY"):
+        problems.append("search_profile.py: auto-apply is on")
+    if "manager" in [x.strip() for x in profile.get("EXCLUDE_LEVELS", [])]:
+        problems.append("search_profile.py: a bare 'manager' exclusion drops MBA roles")
     return problems
 
 
@@ -220,7 +229,7 @@ def main() -> int:
 
     zpath = make_zip(args.out)
     size_kb = zpath.stat().st_size // 1024
-    print(f"{len(files)} files checked: no keys, no personal details, blank profile.")
+    print(f"{len(files)} files checked: no keys, no personal details, starter MBA profile.")
     print(f"Folder: {BUILD}")
     print(f"Zip:    {zpath}  ({size_kb} KB)")
     return 0

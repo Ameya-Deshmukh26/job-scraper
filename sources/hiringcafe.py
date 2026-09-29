@@ -31,7 +31,7 @@ import re
 import time
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote
-from config import SEARCH_TITLES
+from config import SEARCH_TITLES, SOURCE_QUERIES
 
 log = logging.getLogger(__name__)
 
@@ -45,8 +45,8 @@ _JOB_BASE = "https://hiringcafe.com/?job="
 _JOB_ID_RE = re.compile(r'(?:/jobs?/|[?&]job=)([A-Za-z0-9]{8,})')
 
 # Keywords to search for — aligned with config.py KEYWORDS
-# From SEARCH_TITLES in search_profile.py
-_SEARCH_QUERIES = list(SEARCH_TITLES)
+# SOURCE_QUERIES for this site in search_profile.py, else SEARCH_TITLES
+_SEARCH_QUERIES = list(SOURCE_QUERIES.get("hiringcafe") or SEARCH_TITLES)
 
 # Pages to fetch per query
 _PAGES_PER_QUERY = 2

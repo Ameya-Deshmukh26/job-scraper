@@ -26,7 +26,7 @@ import re
 from datetime import datetime, timezone
 
 import requests
-from config import IN_US, SEARCH_TITLES
+from config import IN_US, SEARCH_TITLES, SOURCE_QUERIES
 
 log = logging.getLogger(__name__)
 
@@ -41,8 +41,10 @@ _SESSION.headers.update({
 IG_API = "https://insightglobal.com/all/jobs"
 IG_SEARCH = "https://insightglobal.com/jobs/search/united-states/{kw}"
 
-# From SEARCH_TITLES in search_profile.py, as Insight Global URL slugs
-_QUERIES = [re.sub(r"[^a-z0-9]+", "-", t.lower()).strip("-") for t in SEARCH_TITLES]
+# SOURCE_QUERIES for this site in search_profile.py, else SEARCH_TITLES,
+# as Insight Global URL slugs
+_QUERIES = [re.sub(r"[^a-z0-9]+", "-", t.lower()).strip("-")
+            for t in (SOURCE_QUERIES.get("staffing") or SEARCH_TITLES)]
 
 _PAGE_SIZE = 50
 

@@ -48,9 +48,16 @@ def test_the_matched_phrase_is_returned_for_the_audit_log():
 
 # ── staffing tells ────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("company", [
-    "Tata Consultancy Services", "Infosys", "Accenture", "Boston Consulting Group",
-])
+def test_staffing_exemptions_come_from_the_profile(monkeypatch):
+    """NOT_STAFFING empty keeps the original flag; listing a company exempts it."""
+    import ranking
+    monkeypatch.setattr(ranking, "_NOT_STAFFING", [])
+    assert is_staffing("Tata Consultancy Services")          # original behaviour
+    monkeypatch.setattr(ranking, "_NOT_STAFFING", ["tata consultancy"])
+    assert not is_staffing("Tata Consultancy Services")
+
+
+@pytest.mark.parametrize("company", ["Infosys", "Accenture", "Boston Consulting Group"])
 def test_large_direct_employers_are_not_staffing(company):
     assert not is_staffing(company)
 
@@ -64,10 +71,15 @@ def test_agencies_are_still_flagged(company):
 
 # ── portable build checks ─────────────────────────────────────────────────
 
+_STARTER = ('SETUP_DONE = False\nSEARCH_TITLES = ["Product Manager"]\n'
+            'KEYWORDS = ["product manager"]\nLOCATION_FILTER = ["india"]\n'
+            'EXCLUDE_LEVELS = ["director"]\nENABLE_AUTO_APPLY = False\n')
+
+
 @pytest.fixture
 def fake_build(tmp_path, monkeypatch):
     """A minimal build folder that passes verify() until something is planted."""
-    (tmp_path / "search_profile.py").write_text("SETUP_DONE = False\n", encoding="utf-8")
+    (tmp_path / "search_profile.py").write_text(_STARTER, encoding="utf-8")
     (tmp_path / ".env").write_text("SERPAPI_API_KEY=\n", encoding="utf-8")
     (tmp_path / "LICENSE").write_text("Copyright (c) 2026 Ameya Deshmukh\n", encoding="utf-8")
     monkeypatch.setattr(mp, "BUILD", tmp_path)
@@ -106,8 +118,22 @@ def test_build_rejects_a_filled_env(fake_build):
 
 
 def test_build_rejects_a_profile_that_skips_setup(fake_build):
-    (fake_build / "search_profile.py").write_text("SETUP_DONE = True\n", encoding="utf-8")
+    (fake_build / "search_profile.py").write_text(
+        _STARTER.replace("SETUP_DONE = False", "SETUP_DONE = True"), encoding="utf-8")
     assert any("SETUP_DONE" in p for p in mp.verify(_files(fake_build)))
+
+
+def test_build_rejects_an_empty_search(fake_build):
+    """An empty starter profile ships a dashboard that finds nothing."""
+    (fake_build / "search_profile.py").write_text(
+        _STARTER.replace('["Product Manager"]', "[]"), encoding="utf-8")
+    assert any("SEARCH_TITLES is empty" in p for p in mp.verify(_files(fake_build)))
+
+
+def test_build_rejects_a_bare_manager_exclusion(fake_build):
+    (fake_build / "search_profile.py").write_text(
+        _STARTER.replace('["director"]', '["director", "manager"]'), encoding="utf-8")
+    assert any("manager" in p for p in mp.verify(_files(fake_build)))
 
 
 def test_build_rejects_databases_and_logs(fake_build):
@@ -115,8 +141,12 @@ def test_build_rejects_databases_and_logs(fake_build):
     assert any("must not ship" in p for p in mp.verify(_files(fake_build)))
 
 
-def test_shipped_profile_is_blank_and_safe():
-    blank = (mp.PORTABLE / "search_profile.py").read_text(encoding="utf-8")
-    assert "SETUP_DONE = False" in blank
-    assert "ENABLE_AUTO_APPLY = False" in blank
-    assert '"manager",' not in blank, "a bare 'manager' exclusion drops most MBA roles"
+def test_shipped_starter_profile_searches_mba_roles_in_india():
+    starter: dict = {}
+    exec((mp.PORTABLE / "search_profile.py").read_text(encoding="utf-8"), starter)
+    assert starter["SETUP_DONE"] is False
+    assert starter["ENABLE_AUTO_APPLY"] is False
+    assert starter["SEARCH_COUNTRY"] == "India"
+    assert "Associate Product Manager" in starter["SEARCH_TITLES"]
+    assert "manager" not in starter["EXCLUDE_LEVELS"]
+    assert not starter["NEEDS_SPONSORSHIP"]

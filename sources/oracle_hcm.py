@@ -38,7 +38,7 @@ import uuid
 from datetime import datetime, timezone
 
 import requests
-from config import COUNTRY, SEARCH_TITLES
+from config import COUNTRY, SEARCH_TITLES, SOURCE_QUERIES
 
 log = logging.getLogger(__name__)
 
@@ -54,8 +54,8 @@ _SESSION.headers.update({
 _PAGE_SIZE = 25
 
 # Keywords aligned with config.py KEYWORDS
-# From SEARCH_TITLES in search_profile.py
-_SEARCH_TERMS = list(SEARCH_TITLES)
+# SOURCE_QUERIES for this site in search_profile.py, else SEARCH_TITLES
+_SEARCH_TERMS = list(SOURCE_QUERIES.get("oracle_hcm") or SEARCH_TITLES)
 
 # Only include jobs from these country codes
 _US_COUNTRY_CODES = {COUNTRY["iso2"].upper(), COUNTRY["iso3"]}   # the profile's country

@@ -16,7 +16,7 @@ import re
 from datetime import datetime, timedelta, timezone
 
 import requests
-from config import COUNTRY, SEARCH_CITIES, SEARCH_COUNTRY, SEARCH_TITLES
+from config import COUNTRY, SEARCH_CITIES, SEARCH_COUNTRY, SEARCH_TITLES, SOURCE_QUERIES
 
 log = logging.getLogger(__name__)
 
@@ -24,9 +24,9 @@ _API = "https://api.firecrawl.dev/v2/scrape"
 _KEY = os.environ.get("FIRECRAWL_API_KEY", "")
 
 # Kept small on purpose - every entry here is a paid scrape
-# From SEARCH_TITLES in search_profile.py. Kept small on purpose: every
+# SOURCE_QUERIES for this site in search_profile.py, else SEARCH_TITLES. Kept small on purpose: every
 # query x city pair is a paid scrape.
-_QUERIES = list(SEARCH_TITLES)[:3]
+_QUERIES = list(SOURCE_QUERIES.get("indeed") or SEARCH_TITLES)[:3]
 _LOCATIONS = list(SEARCH_CITIES) or [SEARCH_COUNTRY]
 _HOST = COUNTRY["indeed"]           # www.indeed.com, in.indeed.com, ...
 _MAX_SCRAPES = 6          # hard ceiling per run, protects the credit budget

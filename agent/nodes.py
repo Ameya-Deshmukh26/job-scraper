@@ -122,12 +122,14 @@ def rank_jobs_node(state: AgentState) -> AgentState:
     # Who is searching comes from search_profile.py, not a hardcoded blurb
     from config import (CANDIDATE_SUMMARY, NEEDS_SPONSORSHIP, SEARCH_COUNTRY,
                         SEARCH_TITLES)
-    about = [CANDIDATE_SUMMARY.strip()] if CANDIDATE_SUMMARY.strip() else []
-    if SEARCH_TITLES:
-        about.append("Target roles: " + ", ".join(SEARCH_TITLES) + ".")
-    about.append(f"Searching for jobs in {SEARCH_COUNTRY}.")
-    if NEEDS_SPONSORSHIP and "sponsor" not in CANDIDATE_SUMMARY.lower():
-        about.append("Needs work-visa sponsorship.")
+    if CANDIDATE_SUMMARY.strip():
+        about = [CANDIDATE_SUMMARY.strip()]
+    else:
+        about = [f"Searching for jobs in {SEARCH_COUNTRY}."]
+        if SEARCH_TITLES:
+            about.append("Target roles: " + ", ".join(SEARCH_TITLES) + ".")
+        if NEEDS_SPONSORSHIP:
+            about.append("Needs work-visa sponsorship.")
 
     system = (
         f"{profile}\n"

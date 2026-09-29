@@ -9,8 +9,9 @@ Score range 0-100. Rough bands: 75+ strong, 55-74 decent, <55 weak.
 import re
 from datetime import datetime, timezone
 
-from config import (NEEDS_SPONSORSHIP, PREFERRED_LOCATIONS, RANK_BONUS_WORDS,
-                    RANK_GOOD_TITLES, RANK_TOP_TITLES, SEARCH_COUNTRY)
+from config import (NEEDS_SPONSORSHIP, NOT_STAFFING, PREFERRED_LOCATIONS,
+                    RANK_BONUS_WORDS, RANK_GOOD_TITLES, RANK_TOP_TITLES,
+                    SEARCH_COUNTRY)
 
 # Title tiers — what the role actually is
 _TIER_A = [t.lower() for t in RANK_TOP_TITLES]
@@ -36,20 +37,17 @@ _STAFFING = re.compile(
 )
 
 
-# Large direct employers whose names trip the staffing tells above
-# ("consultancy", "solutions group"). They hire for themselves.
-_NOT_STAFFING = re.compile(
-    r"tata consultancy|infosys|wipro|hcl|tech mahindra|capgemini|cognizant|"
-    r"accenture|deloitte|kpmg|pwc|ernst|mckinsey|boston consulting|bain|kearney|"
-    r"zs associates|mu sigma|fractal|tiger analytics|latentview",
-    re.IGNORECASE,
-)
+# Direct employers whose names trip the staffing tells above ("Tata
+# Consultancy Services"). NOT_STAFFING in search_profile.py.
+_NOT_STAFFING = [c.lower() for c in NOT_STAFFING]
 
 
 def is_staffing(company: str) -> bool:
     """True when the company name looks like a staffing agency."""
     company = company or ""
-    return bool(_STAFFING.search(company)) and not _NOT_STAFFING.search(company)
+    if any(c in company.lower() for c in _NOT_STAFFING):
+        return False
+    return bool(_STAFFING.search(company))
 
 
 def match_score(job: dict) -> int:

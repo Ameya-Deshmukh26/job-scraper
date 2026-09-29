@@ -31,7 +31,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import requests
-from config import COUNTRY, SEARCH_COUNTRY, SEARCH_TITLES
+from config import COUNTRY, SEARCH_COUNTRY, SEARCH_TITLES, SOURCE_QUERIES
 
 log = logging.getLogger(__name__)
 
@@ -41,9 +41,9 @@ _ENV = "SERPAPI_API_KEY"
 
 # Every entry is a paid search. Phrased for new-grad to ~2 yr roles; the
 # normal keyword / level / JD-experience filters still run afterwards.
-# From SEARCH_TITLES in search_profile.py. The search cap below limits how
+# SOURCE_QUERIES for this site in search_profile.py, else SEARCH_TITLES. The search cap below limits how
 # many of them a run actually pays for.
-_QUERIES = list(SEARCH_TITLES)
+_QUERIES = list(SOURCE_QUERIES.get("google_jobs") or SEARCH_TITLES)
 _LOCATION = SEARCH_COUNTRY
 _PAGES_PER_QUERY = 2      # ~10 results a page
 _MAX_SEARCHES = 8         # hard ceiling per run, protects the credit budget
@@ -58,6 +58,10 @@ _AGGREGATORS = (
     "careerbuilder.com", "lensa.com", "jobright.ai", "adzuna.com",
     "learn4good.com", "salary.com", "jobilize.com", "whatjobs.com",
     "builtin.com", "dice.com", "snagajob.com", "tallo.com",
+    # seen in a live run
+    "jobserve.com", "career.io", "jobleads.com", "vaia.com", "worthyjobsbase.com",
+    "jobgether.com", "careerjet.com", "ladders.com", "recruit.net", "naukri.com",
+    "foundit.in", "shine.com", "instahyre.com", "iimjobs.com", "hirist.tech",
 )
 
 _AGE_RE = re.compile(r"(\d+)\s*\+?\s*(minute|min|hour|hr|day|week|month)", re.I)
@@ -137,19 +141,48 @@ def _is_aggregator(url: str) -> bool:
     return any(host == d or host.endswith("." + d) for d in _AGGREGATORS)
 
 
+# Hosts of the applicant-tracking systems employers post to directly. A link
+# here is the employer's own application, whatever the domain looks like.
+_ATS_HOSTS = (
+    "greenhouse.io", "lever.co", "ashbyhq.com", "myworkdayjobs.com",
+    "myworkdaysite.com", "icims.com", "smartrecruiters.com", "jobvite.com",
+    "workable.com", "bamboohr.com", "taleo.net", "successfactors.com",
+    "oraclecloud.com", "recruitee.com", "breezy.hr", "jazzhr.com",
+    "applytojob.com", "rippling.com", "dover.com", "keka.com", "darwinbox.in",
+    "zohorecruit.com", "freshteam.com", "personio.de", "teamtailor.com",
+)
+_COMPANY_WORDS = re.compile(r"[a-z0-9]{4,}")
+_GENERIC_WORDS = {"group", "global", "services", "solutions", "technologies",
+                  "technology", "systems", "limited", "company", "india", "corp"}
+
+
+def _link_rank(url: str, company: str) -> int:
+    """
+    Lower is better: 0 the employer's ATS or own site, 1 an unknown site,
+    2 a known job board. A blocklist of boards alone always misses some
+    (jobserve, career.io and jobleads all slipped through a live run), so
+    positive signs of an employer link are checked first.
+    """
+    host = urlparse(url).netloc.lower()
+    if any(host == h or host.endswith("." + h) for h in _ATS_HOSTS):
+        return 0
+    words = set(_COMPANY_WORDS.findall(company.lower())) - _GENERIC_WORDS
+    if any(w in host for w in words):
+        return 0
+    return 2 if _is_aggregator(url) else 1
+
+
 def _best_apply_link(job: dict) -> tuple[str, str]:
     """
-    (url, via) for the most direct application link.
-
-    Employer pages beat aggregators; an aggregator beats Google's own share
-    link, which only reopens the Google listing.
+    (url, via) for the most direct application link: the employer's own
+    page, then any other site, then a job board. Google's share link, which
+    only reopens the Google listing, is the last resort.
     """
     options = [o for o in (job.get("apply_options") or []) if o.get("link")]
-    for o in options:
-        if not _is_aggregator(o["link"]):
-            return o["link"], o.get("title", "")
+    company = job.get("company_name") or ""
     if options:
-        return options[0]["link"], options[0].get("title", "")
+        best = min(options, key=lambda o: _link_rank(o["link"], company))  # stable: first wins ties
+        return best["link"], best.get("title", "")
     return job.get("share_link", ""), job.get("via", "")
 
 

@@ -52,6 +52,33 @@ KEYWORDS = [
     "analytics",
 ]
 
+# Per-site search terms, when one site needs different wording from
+# SEARCH_TITLES. A site not listed here uses SEARCH_TITLES.
+SOURCE_QUERIES = {
+    "workday":       ["data engineer", "data scientist", "analytics engineer",
+                      "ml engineer", "ai engineer", "business analyst"],
+    "faang":         ["data scientist", "data analyst", "machine learning engineer",
+                      "data engineer", "ai engineer", "business analyst"],
+    "deloitte":      ["data analyst", "data scientist", "machine learning",
+                      "data engineer", "analytics engineer", "ai engineer",
+                      "business analyst"],
+    "goldman_sachs": ["data analyst", "data scientist", "machine learning",
+                      "data engineer", "analytics", "quantitative", "ai engineer",
+                      "business analyst"],
+    "hiringcafe":    ["data analyst", "data scientist", "ml engineer", "data engineer",
+                      "analytics engineer", "ai engineer", "gen ai", "llm engineer",
+                      "business analyst"],
+    "oracle_hcm":    ["data analyst", "data scientist", "machine learning",
+                      "data engineer", "analytics", "ai engineer", "business analyst"],
+    "staffing":      ["data-scientist", "data-analyst", "machine-learning-engineer",
+                      "data-engineer", "ai-engineer", "llm", "generative-ai",
+                      "business-intelligence", "analytics-engineer", "business-analyst"],
+    "google_jobs":   ["entry level data scientist", "junior machine learning engineer",
+                      "entry level data engineer", "AI engineer new grad",
+                      "data analyst entry level"],
+    "indeed":        ["data scientist", "machine learning engineer", "data analyst"],
+}
+
 # ── Where ──────────────────────────────────────────────────────────────────
 # Country every source searches in, spelled as below (see COUNTRIES in
 # config.py for the supported list).
@@ -104,9 +131,8 @@ MAX_YEARS_REQUIRED = 5
 # ── About you ─────────────────────────────────────────────────────────────
 # One or two sentences the AI ranker reads before judging fit. Plain facts:
 # experience, degree, and anything that rules jobs in or out.
-CANDIDATE_SUMMARY = ("~2-3 years in data science, ML and GenAI engineering "
-                     "(LangChain RAG, PySpark, SQL, Tableau). Needs H-1B "
-                     "sponsorship. Based in Boston but open to relocation.")
+CANDIDATE_SUMMARY = ("The candidate has ~2-3 years of experience, needs H-1B "
+                     "sponsorship, and is based in Boston but open to relocation.")
 
 # ── Ranking ────────────────────────────────────────────────────────────────
 # Title contains one of these -> strongest match.
@@ -118,6 +144,10 @@ RANK_GOOD_TITLES = ["data analyst", "analytics engineer", "data engineer",
                     "business analyst", "ai analyst"]
 # Small boost when the title mentions any of these.
 RANK_BONUS_WORDS = ["llm", "genai", "gen ai", "generative", "nlp", "agent", "rag"]
+
+# Companies never treated as staffing agencies, even if the name looks like
+# one ("Tata Consultancy Services"). Lowercase substrings.
+NOT_STAFFING: list[str] = []
 
 # Needs US work-visa (H-1B) sponsorship. When False the H-1B sponsor data is
 # never downloaded, and the H-1B tags and filter are hidden.

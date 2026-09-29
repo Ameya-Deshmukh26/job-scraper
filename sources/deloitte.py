@@ -25,7 +25,7 @@ from datetime import datetime, timezone
 
 import requests
 from bs4 import BeautifulSoup
-from config import IN_US, SEARCH_TITLES
+from config import IN_US, SEARCH_TITLES, SOURCE_QUERIES
 
 log = logging.getLogger(__name__)
 
@@ -42,8 +42,8 @@ _SESSION.headers.update({
 })
 
 # Keywords to search (keep concise — Deloitte ATS handles broad matching)
-# From SEARCH_TITLES in search_profile.py
-_SEARCH_TERMS = list(SEARCH_TITLES)
+# SOURCE_QUERIES for this site in search_profile.py, else SEARCH_TITLES
+_SEARCH_TERMS = list(SOURCE_QUERIES.get("deloitte") or SEARCH_TITLES)
 
 
 def _fetch_page(keyword: str, offset: int) -> list[dict]:

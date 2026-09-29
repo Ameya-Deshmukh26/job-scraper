@@ -7,7 +7,7 @@ import anthropic
 
 
 _SYSTEM = """\
-You are a professional resume writer. Tailor the candidate's LaTeX resume to the job description below.
+You are a professional resume writer. Tailor __WHOSE__ LaTeX resume to the job description below.
 
 Rules:
 1. Keep ALL LaTeX commands and section structure exactly as-is.
@@ -25,7 +25,7 @@ Rules:
 
 def tailor_resume(jd_text: str, company: str) -> tuple[str, int]:
     """Return (tailored_latex_string, match_percent_int)."""
-    from config import ANTHROPIC_API_KEY, RESUME_TEX
+    from config import ANTHROPIC_API_KEY, RESUME_TEX, YOUR_NAME
 
     api_key = os.environ.get("ANTHROPIC_API_KEY") or ANTHROPIC_API_KEY
     if not api_key:
@@ -43,7 +43,8 @@ def tailor_resume(jd_text: str, company: str) -> tuple[str, int]:
         model="claude-opus-4-7",
         max_tokens=8192,
         thinking={"type": "adaptive"},
-        system=_SYSTEM,
+        system=_SYSTEM.replace(
+            "__WHOSE__", f"{YOUR_NAME}'s" if YOUR_NAME.strip() else "the candidate's"),
         messages=[
             {
                 "role": "user",

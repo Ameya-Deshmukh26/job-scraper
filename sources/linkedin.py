@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 
 import requests
 from bs4 import BeautifulSoup
-from config import IN_US, SEARCH_COUNTRY, SEARCH_TITLES
+from config import IN_US, SEARCH_COUNTRY, SEARCH_TITLES, SOURCE_QUERIES
 
 log = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ def _fetch(params: dict) -> requests.Response | None:
     return None
 
 # Searched terms come from SEARCH_TITLES in search_profile.py
-_QUERIES = list(SEARCH_TITLES)
+_QUERIES = list(SOURCE_QUERIES.get("linkedin") or SEARCH_TITLES)
 
 
 def _get_ids(params: dict) -> set:

@@ -15,7 +15,7 @@ import time
 from datetime import datetime, timezone
 
 import requests
-from config import COUNTRY, SEARCH_TITLES
+from config import COUNTRY, SEARCH_TITLES, SOURCE_QUERIES
 
 log = logging.getLogger(__name__)
 
@@ -25,8 +25,8 @@ _SESSION.headers.update({
     "Accept": "application/json",
 })
 
-# From SEARCH_TITLES in search_profile.py
-_QUERIES = list(SEARCH_TITLES)[:6]
+# SOURCE_QUERIES for this site in search_profile.py, else SEARCH_TITLES
+_QUERIES = list(SOURCE_QUERIES.get("faang") or SEARCH_TITLES)[:6]
 
 _SLEEP = 0.5
 

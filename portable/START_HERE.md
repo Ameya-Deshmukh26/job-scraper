@@ -4,6 +4,11 @@ A job-search dashboard that runs on your own computer. It checks LinkedIn,
 company career pages and startup job boards for you, keeps only the jobs that
 fit you, and ranks them best first.
 
+It comes set up for MBA roles in India: product management, strategy,
+consulting, brand, category and business analyst jobs in Bengaluru, Mumbai,
+Delhi NCR, Pune, Hyderabad, Chennai and the rest of India, for 0-3 years of
+experience. You can change any of that just by telling Claude.
+
 You don't need to know any coding. Claude Code does the setup with you.
 
 ## Setting it up (about 10 minutes, once)
@@ -17,9 +22,9 @@ You don't need to know any coding. Claude Code does the setup with you.
    - Or in a terminal: go into the folder and type `claude`.
 4. **Type: `set me up`**
 
-Claude will explain what the tool does, ask you a few questions (the jobs you
-want, the cities you'd work in, your experience), install everything, and
-open your dashboard.
+Claude will explain what the tool does, install everything, show you the
+starter MBA search, and ask if you want to adjust it (your cities, your
+experience, the roles you want). Then it opens your dashboard.
 
 ## Using it
 

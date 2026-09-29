@@ -40,7 +40,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 import requests
-from config import SEARCH_TITLES
+from config import SEARCH_TITLES, SOURCE_QUERIES
 
 log = logging.getLogger(__name__)
 
@@ -56,9 +56,9 @@ _SESSION.headers.update({
 })
 
 # Search terms aligned with config.py KEYWORDS
-# From SEARCH_TITLES in search_profile.py. Capped: every term costs up to
+# SOURCE_QUERIES for this site in search_profile.py, else SEARCH_TITLES. Capped: every term costs up to
 # 3 requests per board, and Workday is already the slowest source.
-_SEARCH_TERMS = list(SEARCH_TITLES)[:6]
+_SEARCH_TERMS = list(SOURCE_QUERIES.get("workday") or SEARCH_TITLES)[:6]
 
 # Pages to fetch per (company, keyword) combination
 _PAGES_PER_QUERY = 3
