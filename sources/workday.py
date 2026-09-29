@@ -193,6 +193,7 @@ def fetch_workday_jobs(
 
                 company_found_any = True
                 page_kept = 0
+                page_old  = 0
 
                 for job in postings:
                     ext_id = _extract_external_id(job)
@@ -208,15 +209,11 @@ def fetch_workday_jobs(
                         # Unknown date — include it (benefit of the doubt)
                         posted_iso = ""
                     else:
-                        if posted_dt < cutoff:
-                            # Workday results are roughly sorted newest-first,
-                            # so once we hit an old job we can stop this page
-                            # (but continue to next keyword in case of ordering quirks)
-                            pass
                         posted_iso = posted_dt.isoformat()
 
                     # Skip if we have a date and it's before cutoff
                     if posted_dt is not None and posted_dt < cutoff:
+                        page_old += 1
                         continue
 
                     seen_ids.add(uid)
@@ -244,6 +241,15 @@ def fetch_workday_jobs(
 
                 # Stop paginating if we got fewer results than the page size
                 if len(postings) < _PAGE_SIZE:
+                    break
+
+                # Every posting on this page is older than the cutoff. Results
+                # come back newest-first, so later pages are older still and
+                # cannot contain anything we want. On a short lookback this is
+                # the common case, and paging on regardless was most of the
+                # scan: 6 keywords x 3 pages x 30 boards is 540 requests, and
+                # Workday alone was 790s of a ~1400s scan.
+                if page_old == len(postings):
                     break
 
                 time.sleep(_SLEEP_BETWEEN)

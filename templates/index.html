@@ -2521,8 +2521,17 @@ async function scanPortals() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ hours: parseFloat(document.getElementById("scan-hours").value) || 2 }),
     });
+    // 409 means a scan is already in flight - usually the automatic one that
+    // fires when the server boots. The user asked to scan and a scan is
+    // running, so attach to it and poll. Reporting that as an error made the
+    // button look broken for the whole run.
+    if (r.status === 409) {
+      toast("A portal scan is already running — watching it", "var(--t-portals)");
+      pollPortalStatus();
+      return;
+    }
     if (!r.ok) { const e = await r.json(); throw new Error(e.error); }
-    toast("Portal scan started — GH + Lever + Ashby + Goldman + Oracle + Deloitte (takes ~30s)", "var(--t-portals)");
+    toast("Portal scan started — GH + Lever + Ashby + Goldman + Oracle + Deloitte", "var(--t-portals)");
     pollPortalStatus();
   } catch (e) {
     toast("Portal scan error: " + e.message, "var(--red)");
