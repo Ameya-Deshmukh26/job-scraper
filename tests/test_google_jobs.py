@@ -5,6 +5,8 @@ Every search is a paid credit, so the budget guards matter as much as the
 parsing: the cap, stopping on a stale page, and doing nothing without a key.
 """
 import sys
+
+import pytest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -37,6 +39,7 @@ def _stub(monkeypatch, pages):
 
     monkeypatch.setattr(gj, "_search", fake_search)
     monkeypatch.setattr(gj, "api_key", lambda: "test-key")
+    monkeypatch.setattr(gj, "_link_alive", lambda url: True)   # no network in tests
     return calls
 
 
@@ -191,3 +194,88 @@ def test_unknown_site_beats_a_known_board():
         {"title": "Other", "link": "https://smallboard.example/1"},
     ])
     assert gj._best_apply_link(job)[0] == "https://smallboard.example/1"
+
+
+# ── what SerpApi actually returns (checked live, Sept 2026) ───────────────
+
+def _live_shape(n: int, age: str, apply=None, company="Acme") -> dict:
+    """A result as SerpApi sends it now: no detected_extensions, age in extensions."""
+    return {
+        "title": f"Data Scientist {n}", "company_name": company, "location": "Boston, MA",
+        "job_id": f"live-{n}", "share_link": "https://www.google.com/search?ibp=htl;jobs",
+        "extensions": [age, "Full-time", "89.8K–229K a year", "Health insurance"],
+        "apply_options": apply if apply is not None else
+            [{"title": "Acme Careers", "link": f"https://careers.acme.com/jobs/{n}"}],
+    }
+
+
+def test_age_and_salary_come_from_extensions():
+    """Reading only detected_extensions left every live result undated."""
+    job = _live_shape(1, "19 hours ago")
+    assert abs((datetime.now(timezone.utc) - gj._posted_from(job)) - timedelta(hours=19)) < timedelta(seconds=5)
+    assert gj._salary_from(job) == "89.8K–229K a year"
+
+
+def test_the_query_asks_google_for_the_lookback_window(monkeypatch):
+    calls = _stub(monkeypatch, lambda q, n: {"jobs_results": []})
+    gj.fetch_google_jobs(datetime.now(timezone.utc) - timedelta(hours=2))
+    assert all(q.endswith(" since yesterday") for q, _ in calls)
+
+
+@pytest.mark.parametrize("hours, phrase", [
+    (2, "since yesterday"), (24, "since yesterday"), (48, "in the last 3 days"),
+    (120, "in the last week"), (500, "in the last month"),
+])
+def test_date_phrase_matches_googles_own_filter(hours, phrase):
+    assert gj._date_phrase(datetime.now(timezone.utc) - timedelta(hours=hours)) == phrase
+
+
+def test_live_shaped_results_are_kept_when_fresh_and_direct(monkeypatch):
+    _stub(monkeypatch, lambda q, n: {"jobs_results": [_live_shape(n, "3 hours ago")]})
+    jobs = gj.fetch_google_jobs(datetime.now(timezone.utc) - timedelta(hours=24))
+    assert jobs and all(j["posted_at"] and j["pay"] for j in jobs)
+
+
+def test_results_with_only_board_links_are_dropped(monkeypatch):
+    """LinkedIn / Indeed copies are scanned directly; re-posting boards are noise."""
+    boards = [{"title": "LinkedIn", "link": "https://www.linkedin.com/jobs/view/1"},
+              {"title": "BeBee", "link": "https://bebee.com/job/1"},
+              {"title": "Vaia", "link": "https://talents.vaia.com/1"}]
+    _stub(monkeypatch, lambda q, n: {"jobs_results": [_live_shape(n, "1 hour ago", apply=boards)]})
+    assert gj.fetch_google_jobs(datetime.now(timezone.utc) - timedelta(hours=24)) == []
+
+
+def test_undated_results_are_dropped(monkeypatch):
+    job = _live_shape(1, "Full-time")
+    job["extensions"] = ["Full-time"]
+    _stub(monkeypatch, lambda q, n: {"jobs_results": [job]})
+    assert gj.fetch_google_jobs(datetime.now(timezone.utc) - timedelta(hours=24)) == []
+
+
+def test_dead_links_are_dropped(monkeypatch):
+    _stub(monkeypatch, lambda q, n: {"jobs_results": [_live_shape(n, "1 hour ago")]})
+    monkeypatch.setattr(gj, "_link_alive", lambda url: False)
+    assert gj.fetch_google_jobs(datetime.now(timezone.utc) - timedelta(hours=24)) == []
+
+
+def test_link_alive_reads_gone_status_and_expired_pages(monkeypatch):
+    class R:
+        def __init__(self, code, text=""):
+            self.status_code, self.text = code, text
+    monkeypatch.setattr(gj.requests, "get", lambda *a, **k: R(410))
+    assert gj._link_alive("https://x") is False
+    monkeypatch.setattr(gj.requests, "get", lambda *a, **k: R(200, "Sorry, this job is no longer available"))
+    assert gj._link_alive("https://x") is False
+    monkeypatch.setattr(gj.requests, "get", lambda *a, **k: R(200, "<h1>Data Scientist</h1> Apply now"))
+    assert gj._link_alive("https://x") is True
+
+    def boom(*a, **k):
+        raise TimeoutError
+    monkeypatch.setattr(gj.requests, "get", boom)
+    assert gj._link_alive("https://x") is True        # can't reach it != it's gone
+
+
+def test_a_24_hour_lookback_is_still_since_yesterday():
+    """The cutoff is computed a moment before the phrase, so it is just over 24h."""
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=24, seconds=3)
+    assert gj._date_phrase(cutoff) == "since yesterday"

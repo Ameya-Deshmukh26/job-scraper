@@ -111,7 +111,12 @@ EXCLUDE_LEVELS = [
     "general manager",
     "senior manager",
     "partner",
+    "lead",          # "Lead - Strategy", "Team Lead"
+    "svp", "avp", "evp",
 ]
+# Entries match as whole words. "Executive" is left out on purpose: in India
+# "Marketing Executive" or "Business Development Executive" is an entry-level
+# title.
 
 # Also drop "Senior" / "Sr." titles.
 EXCLUDE_SENIOR = True
@@ -132,6 +137,9 @@ RANK_BONUS_WORDS = ["mba", "associate", "growth"]
 # Companies never treated as staffing agencies, even if the name looks like
 # one. Lowercase substrings.
 NOT_STAFFING = ["tata consultancy"]
+
+# Employers dropped from every source (lowercase substrings).
+BLOCKED_COMPANIES: list[str] = []
 
 # Needs US work-visa (H-1B) sponsorship. Leave False unless searching for
 # US jobs on a visa.

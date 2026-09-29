@@ -114,7 +114,15 @@ EXCLUDE_LEVELS = [
     "fellow",
     "(l5)", "(l6)", "(l7)", "(l8)",
     " l5,", " l6,", " l7,",
+    # Seen on live Workday / bank titles (Sept 2026): 97 got through
+    "lead",          # Lead ML Engineer, Lead Analytics Consultant, Data Science Lead
+    "svp", "avp", "evp",
+    "architect",     # Solution Architect, Data Architect
+    "executive",     # Executive Director
+    "iii", "iv",     # Data Scientist III / IV
 ]
+# Entries match as whole words: "staff" catches "Staff, Data Scientist" but
+# not "Staffing Analyst"; "vp" catches "VP" and "(VP)" but not "SVP".
 
 # Also drop "Senior" / "Sr." titles (senior usually means 4-6 years).
 EXCLUDE_SENIOR = True
@@ -143,6 +151,11 @@ RANK_BONUS_WORDS = ["llm", "genai", "gen ai", "generative", "nlp", "agent", "rag
 # Companies never treated as staffing agencies, even if the name looks like
 # one ("Tata Consultancy Services"). Lowercase substrings.
 NOT_STAFFING: list[str] = []
+
+# Employers dropped from every source (lowercase substrings). SynergisticIT
+# is a training company that mass-posts "entry level" ads: 29 on LinkedIn and
+# 28 of 56 Google Jobs results, none applied to.
+BLOCKED_COMPANIES = ["synergisticit"]
 
 # Needs US work-visa (H-1B) sponsorship. When False the H-1B sponsor data is
 # never downloaded, and the H-1B tags and filter are hidden.

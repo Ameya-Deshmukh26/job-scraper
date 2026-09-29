@@ -14,7 +14,8 @@ from pathlib import Path
 from flask import Flask, jsonify, render_template, request, send_file
 
 from config import ENABLE_AUTO_APPLY, OVERNIGHT_LOOKBACK_HRS, OVERNIGHT_POLL_HOURS, US_ONLY
-from main import (run_once, _is_us, fetch_all_sources, process_jobs)
+from main import (run_once, _is_us, _is_blocked, _is_right_level,
+                  fetch_all_sources, process_jobs)
 from tracker import JobTracker
 from sources.h1b import is_h1b_sponsor
 from startups import annotate as annotate_startup
@@ -61,6 +62,10 @@ def api_jobs():
     tracker.close()
     if US_ONLY:
         jobs = [j for j in jobs if _is_us(j.get("location", ""))]
+    # Saved jobs get today's title rules too: many were saved before a level
+    # word or a blocked employer was added. Applied jobs always stay visible.
+    jobs = [j for j in jobs if j.get("applied")
+            or (_is_right_level(j.get("title", "")) and not _is_blocked(j.get("company", "")))]
     # Tag each job with H-1B sponsor status (cached lookup, fast)
     from ranking import match_score
     for j in jobs:

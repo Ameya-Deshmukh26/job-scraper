@@ -150,3 +150,59 @@ def test_shipped_starter_profile_searches_mba_roles_in_india():
     assert "Associate Product Manager" in starter["SEARCH_TITLES"]
     assert "manager" not in starter["EXCLUDE_LEVELS"]
     assert not starter["NEEDS_SPONSORSHIP"]
+
+
+# ── title level check: whole words, from live misses (Sept 2026) ──────────
+
+@pytest.mark.parametrize("title", [
+    "Staff, Data Scientist",                       # "staff " with a space missed the comma
+    "VP Fraud Risk Business Analytics Lead",        # " vp" needed a leading space
+    "Lead Treasury Quantitative Analytics (VP)",
+    "Lead Machine Learning Engineer",               # only "lead ml" / "lead data" were listed
+    "Data Science Lead",
+    "Data Scientist III",
+    "Analytics and AI Solution Architect",
+    "GHR AI Engineer - Agentic Integrations AVP",
+    "Data Scientist, Sr.",
+])
+def test_senior_titles_that_used_to_slip_through_are_caught(title):
+    assert not main._is_right_level(title)
+
+
+@pytest.mark.parametrize("title", [
+    "Data Scientist", "Data Analyst II", "Staffing Data Analyst", "Machine Learning Engineer",
+    "Software Engineer, AI (Multiple Seniority Levels)",   # "senior" inside "seniority"
+])
+def test_whole_word_matching_leaves_junior_titles_alone(title):
+    assert main._is_right_level(title)
+
+
+def test_blocked_employers_are_dropped():
+    assert main._is_blocked("SynergisticIT")
+    assert not main._is_blocked("Synergy Health")
+
+
+def test_a_job_failing_the_years_check_is_saved_hidden(monkeypatch):
+    """It used to be saved unflagged, so the dashboard showed it anyway."""
+    saved, flagged = [], {}
+
+    class T:
+        def seen(self, _):
+            return False
+
+        def seen_by_title_company(self, *_):
+            return False
+
+        def mark_seen(self, job):
+            saved.append(job["id"])
+
+        def mark_needs_review(self, job_id, reason):
+            flagged[job_id] = reason
+
+    monkeypatch.setattr(main, "_jd_ok_for_experience", lambda url: url != "https://senior")
+    jobs = [{"id": "a", "title": "Data Scientist", "company": "Acme", "location": "Boston, MA", "url": "https://ok"},
+            {"id": "b", "title": "Data Analyst", "company": "Acme", "location": "Boston, MA", "url": "https://senior"}]
+    new = main.process_jobs(jobs, T())
+    assert [j["id"] for j in new] == ["a"]
+    assert saved == ["a", "b"]                      # both saved, so neither is re-checked
+    assert flagged == {"b": f"requires {main.MAX_YEARS_REQUIRED}+ years experience"}

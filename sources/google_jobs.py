@@ -18,9 +18,21 @@ short query list, a hard cap per run, and never part of a broad scan.
 API notes, checked against the docs (serpapi.com/google-jobs-api):
   - `start` pagination was discontinued by Google; pages chain through
     serpapi_pagination.next_page_token.
-  - `chips` / `ltype` filters are deprecated, so there is no server-side date
-    filter. Age is read from detected_extensions.posted_at ("3 hours ago")
-    and filtered here.
+  - `chips` / `ltype` are deprecated. Google's own "Date posted" filter is
+    plain query text: its "Yesterday" option is the query plus "since
+    yesterday", so that phrase is appended to every search.
+  - `detected_extensions` is no longer returned (checked live, Sept 2026;
+    the docs still show it). The age ("19 hours ago") and salary are plain
+    strings in `extensions`. Reading the old field left every result
+    undated, so the date filter silently passed everything.
+
+What is kept, because a live run returned mostly noise (28 of 56 from one
+training company, links to re-posting boards, 9 already expired):
+  - only results with a direct employer link (their ATS or their own
+    domain). Results that only link to LinkedIn or Indeed are dropped:
+    those sites are scanned directly.
+  - only results with a readable age inside the lookback window
+  - only links that still load (not 404/410 or an "expired" page)
 """
 import hashlib
 import logging
@@ -136,6 +148,65 @@ def _posted_to_dt(posted: str) -> datetime | None:
     return now - timedelta(days=30 * n)
 
 
+def _extensions(job: dict) -> list[str]:
+    """The tag strings on a result. Includes the old detected_extensions
+    fields too, in case SerpApi brings them back."""
+    tags = [str(e) for e in (job.get("extensions") or [])]
+    old = job.get("detected_extensions") or {}
+    tags += [str(old[k]) for k in ("posted_at", "salary") if old.get(k)]
+    return tags
+
+
+def _posted_from(job: dict) -> datetime | None:
+    for tag in _extensions(job):
+        t = tag.lower()
+        if "ago" in t or t in ("today", "just posted", "yesterday"):
+            when = _posted_to_dt(tag)
+            if when:
+                return when
+    return None
+
+
+_PAY_RE = re.compile(r"\b(?:a|an|per)\s+(?:year|hour|month|week|day)\b", re.I)
+
+
+def _salary_from(job: dict) -> str:
+    return next((tag for tag in _extensions(job) if _PAY_RE.search(tag)), "")
+
+
+def _date_phrase(cutoff: datetime) -> str:
+    """Google's own "Date posted" filter, written the way Google writes it."""
+    # Slack on each bound: a "24 hour" cutoff is already a little over 24
+    # hours old by the time it is measured, and fell through to "3 days".
+    hours = (datetime.now(timezone.utc) - cutoff).total_seconds() / 3600
+    if hours <= 26:
+        return "since yesterday"
+    if hours <= 74:
+        return "in the last 3 days"
+    if hours <= 24 * 7 + 2:
+        return "in the last week"
+    return "in the last month"
+
+
+_UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                     "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
+_EXPIRED = ("no longer available", "job has expired", "position has been filled",
+            "this job is no longer", "no longer accepting applications", "job not found")
+
+
+def _link_alive(url: str) -> bool:
+    """False only on clear evidence the posting is gone. A timeout or a bot
+    wall from here says nothing about the job, so those count as alive."""
+    try:
+        r = requests.get(url, headers=_UA, timeout=12, allow_redirects=True)
+    except Exception:
+        return True
+    if r.status_code in (404, 410):
+        return False
+    body = r.text[:200_000].lower()
+    return not any(p in body for p in _EXPIRED)
+
+
 def _is_aggregator(url: str) -> bool:
     host = urlparse(url).netloc.lower()
     return any(host == d or host.endswith("." + d) for d in _AGGREGATORS)
@@ -150,6 +221,8 @@ _ATS_HOSTS = (
     "oraclecloud.com", "recruitee.com", "breezy.hr", "jazzhr.com",
     "applytojob.com", "rippling.com", "dover.com", "keka.com", "darwinbox.in",
     "zohorecruit.com", "freshteam.com", "personio.de", "teamtailor.com",
+    "gem.com", "paylocity.com", "ultipro.com", "adp.com", "paycomonline.net",
+    "dayforcehcm.com", "avature.net", "eightfold.ai", "pinpointhq.com",
 )
 _COMPANY_WORDS = re.compile(r"[a-z0-9]{4,}")
 _GENERIC_WORDS = {"group", "global", "services", "solutions", "technologies",
@@ -215,15 +288,18 @@ def _search(key: str, query: str, page_token: str | None) -> dict:
 
 def fetch_google_jobs(cutoff: datetime) -> list[dict]:
     """Recent Google for Jobs postings. Costs SerpApi credits - use sparingly."""
+    from concurrent.futures import ThreadPoolExecutor
+
     key = api_key()
     if not key:
         log.warning(f"Google Jobs: {_ENV} is not set; skipping")
         return []
 
-    results: list[dict] = []
+    phrase = _date_phrase(cutoff)
+    found: list[dict] = []
     seen: set[str] = set()
     searches = 0
-    too_old = 0
+    dropped = {"older than the lookback": 0, "no date": 0, "no direct employer link": 0}
 
     for query in _QUERIES:
         token = None
@@ -231,7 +307,7 @@ def fetch_google_jobs(cutoff: datetime) -> list[dict]:
             if searches >= _MAX_SEARCHES:
                 break
             searches += 1
-            d = _search(key, query, token)
+            d = _search(key, f"{query} {phrase}", token)
             jobs = d.get("jobs_results") or []
 
             page_fresh = 0
@@ -241,28 +317,33 @@ def fetch_google_jobs(cutoff: datetime) -> list[dict]:
                 if not title or not company:
                     continue
 
-                ext = j.get("detected_extensions") or {}
-                posted = _posted_to_dt(ext.get("posted_at", ""))
-                if posted is not None and posted < cutoff:
-                    too_old += 1
+                posted = _posted_from(j)
+                if posted is None:
+                    dropped["no date"] += 1
+                    continue
+                if posted < cutoff:
+                    dropped["older than the lookback"] += 1
                     continue
                 page_fresh += 1
+
+                url, via = _best_apply_link(j)
+                if _link_rank(url, company) != 0:
+                    dropped["no direct employer link"] += 1
+                    continue
 
                 uid = _job_uid(j)
                 if uid in seen:
                     continue
                 seen.add(uid)
-
-                url, via = _best_apply_link(j)
-                results.append({
+                found.append({
                     "id":        uid,
                     "source":    "google_jobs",
                     "company":   company,
                     "title":     title,
                     "location":  (j.get("location") or _LOCATION).strip(),
                     "url":       url,
-                    "posted_at": posted.isoformat() if posted else "",
-                    "pay":       ext.get("salary", ""),
+                    "posted_at": posted.isoformat(),
+                    "pay":       _salary_from(j),
                     "via":       via,
                 })
 
@@ -271,8 +352,14 @@ def fetch_google_jobs(cutoff: datetime) -> list[dict]:
             if not token or not jobs or page_fresh == 0:
                 break
 
-    log.info(f"Google Jobs: {len(results)} jobs from {searches} searches "
-             f"({too_old} older than the cutoff)")
+    # Only links that still load. Parallel: these are ordinary page fetches
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        alive = list(pool.map(lambda j: _link_alive(j["url"]), found))
+    results = [j for j, ok in zip(found, alive) if ok]
+    dropped["expired link"] = len(found) - len(results)
+
+    log.info(f"Google Jobs: {len(results)} kept from {searches} searches ({phrase}); dropped "
+             + ", ".join(f"{n} {why}" for why, n in dropped.items() if n))
     return results
 
 

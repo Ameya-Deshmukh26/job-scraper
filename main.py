@@ -21,6 +21,7 @@ from config import (
     ASHBY_COMPANIES,
     ENABLE_AUTO_APPLY,
     ENABLE_LINKEDIN,
+    BLOCKED_COMPANIES,
     EXCLUDE_LEVELS,
     EXCLUDE_SENIOR,
     GREENHOUSE_COMPANIES,
@@ -144,14 +145,41 @@ def _matches_keyword(title: str) -> bool:
     return any(kw in t for kw in KEYWORDS)
 
 
+def _phrase_re(phrases: list[str]) -> re.Pattern | None:
+    """
+    Match any phrase as a whole word or words, ignoring case.
+
+    Plain substring checks missed "Staff, Data Scientist" (the list said
+    "staff " with a space), "VP Fraud..." (" vp" needed a leading space) and
+    "Lead Machine Learning Engineer" ("lead ml" / "lead data" only), and a
+    substring "staff" would also hit "Staffing". Letters or digits may not
+    touch either end, so punctuation around a phrase no longer matters.
+    """
+    parts = sorted({p.strip().lower() for p in phrases if p.strip()}, key=len, reverse=True)
+    if not parts:
+        return None
+    return re.compile(r"(?<![a-z0-9])(?:" + "|".join(map(re.escape, parts)) + r")(?![a-z0-9])")
+
+
+_LEVEL_RE = _phrase_re(EXCLUDE_LEVELS)
+_SENIOR_RE = _phrase_re(["senior", "sr"])
+_BLOCKED = [c.strip().lower() for c in BLOCKED_COMPANIES if c.strip()]
+
+
 def _is_right_level(title: str) -> bool:
-    """Return False if the title indicates a level too senior for 2-3 yr experience."""
-    t = title.lower()
-    if any(lvl in t for lvl in EXCLUDE_LEVELS):
+    """Return False if the title names a level in EXCLUDE_LEVELS, or Senior/Sr."""
+    t = (title or "").lower()
+    if _LEVEL_RE and _LEVEL_RE.search(t):
         return False
-    if EXCLUDE_SENIOR and ("senior" in t or " sr " in t or t.startswith("sr ") or t.startswith("sr.")):
+    if EXCLUDE_SENIOR and _SENIOR_RE.search(t):
         return False
     return True
+
+
+def _is_blocked(company: str) -> bool:
+    """True for employers in BLOCKED_COMPANIES (mass-posting training mills and the like)."""
+    c = (company or "").lower()
+    return any(b in c for b in _BLOCKED)
 
 
 def _matches_location(location: str) -> bool:
@@ -369,6 +397,8 @@ def process_jobs(jobs: list[dict], tracker: JobTracker, jd_check: bool = True) -
             continue
         if not _is_right_level(job["title"]):
             continue
+        if _is_blocked(job["company"]):
+            continue
         if not _matches_location(job["location"]):
             continue
         key = (job["title"].strip().lower(), job["company"].strip().lower())
@@ -390,12 +420,18 @@ def process_jobs(jobs: list[dict], tracker: JobTracker, jd_check: bool = True) -
     else:
         ok_flags = [True] * len(candidates)
 
-    # Phase 3 — persist
+    # Phase 3 — persist. A job whose description asks for too many years is
+    # still saved, so it is never fetched and checked again, but flagged the
+    # same way audit_experience.py flags one. The dashboard hides flagged jobs
+    # unless "Show N+ yr roles" is ticked; before this they were saved
+    # unflagged and shown like any other job.
     new_jobs: list[dict] = []
     for job, ok in zip(candidates, ok_flags):
-        tracker.mark_seen(job)   # seen either way so we never re-check it
+        tracker.mark_seen(job)
         if ok:
             new_jobs.append(job)
+        else:
+            tracker.mark_needs_review(job["id"], f"requires {MAX_YEARS_REQUIRED}+ years experience")
     return new_jobs
 
 

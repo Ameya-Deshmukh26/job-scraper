@@ -48,6 +48,7 @@ RANK_GOOD_TITLES: list[str] = []
 RANK_BONUS_WORDS: list[str] = []
 NEEDS_SPONSORSHIP = False
 NOT_STAFFING: list[str] = []
+BLOCKED_COMPANIES: list[str] = []
 BASE_TEX_PATH = ""
 RESUME_OUTPUT_DIR = ""
 ENABLE_AUTO_APPLY = False
