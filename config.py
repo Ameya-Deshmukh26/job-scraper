@@ -1,6 +1,26 @@
 # ── Job Scraper Configuration ──────────────────────────────────────────────
 # Edit this file to customize what you're looking for.
 
+# ── API keys ───────────────────────────────────────────────────────────────
+# Keys live in .env next to this file (gitignored, never committed). Loaded
+# here because config is the first project import in both app.py and
+# main.py, and some sources read their key at import time. A variable that
+# is already set in the real environment wins over .env.
+#
+# Blank entries are skipped rather than exported as "". The template ships
+# with empty slots, and an empty OPIK_WORKSPACE made the Opik SDK send a
+# blank workspace instead of falling back to its saved default (HTTP 403).
+import os as _os
+from pathlib import Path as _Path
+
+try:
+    from dotenv import dotenv_values as _dotenv_values
+    for _k, _v in _dotenv_values(_Path(__file__).with_name(".env")).items():
+        if _v and _v.strip() and not _os.environ.get(_k):
+            _os.environ[_k] = _v.strip()
+except ImportError:
+    pass
+
 # ── Resume Tailoring ───────────────────────────────────────────────────────
 # Get a key at https://console.anthropic.com — or set the ANTHROPIC_API_KEY env var.
 ANTHROPIC_API_KEY = ""  # or: export ANTHROPIC_API_KEY=sk-ant-...

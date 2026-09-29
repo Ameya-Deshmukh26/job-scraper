@@ -140,3 +140,26 @@ def test_same_posting_across_queries_is_kept_once(monkeypatch):
 def test_google_jobs_is_paid_and_never_joins_a_broad_scan():
     assert "google_jobs" in main.PAID_SOURCE_NAMES
     assert main.SOURCE_METHOD["google_jobs"] == "SerpApi (paid)"
+
+
+# ── key lookup ────────────────────────────────────────────────────────────
+
+def test_key_pasted_into_dotenv_is_seen_without_a_restart(monkeypatch, tmp_path):
+    """The server loads .env once at startup; api_key() must re-read it."""
+    monkeypatch.delenv("SERPAPI_API_KEY", raising=False)
+    env = tmp_path / ".env"
+    env.write_text("SERPAPI_API_KEY=\n", encoding="utf-8")
+    monkeypatch.setattr(gj, "_DOTENV", env)
+    monkeypatch.setattr(gj.os, "name", "posix")      # skip the registry fallback
+    assert gj.api_key() == ""
+
+    env.write_text("SERPAPI_API_KEY=abc123\n", encoding="utf-8")   # pasted later
+    assert gj.api_key() == "abc123"
+
+
+def test_real_environment_wins_over_dotenv(monkeypatch, tmp_path):
+    env = tmp_path / ".env"
+    env.write_text("SERPAPI_API_KEY=from-file\n", encoding="utf-8")
+    monkeypatch.setattr(gj, "_DOTENV", env)
+    monkeypatch.setenv("SERPAPI_API_KEY", "from-env")
+    assert gj.api_key() == "from-env"

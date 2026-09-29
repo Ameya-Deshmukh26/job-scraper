@@ -27,6 +27,7 @@ import logging
 import os
 import re
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from urllib.parse import urlparse
 
 import requests
@@ -65,18 +66,30 @@ _AGGREGATORS = (
 _AGE_RE = re.compile(r"(\d+)\s*\+?\s*(minute|min|hour|hr|day|week|month)", re.I)
 
 
+_DOTENV = Path(__file__).resolve().parent.parent / ".env"
+
+
 def api_key() -> str:
     """
-    The SerpApi key from the environment, falling back to the Windows user
-    environment in the registry.
+    The SerpApi key: process environment, then the project .env, then the
+    Windows user environment in the registry.
 
-    `setx` only reaches processes started after it runs, so a server that was
-    already up would otherwise never see a freshly set key. Reading it at call
-    time from the registry means no restart is needed.
+    Read at call time rather than import time. config.py loads .env once at
+    startup, so a key pasted into .env (or set with setx) while the server is
+    running would otherwise need a restart before the button worked.
     """
     key = os.environ.get(_ENV, "").strip()
-    if key or os.name != "nt":
+    if key:
         return key
+    try:
+        from dotenv import dotenv_values
+        key = (dotenv_values(_DOTENV).get(_ENV) or "").strip()
+        if key:
+            return key
+    except ImportError:
+        pass
+    if os.name != "nt":
+        return ""
     try:
         import winreg
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as k:
