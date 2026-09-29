@@ -17,7 +17,7 @@ By the time a job appears on LinkedIn, dozens of applications are already in. Th
 
 ## Features
 
-- **Multi-source scraping** - 293 company ATS boards (Greenhouse 173, Ashby 75, Lever 45) plus Workday, Oracle HCM, Avature, Goldman Sachs, Amazon/Netflix, LinkedIn, HiringCafe, Hacker News, Indeed
+- **Multi-source scraping** - 293 company ATS boards (Greenhouse 173, Ashby 75, Lever 45) plus Workday, Goldman Sachs, Deloitte, Amazon/Netflix, LinkedIn, Hacker News, Insight Global, Google Jobs, Indeed
 - **Automated board discovery** - probes Y Combinator's 6,175-company API against Greenhouse/Lever/Ashby to find live boards instead of guessing slugs, with a collision guard for generic names
 - **H-1B sponsorship tagging** - every employer checked against USCIS Employer Data Hub (FY2021-23, ~44k employers); filter to sponsors only
 - **Match scoring** - 0-100 per job from role fit, level, company type, sponsorship, location and freshness; sortable
@@ -42,12 +42,10 @@ By the time a job appears on LinkedIn, dozens of applications are already in. Th
 | Ashby | GraphQL | 75 boards |
 | Lever | ATS API | 45 boards |
 | Workday | CXS JSON API | 30 Fortune 500 (Capital One, Walmart, Cisco, Citi, Wells Fargo, ...) |
-| Oracle HCM | REST | JPMorgan, Goldman lateral, Amex, Oracle |
 | Avature | HTML | Deloitte |
 | Goldman Sachs | Custom GraphQL | `api-higher.gs.com` |
 | Amazon / Netflix | Public JSON | amazon.jobs, Netflix Eightfold |
 | LinkedIn | Guest API | Dynamic `f_TPR` window, Easy Apply excluded |
-| HiringCafe | Public API + Playwright | Aggregator |
 | Hacker News | Algolia API | Monthly "Who is hiring" thread, startup-heavy |
 | Indeed | Firecrawl | Paid credits, opt-in only |
 
@@ -105,7 +103,7 @@ scan timing live in `config.py`. API keys go in `.env` (gitignored).
 |---|---|
 | `LOOKBACK_HOURS` | How far back each scan looks |
 | `GREENHOUSE_COMPANIES`, `LEVER_COMPANIES`, `ASHBY_COMPANIES` | Board slugs |
-| `WORKDAY_COMPANIES`, `ORACLE_HCM_COMPANIES` | `(host, board, name)` tuples |
+| `WORKDAY_COMPANIES` | `(host, board, name)` tuples |
 | `DISCORD_WEBHOOK_URL` | Discord alerts (optional) |
 
 ## Sharing a copy
@@ -151,7 +149,7 @@ sources through the same engine, so each shows per-source jobs and timing.
 |---|---|---|
 | **All** | every job, filterable by keyword / source / location | **Scan everything** runs the three below |
 | **LinkedIn** | LinkedIn guest search (Easy Apply excluded) | free |
-| **Boards** | Greenhouse, Lever, Ashby, Amazon/Netflix, Goldman, Oracle HCM, Deloitte, HN Who's Hiring, HiringCafe, Insight Global | free |
+| **Boards** | Greenhouse, Lever, Ashby, Amazon/Netflix, Goldman, Deloitte, HN Who's Hiring, Insight Global | free |
 | **Workday + Google** | Workday career sites, Google Jobs (SerpApi), Indeed (Firecrawl) | asks before spending credits |
 
 An hourly background scan covers Boards plus Workday, never LinkedIn or a paid
@@ -177,7 +175,6 @@ job_scraper/
 │   ├── goldman_sachs.py # Goldman Sachs GraphQL API (higher.gs.com)
 │   ├── linkedin.py      # LinkedIn guest API
 │   ├── remotive.py      # Remotive public API
-│   ├── hiringcafe.py    # HiringCafe API
 │   └── adzuna.py        # Adzuna REST API
 ├── tailoring/           # Claude-powered resume tailoring
 ├── autoapply/           # Overnight auto-apply runner

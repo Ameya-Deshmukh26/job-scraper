@@ -69,11 +69,7 @@ Use `python3` everywhere below if that is what works on their machine.
 
 ```
 python -m pip install -r requirements.txt
-python -m playwright install chromium
 ```
-
-The second command downloads a browser used by one job site (HiringCafe). If
-it fails, carry on: everything else still works.
 
 ### 4. Personalise the starter search
 

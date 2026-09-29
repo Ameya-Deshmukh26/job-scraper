@@ -5,8 +5,8 @@ and rewrites resume bullets for a target role, with a **deterministic
 fabrication validator** in the loop so the agent cannot ship invented claims.
 
 Built on top of a job scraper that pulls from 13+ ATS sources
-(LinkedIn guest API, Ashby GraphQL, Workday CXS, Oracle HCM, Avature,
-Greenhouse, Lever, Amazon/Netflix career APIs, HiringCafe, RemoteOK) and
+(LinkedIn guest API, Ashby GraphQL, Workday CXS, Greenhouse, Lever,
+Amazon/Netflix career APIs, Hacker News, Google Jobs, Indeed) and
 tracks ~3,000 postings in SQLite.
 
 ## Graph

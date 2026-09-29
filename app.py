@@ -297,7 +297,7 @@ def api_headed_status(job_id: str):
 SCAN_GROUPS: dict[str, set[str]] = {
     "linkedin": {"linkedin"},
     "boards":   {"greenhouse", "lever", "ashby", "faang", "goldman_sachs",
-                 "oracle_hcm", "deloitte", "hackernews", "hiringcafe", "staffing"},
+                 "deloitte", "hackernews", "staffing"},
     "big":      {"workday", "google_jobs", "indeed"},
 }
 _PAID_SOURCES = {"google_jobs": "SERPAPI_API_KEY", "indeed": "FIRECRAWL_API_KEY"}

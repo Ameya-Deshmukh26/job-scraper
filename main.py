@@ -1,6 +1,6 @@
 """
-Job Scraper: LinkedIn, Indeed, HiringCafe, Hacker News, and direct
-company portals (Greenhouse, Lever, Ashby, Workday, Oracle HCM, Avature, FAANG).
+Job Scraper: LinkedIn, Indeed, Google Jobs, Hacker News, and direct
+company portals (Greenhouse, Lever, Ashby, Workday, Goldman, Deloitte, FAANG).
 
 Usage
 -----
@@ -29,7 +29,6 @@ from config import (
     LOCATION_FILTER,
     LOOKBACK_HOURS,
     MAX_YEARS_REQUIRED,
-    ORACLE_HCM_COMPANIES,
     OVERNIGHT_LOOKBACK_HRS,
     OVERNIGHT_POLL_HOURS,
     POLL_INTERVAL_MINUTES,
@@ -42,14 +41,12 @@ from sources.greenhouse import fetch_greenhouse_jobs
 from sources.lever import fetch_lever_jobs
 from sources.linkedin import fetch_linkedin_jobs
 from sources.goldman_sachs import fetch_goldman_sachs_jobs
-from sources.oracle_hcm import fetch_oracle_hcm_jobs
 from sources.deloitte import fetch_deloitte_jobs
 from sources.faang import fetch_faang_jobs
 from sources.indeed import fetch_indeed_jobs
 from sources.google_jobs import fetch_google_jobs
 from sources.hackernews import fetch_hackernews_jobs
 from sources.staffing import fetch_staffing_jobs
-from sources.hiringcafe import fetch_hiringcafe_jobs
 from sources.workday import fetch_workday_jobs
 from tracker import JobTracker
 
@@ -227,7 +224,7 @@ def _jd_ok_for_experience(url: str) -> bool:
 
 # Source groups so the dashboard can scan a subset (e.g. only portals)
 PORTAL_SOURCE_NAMES = {"greenhouse", "lever", "ashby", "workday",
-                       "goldman_sachs", "oracle_hcm", "deloitte", "faang"}
+                       "goldman_sachs", "deloitte", "faang"}
 
 # Sources that cost real money per run (Firecrawl credits). Never included in
 # a broad scan - they only run when named explicitly via `only=`.
@@ -240,14 +237,12 @@ SOURCE_METHOD = {
     "lever":         "REST API",
     "faang":         "REST API",
     "staffing":      "REST API",
-    "oracle_hcm":    "REST API",
     "ashby":         "GraphQL",
     "workday":       "POST JSON",
     "goldman_sachs": "GraphQL",
     "linkedin":      "Guest API + HTML",
     "hackernews":    "Algolia API",
     "deloitte":      "HTML scrape",
-    "hiringcafe":    "Browser (Playwright)",
     "indeed":        "Browser (Firecrawl, paid)",
     "google_jobs":   "SerpApi (paid)",
 }
@@ -287,8 +282,6 @@ def fetch_all_sources(cutoff: datetime, only: set | None = None,
                   for c in ASHBY_COMPANIES]
     if want("linkedin") and ENABLE_LINKEDIN:
         tasks.append(("linkedin", lambda: fetch_linkedin_jobs(cutoff, us_only=US_ONLY)))
-    if want("hiringcafe"):
-        tasks.append(("hiringcafe", lambda: fetch_hiringcafe_jobs(cutoff)))
     if want("hackernews"):
         tasks.append(("hackernews", lambda: fetch_hackernews_jobs(cutoff)))
     if want("staffing"):
@@ -308,9 +301,6 @@ def fetch_all_sources(cutoff: datetime, only: set | None = None,
         tasks.append(("indeed", lambda: fetch_indeed_jobs(cutoff)))
     if want("google_jobs"):
         tasks.append(("google_jobs", lambda: fetch_google_jobs(cutoff)))
-    if want("oracle_hcm") and ORACLE_HCM_COMPANIES:
-        tasks += [("oracle_hcm", lambda c=c: fetch_oracle_hcm_jobs([c], cutoff))
-                  for c in ORACLE_HCM_COMPANIES]
 
     def timed(name, fn):
         """Wrap a fetch so each source reports its own wall time."""
@@ -458,8 +448,8 @@ def main():
         tracker.close()
         return
 
-    # boards + the always-on feed sources (LinkedIn, HiringCafe, Hacker News)
-    extra = (1 if ENABLE_LINKEDIN else 0) + 2
+    # boards + the always-on feed sources (LinkedIn, Hacker News)
+    extra = (1 if ENABLE_LINKEDIN else 0) + 1
     sources = (len(GREENHOUSE_COMPANIES) + len(LEVER_COMPANIES)
                + len(ASHBY_COMPANIES) + len(WORKDAY_COMPANIES) + extra)
 

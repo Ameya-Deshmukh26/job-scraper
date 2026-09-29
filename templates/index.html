@@ -1185,7 +1185,6 @@
     <button class="chip on" data-src="all"        onclick="setSource(this)">All</button>
     <button class="chip"    data-src="linkedin"   onclick="setSource(this)">LinkedIn</button>
     <button class="chip"    data-src="greenhouse" onclick="setSource(this)">Greenhouse</button>
-    <button class="chip"    data-src="hiringcafe" onclick="setSource(this)">HiringCafe</button>
     <button class="chip"    data-src="indeed"     onclick="setSource(this)">Indeed</button>
     <button class="chip"    data-src="google_jobs" onclick="setSource(this)">Google Jobs</button>
     <button class="chip"    data-src="staffing-src" onclick="setSource(this)">Insight Global</button>
@@ -1372,10 +1371,10 @@ let activeTab       = "all";
 
 // Direct-ATS sources, grouped behind one chip instead of eight
 const BOARD_SOURCES = ["greenhouse", "lever", "ashby", "workday",
-                       "oracle_hcm", "deloitte", "goldman_sachs", "faang"];
+                       "deloitte", "goldman_sachs", "faang"];
 const LI_SOURCES = ["linkedin"];
 const BOARDS_SOURCES = ["greenhouse", "lever", "ashby", "faang", "goldman_sachs",
-                        "oracle_hcm", "deloitte", "hackernews", "hiringcafe", "staffing"];
+                        "deloitte", "hackernews", "staffing"];
 const BIG_SOURCES = ["workday", "google_jobs", "indeed"];
 const SOURCE_NAME = {
   linkedin: "LinkedIn", greenhouse: "Greenhouse", lever: "Lever", ashby: "Ashby",
@@ -2086,10 +2085,8 @@ function renderPortal() {
     ["Greenhouse · Lever · Ashby", ["greenhouse", "lever", "ashby"]],
     ["Amazon · Netflix", ["faang"]],
     ["Goldman Sachs", ["goldman_sachs"]],
-    ["Oracle HCM · JPMorgan · Amex", ["oracle_hcm"]],
     ["Deloitte", ["deloitte"]],
     ["Hacker News · Who's hiring", ["hackernews"]],
-    ["HiringCafe", ["hiringcafe"]],
     ["Insight Global · staffing", ["staffing"]],
   ]);
 }

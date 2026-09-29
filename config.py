@@ -229,19 +229,6 @@ WORKDAY_COMPANIES: list[tuple[str, str, str]] = [
     ("statestreet.wd1",    "Global",                   "State Street"),
 ]
 
-# ── Oracle HCM Companies ───────────────────────────────────────────────────
-# Tuple of (tenant_hostname, site_code, display_name)
-# Tenant hostname format: {company}.fa.{region}.oraclecloud.com
-# Site code is embedded in the careers page URL under /sites/{code}/
-ORACLE_HCM_COMPANIES: list[tuple[str, str, str]] = [
-    # Finance / Banking (all confirmed HTTP 200)
-    ("jpmc.fa.oraclecloud.com",     "CX_1001",      "JPMorgan Chase"),
-    ("hdpc.fa.us2.oraclecloud.com", "LateralHiring", "Goldman Sachs"),
-    ("egug.fa.us2.oraclecloud.com", "CX_1",          "American Express"),
-    # Technology (all confirmed HTTP 200)
-    ("eeho.fa.us2.oraclecloud.com", "jobsearch",     "Oracle Corporation"),
-]
-
 # ── Lever Companies ────────────────────────────────────────────────────────
 # URL pattern: https://jobs.lever.co/{slug}
 # Only confirmed-live boards (June 2026 audit) — 32 dead slugs removed.

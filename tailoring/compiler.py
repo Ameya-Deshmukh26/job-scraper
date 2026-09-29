@@ -2,7 +2,6 @@
 import re
 import shutil
 import subprocess
-from pathlib import Path
 
 from config import RESUME_DIR, YOUR_NAME
 
