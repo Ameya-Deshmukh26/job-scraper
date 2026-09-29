@@ -80,11 +80,13 @@ def match_score(job: dict) -> int:
     if NEEDS_SPONSORSHIP and job.get("h1b_sponsor"):
         score += 12   # sponsorship track record is critical on a visa
 
-    # Location
-    if any(loc in location for loc in _PREFERRED):
-        score += 6
-    elif "remote" in location or location.strip() == _COUNTRY:
-        score += 4
+    # Location: only for a profile that names preferred places. With none
+    # (willing to relocate anywhere) location does not move the score.
+    if _PREFERRED:
+        if any(loc in location for loc in _PREFERRED):
+            score += 6
+        elif "remote" in location or location.strip() == _COUNTRY:
+            score += 4
 
     # Direct-ATS sources are auto-applyable and less crowded than LinkedIn
     if source in ("greenhouse", "lever", "ashby"):

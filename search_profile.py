@@ -80,7 +80,7 @@ SOURCE_QUERIES = {
 SEARCH_COUNTRY = "United States"
 
 # Cities searched one by one on Indeed (a paid source, so keep it short).
-SEARCH_CITIES = ["Boston, MA", "Remote"]
+SEARCH_CITIES = ["United States", "Remote"]   # relocates anywhere: search nationwide
 
 # Drop jobs whose location is clearly outside the US.
 US_ONLY = True
@@ -90,7 +90,7 @@ US_ONLY = True
 LOCATION_FILTER = []
 
 # Locations that get a small ranking boost (lowercase substrings).
-PREFERRED_LOCATIONS = ["boston", "cambridge", "massachusetts"]
+PREFERRED_LOCATIONS: list[str] = []   # relocates anywhere, so no location boost
 
 # ── Level ──────────────────────────────────────────────────────────────────
 # Titles containing any of these are dropped as too senior.
@@ -135,7 +135,7 @@ MAX_YEARS_REQUIRED = 5
 # One or two sentences the AI ranker reads before judging fit. Plain facts:
 # experience, degree, and anything that rules jobs in or out.
 CANDIDATE_SUMMARY = ("The candidate has ~2-3 years of experience, needs H-1B "
-                     "sponsorship, and is based in Boston but open to relocation.")
+                     "sponsorship, and is willing to relocate anywhere in the US.")
 
 # ── Ranking ────────────────────────────────────────────────────────────────
 # Title contains one of these -> strongest match.

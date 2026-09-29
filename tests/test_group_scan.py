@@ -81,7 +81,8 @@ def test_big_tab_without_paid_runs_workday_only(fake_scan):
     dashboard._start_group("big", 2, paid=False)
     st = _wait("big")
     assert [c["only"] for c in fake_scan] == [{"workday"}]
-    assert sorted(st["skipped"]) == ["google_jobs: paid, not run", "indeed: paid, not run"]
+    assert sorted(st["skipped"]) == ["google_jobs: paid, not run", "indeed: paid, not run",
+                                     "ziprecruiter: paid, not run"]
 
 
 def test_big_tab_with_paid_includes_sources_that_have_keys(fake_scan, monkeypatch):
@@ -89,7 +90,7 @@ def test_big_tab_with_paid_includes_sources_that_have_keys(fake_scan, monkeypatc
     dashboard._start_group("big", 2, paid=True)
     st = _wait("big")
     assert fake_scan[0]["only"] == {"workday", "google_jobs"}
-    assert st["skipped"] == ["indeed: no key in .env"]
+    assert st["skipped"] == ["indeed: no key in .env", "ziprecruiter: no key in .env"]
 
 
 def test_a_second_click_joins_the_running_scan(fake_scan, monkeypatch):
@@ -124,8 +125,8 @@ def test_a_failed_scan_reports_the_error_and_frees_the_button(fake_scan, monkeyp
 def test_status_lists_every_tab_and_its_sources(fake_scan):
     d = dashboard.app.test_client().get("/api/group-scan/status").get_json()
     assert set(d["groups"]) == {"linkedin", "boards", "big"}
-    assert d["sources"]["big"] == ["google_jobs", "indeed", "workday"]
-    assert set(d["paid_keys"]) == {"google_jobs", "indeed"}
+    assert d["sources"]["big"] == ["google_jobs", "indeed", "workday", "ziprecruiter"]
+    assert set(d["paid_keys"]) == {"google_jobs", "indeed", "ziprecruiter"}
 
 
 def test_unknown_group_is_rejected():

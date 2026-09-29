@@ -1263,7 +1263,7 @@
     <div class="wd-meta">
       <div class="wd-meta-item">
         <i class="bi bi-building" style="color:var(--c-workday)"></i>
-        <span>Fortune 500 career sites · Google Jobs and Indeed (paid, asks first)</span>
+        <span>Fortune 500 career sites · Google Jobs, ZipRecruiter and Indeed (paid, asks first)</span>
       </div>
       <div class="wd-meta-item">
         <i class="bi bi-clock-history" style="color:var(--muted)"></i>
@@ -1285,7 +1285,7 @@
   <!-- Feed -->
   <div class="portal-wrap">
     <div class="portal-toolbar">
-      <input class="search" id="wd-search" type="text" placeholder="&#128269;  Search Workday, Google and Indeed jobs…" oninput="renderWorkdayTab()" />
+      <input class="search" id="wd-search" type="text" placeholder="&#128269;  Search Workday, Google, ZipRecruiter and Indeed jobs…" oninput="renderWorkdayTab()" />
       <span class="portal-count" id="wd-count-label"></span>
     </div>
     <div class="portal-feed" id="workday-feed"></div>
@@ -1375,12 +1375,13 @@ const BOARD_SOURCES = ["greenhouse", "lever", "ashby", "workday",
 const LI_SOURCES = ["linkedin"];
 const BOARDS_SOURCES = ["greenhouse", "lever", "ashby", "faang", "goldman_sachs",
                         "deloitte", "hackernews", "staffing"];
-const BIG_SOURCES = ["workday", "google_jobs", "indeed"];
+const BIG_SOURCES = ["workday", "google_jobs", "indeed", "ziprecruiter"];
 const SOURCE_NAME = {
   linkedin: "LinkedIn", greenhouse: "Greenhouse", lever: "Lever", ashby: "Ashby",
   faang: "Amazon · Netflix", goldman_sachs: "Goldman Sachs", oracle_hcm: "Oracle HCM",
   deloitte: "Deloitte", hackernews: "HN Who's Hiring", hiringcafe: "HiringCafe",
   staffing: "Insight Global", workday: "Workday", google_jobs: "Google Jobs", indeed: "Indeed",
+  ziprecruiter: "ZipRecruiter",
 };
 
 // ════════════════════════════════════════════════════════════════════════
@@ -1797,7 +1798,8 @@ function renderWorkdayTab() {
   }
 
   feed.innerHTML = sectionedFeed(filtered, [
-    ["Workday", ["workday"]], ["Google Jobs", ["google_jobs"]], ["Indeed", ["indeed"]],
+    ["Workday", ["workday"]], ["Google Jobs", ["google_jobs"]],
+    ["ZipRecruiter", ["ziprecruiter"]], ["Indeed", ["indeed"]],
   ]);
 }
 
@@ -1987,6 +1989,7 @@ const SRC_COLOR = {
   google_jobs:   "var(--c-google_jobs)",
   faang:         "#fbbf24",
   staffing:      "#94a3b8",
+  ziprecruiter:  "#4ade80",
 };
 
 // A feed split into labelled sections, one per source group, in order
@@ -2135,7 +2138,8 @@ function askPaid() {
   const keys = (scanStatus && scanStatus.paid_keys) || {};
   const parts = [];
   if (keys.google_jobs) parts.push("Google Jobs (up to 8 SerpApi searches)");
-  if (keys.indeed) parts.push("Indeed (up to 6 Firecrawl credits)");
+  if (keys.ziprecruiter) parts.push("ZipRecruiter (8 searches, about 15 Firecrawl credits)");
+  if (keys.indeed) parts.push("Indeed (up to 6 searches, about 36 Firecrawl credits)");
   if (!parts.length) return false;
   return confirm(`Include ${parts.join(" and ")}?\n\nOK = include them.\nCancel = skip the paid sources this time.`);
 }

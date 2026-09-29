@@ -206,3 +206,13 @@ def test_a_job_failing_the_years_check_is_saved_hidden(monkeypatch):
     assert [j["id"] for j in new] == ["a"]
     assert saved == ["a", "b"]                      # both saved, so neither is re-checked
     assert flagged == {"b": f"requires {main.MAX_YEARS_REQUIRED}+ years experience"}
+
+
+def test_no_preferred_locations_means_location_never_moves_the_score(monkeypatch):
+    """Relocates anywhere: Boston, Atlanta and Remote score the same."""
+    import ranking
+    monkeypatch.setattr(ranking, "_PREFERRED", [])
+    base = {"title": "Data Scientist", "company": "Acme", "source": "greenhouse"}
+    scores = {loc: ranking.match_score({**base, "location": loc})
+              for loc in ["Boston, MA", "Atlanta, GA", "Remote", "United States"]}
+    assert len(set(scores.values())) == 1, scores

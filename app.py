@@ -303,9 +303,10 @@ SCAN_GROUPS: dict[str, set[str]] = {
     "linkedin": {"linkedin"},
     "boards":   {"greenhouse", "lever", "ashby", "faang", "goldman_sachs",
                  "deloitte", "hackernews", "staffing"},
-    "big":      {"workday", "google_jobs", "indeed"},
+    "big":      {"workday", "google_jobs", "indeed", "ziprecruiter"},
 }
-_PAID_SOURCES = {"google_jobs": "SERPAPI_API_KEY", "indeed": "FIRECRAWL_API_KEY"}
+_PAID_SOURCES = {"google_jobs": "SERPAPI_API_KEY", "indeed": "FIRECRAWL_API_KEY",
+                 "ziprecruiter": "FIRECRAWL_API_KEY"}
 _HN_LOOKBACK_H = 720      # the Who-is-hiring thread is monthly
 
 _AUTO_INTERVAL = 3600     # background scan every hour...

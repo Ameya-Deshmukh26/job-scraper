@@ -46,6 +46,7 @@ from sources.deloitte import fetch_deloitte_jobs
 from sources.faang import fetch_faang_jobs
 from sources.indeed import fetch_indeed_jobs
 from sources.google_jobs import fetch_google_jobs
+from sources.ziprecruiter import fetch_ziprecruiter_jobs
 from sources.hackernews import fetch_hackernews_jobs
 from sources.staffing import fetch_staffing_jobs
 from sources.workday import fetch_workday_jobs
@@ -256,7 +257,7 @@ PORTAL_SOURCE_NAMES = {"greenhouse", "lever", "ashby", "workday",
 
 # Sources that cost real money per run (Firecrawl credits). Never included in
 # a broad scan - they only run when named explicitly via `only=`.
-PAID_SOURCE_NAMES = {"indeed", "google_jobs"}
+PAID_SOURCE_NAMES = {"indeed", "google_jobs", "ziprecruiter"}
 
 # How each source fetches. Bucketing by access method shows at a glance which
 # kind of access is costing the time, rather than a single opaque total.
@@ -273,6 +274,7 @@ SOURCE_METHOD = {
     "deloitte":      "HTML scrape",
     "indeed":        "Browser (Firecrawl, paid)",
     "google_jobs":   "SerpApi (paid)",
+    "ziprecruiter":  "Firecrawl raw HTML (paid)",
 }
 
 
@@ -329,6 +331,8 @@ def fetch_all_sources(cutoff: datetime, only: set | None = None,
         tasks.append(("indeed", lambda: fetch_indeed_jobs(cutoff)))
     if want("google_jobs"):
         tasks.append(("google_jobs", lambda: fetch_google_jobs(cutoff)))
+    if want("ziprecruiter"):
+        tasks.append(("ziprecruiter", lambda: fetch_ziprecruiter_jobs(cutoff)))
 
     def timed(name, fn):
         """Wrap a fetch so each source reports its own wall time."""
