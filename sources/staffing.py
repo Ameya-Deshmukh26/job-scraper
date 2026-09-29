@@ -41,8 +41,6 @@ _SESSION.headers.update({
 IG_API = "https://insightglobal.com/all/jobs"
 IG_SEARCH = "https://insightglobal.com/jobs/search/united-states/{kw}"
 
-# Tailored to Ameya's background: data/ML/AI plus the analyst lane, and the
-# GenAI terms that staffing firms now use for contract AI work.
 # From SEARCH_TITLES in search_profile.py, as Insight Global URL slugs
 _QUERIES = [re.sub(r"[^a-z0-9]+", "-", t.lower()).strip("-") for t in SEARCH_TITLES]
 

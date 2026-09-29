@@ -108,7 +108,7 @@ def rank_jobs_node(state: AgentState) -> AgentState:
 
     # Ground the profile in the actual corpus rather than a hardcoded blurb.
     # Without this the model invents gaps that contradict real experience
-    # (e.g. calling pharma "unfamiliar" despite the Boehringer Ingelheim role).
+    # (e.g. calling a domain "unfamiliar" when the resume shows a role in it).
     corpus = state.get("corpus") or []
     if corpus:
         history = "\n".join(

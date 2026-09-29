@@ -64,3 +64,10 @@ check_db.py
 check_linkedin.py
 filter_linkedin.py
 test_headed*.py
+
+# Personal resume files (resume tailoring)
+resume.tex
+resumes/
+
+# Portable build output
+dist/

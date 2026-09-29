@@ -83,10 +83,46 @@ python app.py
 
 ---
 
-## Configuration (`config.py`)
+## Configuration
 
-| Setting | Default | Description |
-|---|---|---|
+Who is searching lives in **`search_profile.py`**; company board lists and
+scan timing live in `config.py`. API keys go in `.env` (gitignored).
+
+| Setting (`search_profile.py`) | Description |
+|---|---|
+| `SEARCH_TITLES` | Typed into every job site's search box |
+| `KEYWORDS` | A title must contain one of these to be kept |
+| `SEARCH_COUNTRY` | Country every source searches (see `COUNTRIES` in config.py) |
+| `SEARCH_CITIES` | Cities for the paid Indeed search |
+| `LOCATION_FILTER` / `US_ONLY` | Which locations are kept |
+| `EXCLUDE_LEVELS` / `EXCLUDE_SENIOR` | Titles skipped as too senior |
+| `MAX_YEARS_REQUIRED` | Skip jobs whose description asks for this many years or more |
+| `RANK_*`, `PREFERRED_LOCATIONS` | Match-score tiers and boosts |
+| `NEEDS_SPONSORSHIP` | H-1B tagging and scoring; off skips the USCIS download |
+| `BASE_TEX_PATH` | LaTeX resume for tailoring ("" = `./resume.tex`) |
+
+| Setting (`config.py`) | Description |
+|---|---|
+| `LOOKBACK_HOURS` | How far back each scan looks |
+| `GREENHOUSE_COMPANIES`, `LEVER_COMPANIES`, `ASHBY_COMPANIES` | Board slugs |
+| `WORKDAY_COMPANIES`, `ORACLE_HCM_COMPANIES` | `(host, board, name)` tuples |
+| `DISCORD_WEBHOOK_URL` | Discord alerts (optional) |
+
+## Sharing a copy
+
+```
+python make_portable.py
+```
+
+Builds `JobScout.zip` next to this repo for someone else to use. It contains
+only git-tracked files, with a blank `search_profile.py`, an empty `.env`,
+and a `CLAUDE.md` that has Claude Code run a guided setup (roles, cities,
+experience, optional API keys) the first time the folder is opened. The
+build refuses to zip if any file contains a key value from this machine, a
+credential-shaped string, or personal details. The shipped setup files live
+in `portable/`.
+
+---|---|---|
 | `KEYWORDS` | data analyst, ML engineer, … | Title must match at least one |
 | `EXCLUDE_LEVELS` | staff, principal, director, … | Titles to skip |
 | `EXCLUDE_SENIOR` | `True` | Also skip "Senior" roles |
