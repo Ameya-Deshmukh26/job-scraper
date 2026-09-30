@@ -8,10 +8,13 @@ We fetch that set per query and subtract from the full results so only
 direct-apply jobs remain — no Selenium needed.
 """
 import logging
+import re
 import time
 from datetime import datetime, timezone
 
 import requests
+
+import jobmeta
 from bs4 import BeautifulSoup
 from config import IN_US, SEARCH_COUNTRY, SEARCH_TITLES, SOURCE_QUERIES
 
@@ -149,10 +152,18 @@ def fetch_linkedin_jobs(cutoff: datetime, us_only: bool = True) -> list[dict]:
                     if not title:
                         continue
 
+                    # "5 hours ago" is exact to the hour; the datetime
+                    # attribute is only the date, so two jobs 15 hours apart
+                    # looked equally new.
                     posted_at = ""
-                    if time_el and time_el.get("datetime"):
-                        posted_at = time_el["datetime"]
+                    if time_el:
+                        when = jobmeta.age_to_datetime(time_el.get_text(strip=True))
+                        if when:
+                            posted_at = when.isoformat()
+                        elif time_el.get("datetime"):
+                            posted_at = time_el["datetime"]
 
+                    salary_el = card.find("span", class_="job-search-card__salary-info")
                     jobs.append({
                         "id":        f"li_{jid}",
                         "source":    "LinkedIn",
@@ -161,6 +172,9 @@ def fetch_linkedin_jobs(cutoff: datetime, us_only: bool = True) -> list[dict]:
                         "location":  location,
                         "url":       f"https://www.linkedin.com/jobs/view/{jid}",
                         "posted_at": posted_at,
+                        "pay":       re.sub(r"\s+", " ", salary_el.get_text(" ", strip=True)) if salary_el else "",
+                        "job_type":  jobmeta.job_type("", title),
+                        "workplace": jobmeta.workplace("", title, location),
                     })
 
                 time.sleep(1.2)

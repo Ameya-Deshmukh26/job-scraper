@@ -129,7 +129,13 @@ EXCLUDE_SENIOR = True
 
 # Drop a job when its description asks for this many years or more
 # ("5+ years", "minimum 5 years", "5-8 years").
-MAX_YEARS_REQUIRED = 5
+MAX_YEARS_REQUIRED = 4   # anything above 3 years is dropped; 3 or fewer is fine
+
+# Highest degree: "bachelors", "masters" or "phd". Picks the path in
+# descriptions that offer one per degree ("Bachelor's + 8 years or
+# Master's + 6 years"), and counts "Master's, or Bachelor's + 5 years" as
+# needing no minimum when this is "masters".
+HIGHEST_DEGREE = "masters"   # MS
 
 # ── About you ─────────────────────────────────────────────────────────────
 # One or two sentences the AI ranker reads before judging fit. Plain facts:

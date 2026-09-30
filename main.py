@@ -36,6 +36,9 @@ from config import (
     US_ONLY,
     WORKDAY_COMPANIES,
 )
+import jobmeta
+from experience import required_years
+from experience import too_senior as _too_senior
 from notifier import notify
 from sources.ashby import fetch_ashby_jobs
 from sources.greenhouse import fetch_greenhouse_jobs
@@ -193,60 +196,60 @@ def _matches_location(location: str) -> bool:
 
 
 # ── JD experience check ────────────────────────────────────────────────────
-# Phrases stating a years-of-experience requirement. The number is captured
-# and compared with MAX_YEARS_REQUIRED from search_profile.py, rather than
-# baking one threshold into the regex.
-
-_YEARS_REQUIRED = re.compile(
-    r"""
-    (?:
-        \b(\d{1,2})\s*\+\s*years?            # "5+ years"
-        |
-        \b(\d{1,2})\s+or\s+more\s+years?     # "5 or more years"
-        |
-        minimum\s+(?:of\s+)?(\d{1,2})\s+years?   # "minimum 5 years"
-        |
-        at\s+least\s+(\d{1,2})\s+years?      # "at least 5 years"
-        |
-        \b(\d{1,2})\s*[-–]\s*\d+\s+years?    # "5-8 years" (the lower bound counts)
-        |
-        (?<![-–\d.])\b(\d{1,2})\s+years?     # bare "7 years..." (not the "5" in "3-5 years")
-    )
-    \s*(?:of\s+)?(?:[\w/&,.-]+\s+){0,5}experience   # up to 5 qualifier words before "experience"
-    """,
-    re.VERBOSE | re.IGNORECASE,
-)
+# The rule lives in experience.py: any number next to "years" is a
+# requirement, ranges count by their lower bound, a choice of paths by the
+# easiest, and preferred / nice-to-have mentions do not count.
 
 
 def too_senior(jd: str, max_years: int | None = None) -> str | None:
-    """
-    The phrase that asks for max_years or more of experience, or None.
-    max_years defaults to MAX_YEARS_REQUIRED.
-    """
-    limit = MAX_YEARS_REQUIRED if max_years is None else max_years
-    for m in _YEARS_REQUIRED.finditer(jd or ""):
-        years = next(int(g) for g in m.groups() if g)
-        if years >= limit:
-            return m.group(0).strip()
-    return None
+    """The sentence asking for max_years or more (default MAX_YEARS_REQUIRED), or None."""
+    return _too_senior(jd, MAX_YEARS_REQUIRED if max_years is None else max_years)
 
 
-def _jd_ok_for_experience(url: str) -> bool:
+def _enrich_and_check(job: dict) -> tuple[bool, str]:
     """
-    Fetch the JD and return False if it clearly requires 5+ years experience.
-    Returns True on any fetch error (benefit of the doubt).
+    Fill in what the source's per-job call provides (description, real
+    posting date, workplace), then check the years requirement.
+
+    The description comes from the source whenever it sent one (Lever,
+    Amazon, Google Jobs, Hacker News) or has a per-job JSON call for it
+    (Greenhouse, Ashby, Workday). Only the rest fall back to fetching the
+    job's web page, which returns nothing for sites that need a browser; a
+    job whose description cannot be read passes, as before.
+
+    Returns (keep, reason). Mutates job.
     """
-    try:
-        from tailoring.jd_fetcher import fetch_jd
-        jd = fetch_jd(url)
-        if jd.startswith("[Could not fetch"):
-            return True   # can't fetch → don't penalise
-        if too_senior(jd):
-            log.debug(f"JD filter: {MAX_YEARS_REQUIRED}+ yrs required — skipping {url}")
-            return False
-        return True
-    except Exception:
-        return True   # any error → include the job
+    detail = job.pop("_detail", None)
+    if detail:
+        try:
+            for key, value in (detail() or {}).items():
+                if value:
+                    job[key] = value
+        except Exception as e:
+            log.debug(f"detail fetch failed for {job.get('url')}: {e}")
+
+    text = job.get("description") or ""
+    if not text:
+        try:
+            from tailoring.jd_fetcher import fetch_jd
+            text = fetch_jd(job["url"])
+        except Exception:
+            text = ""
+        if text.startswith("[Could not"):
+            text = ""
+    if not text:
+        return True, ""
+    # A type or workplace the listing did not give may be a labelled line
+    # in the description ("Employment type: Contract" on LinkedIn)
+    if not job.get("job_type") or not job.get("workplace"):
+        typ, place = jobmeta.labels_from_text(text)
+        job["job_type"] = job.get("job_type") or typ
+        job["workplace"] = job.get("workplace") or place
+    need, evidence = required_years(text)
+    if need is not None and need >= MAX_YEARS_REQUIRED:
+        log.debug(f"JD filter: needs {need} years ({evidence!r}) - {job.get('url')}")
+        return False, f"requires {need}+ years experience: {evidence}"
+    return True, ""
 
 
 # ── Core scan ──────────────────────────────────────────────────────────────
@@ -417,12 +420,15 @@ def process_jobs(jobs: list[dict], tracker: JobTracker, jd_check: bool = True) -
         batch_keys.add(key)
         candidates.append(job)
 
-    # Phase 2 — JD experience check, parallel (each is an HTTP fetch)
+    # Phase 2 — per-job details and the years check, parallel. Only new
+    # jobs that passed the cheap filters get here, so per-job calls stay few.
     if jd_check and candidates:
         with ThreadPoolExecutor(max_workers=8) as pool:
-            ok_flags = list(pool.map(lambda j: _jd_ok_for_experience(j["url"]), candidates))
+            checked = list(pool.map(_enrich_and_check, candidates))
     else:
-        ok_flags = [True] * len(candidates)
+        for job in candidates:
+            job.pop("_detail", None)
+        checked = [(True, "")] * len(candidates)
 
     # Phase 3 — persist. A job whose description asks for too many years is
     # still saved, so it is never fetched and checked again, but flagged the
@@ -430,12 +436,12 @@ def process_jobs(jobs: list[dict], tracker: JobTracker, jd_check: bool = True) -
     # unless "Show N+ yr roles" is ticked; before this they were saved
     # unflagged and shown like any other job.
     new_jobs: list[dict] = []
-    for job, ok in zip(candidates, ok_flags):
+    for job, (ok, reason) in zip(candidates, checked):
         tracker.mark_seen(job)
         if ok:
             new_jobs.append(job)
         else:
-            tracker.mark_needs_review(job["id"], f"requires {MAX_YEARS_REQUIRED}+ years experience")
+            tracker.mark_needs_review(job["id"], reason)
     return new_jobs
 
 

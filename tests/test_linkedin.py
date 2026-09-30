@@ -184,4 +184,6 @@ def test_job_fields_are_parsed(captured):
     assert j["source"] == "LinkedIn"
     assert j["title"] == "Data Analyst"
     assert j["url"] == "https://www.linkedin.com/jobs/view/4453331917"
-    assert j["posted_at"] == "2026-08-12"
+    # "Just now" is read as the posting time; the datetime attribute is only the day
+    posted = datetime.fromisoformat(j["posted_at"])
+    assert timedelta(0) <= datetime.now(timezone.utc) - posted < timedelta(minutes=5)

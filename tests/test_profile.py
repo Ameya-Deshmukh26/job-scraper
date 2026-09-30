@@ -27,23 +27,22 @@ from ranking import is_staffing  # noqa: E402
     ("5-8 years of relevant experience", True),
     ("minimum of 6 years experience", True),
     ("at least 4 years of experience", False),
-    ("3 to 5 years of experience", True),         # previous behaviour, kept
+    ("3 to 5 years of experience", False),        # a range counts by its lower bound
     ("10+ years of professional experience", True),
     ("1-3 years of experience with SQL", False),
 ])
-def test_default_cap_of_five_matches_the_old_regex(text, too_senior):
+def test_cap_of_five(text, too_senior):
     assert bool(main.too_senior(text, 5)) is too_senior
 
 
 def test_cap_is_configurable():
     jd = "Looking for 3+ years of experience in product management."
     assert main.too_senior(jd, 5) is None
-    assert main.too_senior(jd, 3) == "3+ years of experience"
+    assert "3+ years of experience" in main.too_senior(jd, 3)
 
 
-def test_the_matched_phrase_is_returned_for_the_audit_log():
-    assert main.too_senior("We need at least 7 years of experience.", 5) == \
-        "at least 7 years of experience"
+def test_the_matching_sentence_is_returned_for_the_audit_log():
+    assert "at least 7 years of experience" in main.too_senior("We need at least 7 years of experience.", 5)
 
 
 # ── staffing tells ────────────────────────────────────────────────────────
@@ -199,13 +198,32 @@ def test_a_job_failing_the_years_check_is_saved_hidden(monkeypatch):
         def mark_needs_review(self, job_id, reason):
             flagged[job_id] = reason
 
-    monkeypatch.setattr(main, "_jd_ok_for_experience", lambda url: url != "https://senior")
-    jobs = [{"id": "a", "title": "Data Scientist", "company": "Acme", "location": "Boston, MA", "url": "https://ok"},
-            {"id": "b", "title": "Data Analyst", "company": "Acme", "location": "Boston, MA", "url": "https://senior"}]
+    monkeypatch.setattr(main, "MAX_YEARS_REQUIRED", 4)
+    jobs = [{"id": "a", "title": "Data Scientist", "company": "Acme", "location": "Boston, MA",
+             "url": "https://ok", "description": "2+ years of experience with SQL"},
+            {"id": "b", "title": "Data Analyst", "company": "Acme", "location": "Boston, MA",
+             "url": "https://senior", "description": "You have 5+ years of experience in analytics."}]
     new = main.process_jobs(jobs, T())
     assert [j["id"] for j in new] == ["a"]
     assert saved == ["a", "b"]                      # both saved, so neither is re-checked
-    assert flagged == {"b": f"requires {main.MAX_YEARS_REQUIRED}+ years experience"}
+    assert flagged["b"].startswith("requires 5+ years experience: ")   # the real number, not the cap
+
+
+def test_the_description_a_source_sent_is_used_without_fetching_the_page(monkeypatch):
+    import tailoring.jd_fetcher as jf
+    monkeypatch.setattr(jf, "fetch_jd", lambda url: (_ for _ in ()).throw(AssertionError("fetched")))
+    ok, _ = main._enrich_and_check({"url": "https://x", "description": "1+ years of Python"})
+    assert ok
+
+
+def test_a_per_job_detail_fills_the_description_and_date(monkeypatch):
+    monkeypatch.setattr(main, "MAX_YEARS_REQUIRED", 4)
+    job = {"url": "https://x", "posted_at": "",
+           "_detail": lambda: {"description": "7+ years of experience", "posted_at": "2026-09-29T00:00:00+00:00"}}
+    ok, reason = main._enrich_and_check(job)
+    assert not ok and reason.startswith("requires 7+")
+    assert job["posted_at"] == "2026-09-29T00:00:00+00:00" and "_detail" not in job
+
 
 
 def test_no_preferred_locations_means_location_never_moves_the_score(monkeypatch):

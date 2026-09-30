@@ -9,7 +9,12 @@ import logging
 import time
 from datetime import datetime, timezone
 
+from functools import partial
+
 import requests
+
+import jobmeta
+from experience import html_to_text
 
 log = logging.getLogger(__name__)
 
@@ -31,10 +36,40 @@ query($org: String!) {
       locationName
       secondaryLocations { locationName }
       teamId
+      employmentType
+      workplaceType
+      compensationTierSummary
     }
   }
 }
 """
+
+
+
+# The list has no dates or descriptions; one posting's detail has both.
+# Fetched only for jobs that are new and pass the title filters.
+_DETAIL_QUERY = """
+query($org: String!, $id: String!) {
+  jobPosting(organizationHostedJobsPageName: $org, jobPostingId: $id) {
+    descriptionHtml
+    publishedDate
+  }
+}
+"""
+
+
+def _detail(company: str, jid: str) -> dict:
+    try:
+        r = _SESSION.post(_GQL_URL, json={"query": _DETAIL_QUERY, "variables": {"org": company, "id": jid}},
+                          headers={"Referer": f"https://jobs.ashbyhq.com/{company}"}, timeout=12)
+        post = ((r.json().get("data") or {}).get("jobPosting")) or {}
+    except Exception as e:
+        log.debug(f"Ashby detail {company}/{jid}: {e}")
+        return {}
+    out = {"description": html_to_text(post.get("descriptionHtml") or "")}
+    if post.get("publishedDate"):
+        out["posted_at"] = f"{post['publishedDate']}T00:00:00+00:00"
+    return out
 
 
 def fetch_ashby_jobs(company: str, cutoff: datetime) -> list[dict]:
@@ -74,7 +109,8 @@ def fetch_ashby_jobs(company: str, cutoff: datetime) -> list[dict]:
         # URL — no externalLink in list view; construct canonical URL
         url = f"https://jobs.ashbyhq.com/{company}/{jid}"
 
-        # No publishedAt in list view — tracker handles dedup (same as Goldman/Deloitte)
+        # The list view has no date: the detail fills posted_at in for new
+        # jobs, and the tracker's dedup keeps old ones from repeating.
         jobs.append({
             "id":        f"ashby_{jid}",
             "source":    "ashby",
@@ -83,6 +119,11 @@ def fetch_ashby_jobs(company: str, cutoff: datetime) -> list[dict]:
             "location":  location,
             "url":       url,
             "posted_at": "",
+            "job_type":  jobmeta.job_type(job.get("employmentType") or "", title),
+            "workplace": jobmeta.workplace(job.get("workplaceType") or "", title, location),
+            "pay":       (job.get("compensationTierSummary") or "").split(" • ")[0],
+            "_detail":   partial(_detail, company, jid),
         })
 
     return jobs
+

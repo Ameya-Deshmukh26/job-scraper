@@ -15,6 +15,9 @@ import time
 from datetime import datetime, timezone
 
 import requests
+
+import jobmeta
+from experience import html_to_text
 from config import COUNTRY, SEARCH_TITLES, SOURCE_QUERIES
 
 log = logging.getLogger(__name__)
@@ -66,14 +69,23 @@ def fetch_amazon_jobs(cutoff: datetime) -> list[dict]:
                 except ValueError:
                     pass
                 seen.add(jid)
+                title = (j.get("title") or "").strip()
+                location = _amazon_location(j.get("location"))
                 jobs.append({
                     "id":        f"amzn_{jid}",
                     "source":    "faang",
                     "company":   "Amazon",
-                    "title":     (j.get("title") or "").strip(),
-                    "location":  _amazon_location(j.get("location")),
+                    "title":     title,
+                    "location":  location,
                     "url":       "https://www.amazon.jobs" + (j.get("job_path") or ""),
                     "posted_at": posted_iso,
+                    # Required qualifications only: a "5+ years" under
+                    # preferred_qualifications must not drop the job.
+                    "description": html_to_text((j.get("basic_qualifications") or "") + "<br>"
+                                                + (j.get("description") or "")),
+                    "job_type":  "Internship" if j.get("is_intern") else
+                                 jobmeta.job_type(j.get("job_schedule_type") or "", title),
+                    "workplace": jobmeta.workplace("", title, location),
                 })
         except Exception as e:
             log.debug(f"Amazon q={q!r}: {e}")

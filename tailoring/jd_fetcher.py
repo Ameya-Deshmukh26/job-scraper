@@ -43,7 +43,14 @@ def _linkedin_jd(url: str) -> str:
         resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
     desc = soup.find(class_="show-more-less-html__markup")
-    return desc.get_text("\n") if desc else ""
+    text = desc.get_text("\n") if desc else ""
+    # The criteria list ("Employment type: Full-time", "Seniority level: ...")
+    # sits outside the description; keep it as labelled lines
+    criteria = [f"{h.get_text(strip=True)}: {v.get_text(strip=True)}"
+                for item in soup.select(".description__job-criteria-item")
+                for h, v in [(item.find(class_="description__job-criteria-subheader"),
+                              item.find(class_="description__job-criteria-text"))] if h and v]
+    return text + ("\n" + "\n".join(criteria) if criteria and text else "")
 
 
 def _firecrawl_jd(url: str) -> str:

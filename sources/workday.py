@@ -40,6 +40,11 @@ import time
 from datetime import datetime, timedelta, timezone
 
 import requests
+
+from functools import partial
+
+import jobmeta
+from experience import html_to_text
 from config import SEARCH_TITLES, SOURCE_QUERIES
 
 log = logging.getLogger(__name__)
@@ -130,6 +135,27 @@ def _extract_external_id(job: dict) -> str:
     if "_" in path:
         return path.rsplit("_", 1)[-1]
     return path.replace("/", "_").strip("_") or ""
+
+
+def _detail(detail_url: str) -> dict:
+    """
+    One posting's JSON: description, start date and remote type. The job's
+    web page only fills in after scripts run, so fetching it returned 0
+    characters and every Workday job passed the years check unread.
+    """
+    try:
+        r = _SESSION.get(detail_url, timeout=15)
+        r.raise_for_status()
+        info = r.json().get("jobPostingInfo") or {}
+    except Exception as e:
+        log.debug(f"Workday detail {detail_url}: {e}")
+        return {}
+    out = {"description": html_to_text(info.get("jobDescription") or "")}
+    if info.get("startDate"):
+        out["posted_at"] = f"{info['startDate']}T00:00:00+00:00"
+    if info.get("remoteType"):
+        out["workplace"] = jobmeta.workplace(info["remoteType"])
+    return out
 
 
 def _fetch_page(url: str, keyword: str, offset: int) -> dict | None:
@@ -227,6 +253,9 @@ def fetch_workday_jobs(
                         "location":  location,
                         "url":       job_url,
                         "posted_at": posted_iso,
+                        "job_type":  jobmeta.job_type(job.get("timeType") or "", title),
+                        "workplace": jobmeta.workplace("", title, location),
+                        "_detail":   partial(_detail, url.rsplit("/jobs", 1)[0] + external_path),
                     })
                     page_kept += 1
 

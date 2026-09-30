@@ -43,6 +43,7 @@ PREFERRED_LOCATIONS: list[str] = []
 EXCLUDE_LEVELS: list[str] = []
 EXCLUDE_SENIOR = True
 MAX_YEARS_REQUIRED = 5
+HIGHEST_DEGREE = "bachelors"
 RANK_TOP_TITLES: list[str] = []
 RANK_GOOD_TITLES: list[str] = []
 RANK_BONUS_WORDS: list[str] = []

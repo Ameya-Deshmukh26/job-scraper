@@ -124,6 +124,12 @@ EXCLUDE_SENIOR = True
 # Drop a job when its description asks for this many years or more.
 MAX_YEARS_REQUIRED = 5
 
+# Highest degree: "bachelors", "masters" or "phd". Picks the path in
+# descriptions that offer one per degree ("Bachelor's + 8 years or
+# Master's + 6 years"), and counts "Master's, or Bachelor's + 5 years" as
+# needing no minimum when this is "masters".
+HIGHEST_DEGREE = "masters"   # an MBA is a Master's
+
 # ── Ranking ────────────────────────────────────────────────────────────────
 # Title contains one of these -> strongest match.
 RANK_TOP_TITLES = ["product manager", "strategy", "founder's office", "founders office"]

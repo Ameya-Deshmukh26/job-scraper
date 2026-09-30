@@ -19,6 +19,8 @@ import re
 from datetime import datetime, timezone
 
 import requests
+
+import jobmeta
 from bs4 import BeautifulSoup
 
 log = logging.getLogger(__name__)
@@ -186,14 +188,19 @@ def fetch_hackernews_jobs(cutoff: datetime) -> list[dict]:
             except Exception:
                 pass
 
+        location = _location_of(text)
         results.append({
-            "id":        f"hn_{c.get('id')}",
-            "source":    "hackernews",
-            "company":   _company_of(text, raw),
-            "title":     role,
-            "location":  _location_of(text),
-            "url":       html.unescape(url),
-            "posted_at": posted,
+            "id":          f"hn_{c.get('id')}",
+            "source":      "hackernews",
+            "company":     _company_of(text, raw),
+            "title":       role,
+            "location":    location,
+            "url":         html.unescape(url),
+            "posted_at":   posted,
+            "description": text,        # the comment is the whole posting
+            "job_type":    jobmeta.job_type(text[:300], role),
+            "workplace":   jobmeta.workplace(text[:300], role, location),
+            "pay":         jobmeta.pay_from_text(text[:600]),
         })
 
     log.info(f"HN: {len(results)} relevant postings from {len(children)} comments")

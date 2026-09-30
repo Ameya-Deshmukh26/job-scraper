@@ -514,6 +514,11 @@
     .agent-wait, .agent-err { padding: 24px; text-align:center; color: var(--muted); font-size: 13px; }
     .spin { display:inline-block; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .tag-type           { background: rgba(251,191,36,.12); color: #fbbf24; border: 1px solid rgba(251,191,36,.25); }
+    .tag-type.ft        { background: transparent; color: var(--muted); border: 1px solid rgba(255,255,255,.08); }
+    .tag-work           { background: rgba(56,189,248,.10); color: #7dd3fc; border: 1px solid rgba(56,189,248,.22); }
+    .nav-filter         { background: var(--surface, #111827); color: var(--text, #e5e7eb); border: 1px solid rgba(255,255,255,.12);
+                          border-radius: 6px; font-size: 11px; padding: 3px 6px; }
     .tag-pay            { background: rgba(52,211,153,.12); color: #34d399; border: 1px solid rgba(52,211,153,.25); font-weight:600; }
     .tag-src-staffing   { background: rgba(148,163,184,.12); color: #94a3b8; }
     .dot-staffing       { background: #94a3b8; }
@@ -1112,6 +1117,21 @@
       <label for="scan-hours" style="white-space:nowrap">Lookback hrs</label>
       <input id="scan-hours" class="scan-hours" type="number" min="1" max="168" value="2" />
     </div>
+    <!-- Apply on every tab. Many jobs never state a type or workplace, so the
+         "hide" options only remove jobs known to be that kind. -->
+    <select id="f-type" class="nav-filter" onchange="metaFiltersChanged()" title="Job type">
+      <option value="any">Any type</option>
+      <option value="no-intern">Hide internships</option>
+      <option value="no-contract">Hide contract</option>
+      <option value="contract">Only contract</option>
+      <option value="intern">Only internships</option>
+    </select>
+    <select id="f-work" class="nav-filter" onchange="metaFiltersChanged()" title="Workplace">
+      <option value="any">Anywhere</option>
+      <option value="remote">Remote only</option>
+      <option value="remote-hybrid">Remote or hybrid</option>
+      <option value="onsite">On-site only</option>
+    </select>
   </div>
 </nav>
 
@@ -1434,8 +1454,7 @@ function buildJobCard(j, onToggle) {
     : "";
   const staffTag = j.is_staffing
     ? `<span class="tag tag-staffing" title="Staffing agency or contract shop">agency</span>` : "";
-  const payTag = j.pay
-    ? `<span class="tag tag-pay" title="Rate and contract type from the staffing API">${esc(j.pay)}</span>` : "";
+  const payTag = metaTags(j);   // pay, job type, workplace
   const m = j.match ?? null;
   const matchTag = m !== null
     ? `<span class="tag tag-match ${m >= 75 ? "hi" : m >= 55 ? "mid" : "lo"}" title="Match score: role fit, level, company, H-1B, location, freshness">${m}</span>` : "";
@@ -1647,6 +1666,48 @@ function cappedHtml(gridId, filtered, builder) {
 // time component (LinkedIn gives date-only strings that parse as midnight UTC).
 // A job whose JD demands more years than MAX_YEARS_REQUIRED is not applicable; the audit flags these
 // via review_reason. Hidden unless explicitly requested.
+// Type / workplace filters from the nav, shared by every tab
+function passesMeta(j) {
+  const t = (document.getElementById("f-type") || {}).value || "any";
+  const w = (document.getElementById("f-work") || {}).value || "any";
+  const type = j.job_type || "", place = j.workplace || "";
+  if (t === "no-intern" && type === "Internship") return false;
+  if (t === "no-contract" && type === "Contract") return false;
+  if (t === "contract" && type !== "Contract") return false;
+  if (t === "intern" && type !== "Internship") return false;
+  if (w === "remote" && place !== "Remote") return false;
+  if (w === "remote-hybrid" && place !== "Remote" && place !== "Hybrid") return false;
+  if (w === "onsite" && place !== "On-site") return false;
+  return true;
+}
+
+function metaFiltersChanged() {
+  try {
+    localStorage.setItem("f-type", document.getElementById("f-type").value);
+    localStorage.setItem("f-work", document.getElementById("f-work").value);
+  } catch (e) { /* private window: filters still work, just not remembered */ }
+  render(); renderLinkedinTab(); renderPortal(); renderWorkdayTab();
+}
+
+function restoreMetaFilters() {
+  try {
+    for (const id of ["f-type", "f-work"]) {
+      const v = localStorage.getItem(id);
+      const el = document.getElementById(id);
+      if (v && el && [...el.options].some(o => o.value === v)) el.value = v;
+    }
+  } catch (e) { /* ignore */ }
+}
+
+// Card tags for type, workplace and pay
+function metaTags(j) {
+  const type = j.job_type
+    ? `<span class="tag tag-type${j.job_type === "Full-time" ? " ft" : ""}">${esc(j.job_type)}</span>` : "";
+  const work = j.workplace ? `<span class="tag tag-work">${esc(j.workplace)}</span>` : "";
+  const pay = j.pay ? `<span class="tag tag-pay" title="Pay shown by the source">${esc(j.pay)}</span>` : "";
+  return pay + type + work;
+}
+
 function isTooSenior(j) {
   return /^requires \d+\+ years/.test(j.review_reason || "");
 }
@@ -1668,6 +1729,7 @@ function render() {
   const filtered = allJobs.filter(j => {
     if (hideAp  && j.applied)     return false;
     if (!showSenior && isTooSenior(j)) return false;
+    if (!passesMeta(j)) return false;
     if (h1bOnly && !j.h1b_sponsor) return false;
     const src = (j.source || "").toLowerCase();
     if (activeSrc === "staffing-src") {
@@ -1727,7 +1789,7 @@ function renderLinkedinTab() {
   // Base: only LinkedIn/boards sources
   let filtered = allJobs.filter(j => {
     const src = (j.source || "").toLowerCase();
-    return LI_SOURCES.includes(src) && !isTooSenior(j);
+    return LI_SOURCES.includes(src) && !isTooSenior(j) && passesMeta(j);
   });
 
   // Hide applied
@@ -1769,6 +1831,7 @@ function renderWorkdayTab() {
   let filtered = portalJobs.filter(j => {
     const src = (j.source || "").toLowerCase();
     if (!BIG_SOURCES.includes(src)) return false;
+    if (isTooSenior(j) || !passesMeta(j)) return false;
     if (hideAp && j.applied) return false;
     if (US_ONLY && !isUS(j.location)) return false;
     if (q && !j.title.toLowerCase().includes(q) && !(j.company||"").toLowerCase().includes(q)) return false;
@@ -2036,6 +2099,7 @@ function renderPCard(j) {
         <span class="p-meta-item" style="color:${color}">
           <i class="bi bi-circle-fill" style="font-size:5px"></i>${srcCap}
         </span>
+        ${metaTags(j)}
       </div>
     </div>
     <div class="p-actions">
@@ -2065,6 +2129,7 @@ function renderPortal() {
   let filtered = portalJobs.filter(j => {
     const src = (j.source||"").toLowerCase();
     if (!BOARDS_SOURCES.includes(src)) return false;
+    if (isTooSenior(j) || !passesMeta(j)) return false;
     if (hideAp && j.applied) return false;
     if (US_ONLY && !isUS(j.location)) return false;
     if (q && !j.title.toLowerCase().includes(q) && !(j.company||"").toLowerCase().includes(q)) return false;
@@ -2293,6 +2358,7 @@ function watchScans() {
 // BOOT
 // ════════════════════════════════════════════════════════════════════════
 (async () => {
+  restoreMetaFilters();
   await Promise.all([loadJobs(), loadStats(), loadScanStatus()]);
   loadAgentStatus();   // fire-and-forget: backend import can take a few seconds
   if (scanStatus && Object.values(scanStatus.groups).some(x => x.running)) watchScans();

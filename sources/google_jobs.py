@@ -43,6 +43,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import requests
+
+import jobmeta
 from config import COUNTRY, SEARCH_COUNTRY, SEARCH_TITLES, SOURCE_QUERIES
 
 log = logging.getLogger(__name__)
@@ -172,6 +174,15 @@ _PAY_RE = re.compile(r"\b(?:a|an|per)\s+(?:year|hour|month|week|day)\b", re.I)
 
 def _salary_from(job: dict) -> str:
     return next((tag for tag in _extensions(job) if _PAY_RE.search(tag)), "")
+
+
+def _description(job: dict) -> str:
+    """Google sends the full description plus a Qualifications list."""
+    parts = [job.get("description") or ""]
+    for block in job.get("job_highlights") or []:
+        if "qualif" in (block.get("title") or "").lower():
+            parts.extend(block.get("items") or [])
+    return "\n".join(p for p in parts if p)
 
 
 def _date_phrase(cutoff: datetime) -> str:
@@ -345,6 +356,9 @@ def fetch_google_jobs(cutoff: datetime) -> list[dict]:
                     "posted_at": posted.isoformat(),
                     "pay":       _salary_from(j),
                     "via":       via,
+                    "description": _description(j),
+                    "job_type":  jobmeta.job_type(" ".join(_extensions(j)), title),
+                    "workplace": jobmeta.workplace(" ".join(_extensions(j)), title, j.get("location") or ""),
                 })
 
             token = (d.get("serpapi_pagination") or {}).get("next_page_token")
